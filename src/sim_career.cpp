@@ -21,7 +21,7 @@ bool Sim::load(const std::vector<uint8_t>& data) {
     a.writing = false; a.buf = data; a.pos = 4;
     GameState t;
     a & t;
-    if (!a.ok || a.ver < 8 || a.ver > 15 || t.theatre < 0 || t.theatre >= (int)THEATRES.size()) return false;
+    if (!a.ok || a.ver < 8 || a.ver > 16 || t.theatre < 0 || t.theatre >= (int)THEATRES.size()) return false;
     g = t;
     if (g.patronName.empty()) g.patronName = RU_LAST[(size_t)(g.seed % RU_LAST.size())];     // a save from before version 1.2
     if (a.ver < 9) g.planYear = dateOf(g.day).y;                                             // no plan until next January
@@ -277,6 +277,7 @@ void Sim::startPosting(int theatre, bool first) {
     for (auto& row : g.habit) for (float& x : row) x = 0;
     for (float& x : g.habitD) x = 0;
     g.advAlert = 0;
+    g.ops.clear(); g.lastOpDay = g.day; g.opsWon = g.opsLost = 0;
     g.zenit.clear(); g.krLog.clear(); g.usedReqTemplates.clear(); g.histDone.clear(); g.usedNames.clear();
     g.mSpotted = g.mMeetings = g.mAborts = g.mRolls = 0; g.mValue = 0;
     makePool(); g.krEst = -1;
@@ -458,7 +459,7 @@ void Sim::endPosting(int how, const std::string& title, const std::string& text)
     for (auto& o : g.officers) if (o.mole) rec.agents.push_back("  (" + o.title() + " of the rezidentura worked for the adversary from " + fmtShort(o.moleDay) + (o.gone ? "; he did not finish the tour.)" : "; he was never caught.)"));
     // what Centre weighs: product first, then requirements met, then the network you leave behind, less the people you lost
     float score = 30 * std::min(1.5f, g.totValue / t.valuePar) + g.totReqDone * 2 + std::min(g.totRecruited, 8) * 1.f + std::min(rec.agentsAtEnd, 6) * 2
-                  - g.totArrested * 5 / (1 + 0.5f * t.role) + std::min(g.totExfil, 3) * 2.f + (g.standCentre - 50) * 0.25f;   // a man brought out is a man not lost
+                  - g.totArrested * 5 / (1 + 0.5f * t.role) + std::min(g.totExfil, 3) * 2.f + std::min(g.opsWon, 4) * 3.f - std::min(g.opsLost, 3) * 1.f + (g.standCentre - 50) * 0.25f;   // a man brought out is a man not lost
     if (!t.training) score += clampf((g.patron - 30) * 0.1f, -3, 6);          // somebody at Centre reads the file kindly, or does not
     if (how == END_PNG) score -= 20;
     if (how == END_RECALLED) score -= 35;
@@ -565,6 +566,10 @@ void Sim::decide(int decisionId, int option) {
     actAs(nullptr);
     subj = nullptr;
     switch (d.kind) {
+        case DK_OP_OFFER:
+        case DK_OP_NAME:
+            opDecide(d, option);
+            break;
         case DK_STREET: {
             int b = std::max(0, std::min(2, d.ref));
             int t = order(g.day, b).type;

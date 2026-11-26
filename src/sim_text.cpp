@@ -417,6 +417,14 @@ std::vector<Sim::Todo> Sim::todo() {
         }
         if (p.verify == 3 && p.verifyResult != "CONSISTENT" && p.play == 0) add(1, TD_PEOPLE, gx(&p, p.codename + " failed Centre's verification. Decide what is to be done with him."));
     }
+    // the operation under way: the next stage, and the days left
+    if (Operation* op = activeOp()) {
+        auto st = opStages(*op);
+        std::string next;
+        for (auto& s : st) if (!s.second) { next = s.first; break; }
+        int left = op->due - g.day;
+        add(left <= 7 ? 2 : 1, op->kind == OP_LEAK ? TD_STATION : TD_PEOPLE, "Operation " + op->name + fstr(" (%d day%s left): ", left, left == 1 ? "" : "s") + (next.empty() ? op->title : next) + ".");
+    }
     // birthdays in the coming ten days, of the people you see yourself
     for (auto& p : g.persons) {
         if (!p.live() || p.handler != 0 || p.stage == SPOTTED) continue;

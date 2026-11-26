@@ -37,6 +37,10 @@ extern const char* W_STAND[5];
 
 class Sim {
 public:
+    // ---- operations (sim_ops.cpp)
+    Operation* activeOp();
+    std::vector<std::pair<std::string, bool>> opStages(const Operation& o);   // each stage, and whether it is done
+    std::string nameTraitor();                              // opens the decision that ends a leak hunt
     /** The deputy: on each morning he is on, he puts the routine in order (sim_deputy.cpp). Safe to call more than once a day. */
     void deputyPlan();
     std::string deputyLog;                                  // what he did this morning, for the brief and the report
@@ -181,6 +185,10 @@ public:
     int unread() const;
 
 private:
+    void opsDawn();
+    void opOffer(int kind);
+    void opEnd(Operation& o, bool won, const std::string& why);
+    void opDecide(const Decision& d, int option);
     struct StreetHalt { int block; std::string title, text; std::vector<std::string> opts; };
     void endDayInner();
     std::string streetStakes(const Order& o, Site* st);

@@ -337,6 +337,37 @@ int main(int argc, char** argv) {
         check(logged && s.g.paperwork <= 8, fstr("a month with only the deputy: he reports what he did, and the reports are up to date (%.1f h)", s.g.paperwork));
         s.load(before);
     }
+    // ---- an operation: offered by Centre, accepted, and pinned above the brief
+    {
+        std::vector<uint8_t> before = s.save();
+        for (auto& o : s.g.ops) if (o.state == OPS_ACTIVE || o.state == OPS_OFFERED) o.state = OPS_DECLINED;
+        s.g.lastOpDay = -9999;
+        bool offered = false;
+        for (int k = 0; k < 10 && s.g.phase == PH_PLAY && !offered; k++) {
+            for (auto& d : s.g.decisions) if (d.kind == DK_OP_OFFER) offered = true;
+            if (offered) break;
+            while (!s.g.decisions.empty()) s.decide(s.g.decisions[0].id, 0);
+            s.endDay();
+        }
+        check(offered, "Centre offers an operation");
+        if (offered) {
+            frames(4);
+            shot("09-operation-offer");
+            if (onScreen("decision:0")) click("decision:0");
+            while (!s.g.decisions.empty()) s.decide(s.g.decisions[0].id, 0);
+            check(s.activeOp() != nullptr, "the operation is taken on");
+            click("tab:Planner");
+            shot("09-operation-card");
+            if (s.activeOp() && s.activeOp()->kind == OP_LEAK) {
+                click("Name the traitor...");
+                frames(4);
+                check(onScreen("decision:0"), "a leak hunt ends with a name");
+                shot("09-operation-name");
+                while (!s.g.decisions.empty()) s.decide(s.g.decisions[0].id, 0);
+            }
+        }
+        s.load(before);
+    }
     // ---- a decision in the street: a watched officer goes about his business until something is seen on the way to an act
     {
         std::vector<uint8_t> before = s.save();

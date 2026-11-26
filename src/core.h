@@ -476,7 +476,17 @@ struct Decision {
     std::vector<std::string> opts;
     template <class A> void io(A& a) { a & id & kind & ref & day & title & text & opts; }
 };
-enum { DK_APPROACH = 1, DK_RYAN, DK_ORPHANS, DK_POSTED, DK_GAME, DK_GAME_OFFER, DK_EVENT, DK_PLAN, DK_LEAVE, DK_WIFE, DK_WALKIN, DK_SUMMONS, DK_STREET };
+enum { DK_APPROACH = 1, DK_RYAN, DK_ORPHANS, DK_POSTED, DK_GAME, DK_GAME_OFFER, DK_EVENT, DK_PLAN, DK_LEAVE, DK_WIFE, DK_WALKIN, DK_SUMMONS, DK_STREET,
+       DK_OP_OFFER, DK_OP_NAME };
+
+/** An operation: a piece of work with a name, a goal, a deadline, stages you can see, and a reckoning at the end (sim_ops.cpp). */
+enum { OP_RECRUIT = 1, OP_LEAK, OP_RESCUE, OP_FLASH };
+enum { OPS_OFFERED, OPS_ACTIVE, OPS_WON, OPS_LOST, OPS_DECLINED };
+struct Operation {
+    int id = 0, kind = 0, ref = -1, ref2 = -1, state = OPS_OFFERED, start = 0, due = 0, ended = -1, stage = 0;
+    std::string name, title, brief, stakes;
+    template <class A> void io(A& a) { a & id & kind & ref & ref2 & state & start & due & ended & stage & name & title & brief & stakes; }
+};
 inline const char* KOMP_LABEL[] = {"Money against signed receipts", "An arranged acquaintance, photographed", "Photographs of him taking an envelope from you"};
 inline const char* PLAN_LABEL[] = {"modest", "firm", "ambitious"};
 inline const char* ASSET_LABEL[] = {"A Zhiguli, through the cheque shop", "A cooperative flat in Moscow", "A dacha outside Moscow"};
@@ -525,7 +535,7 @@ struct PostRec {
 };
 
 struct GameState {
-    uint32_t version = 15;
+    uint32_t version = 16;
     std::string notes;                       // the player's notebook
     int background = 0;                      // where the officer came from (BACKGROUND_LABEL)
     int startTheatre = 0;                    // where the career was begun
@@ -595,6 +605,8 @@ struct GameState {
     float habit[7][3] = {}, habitD[8] = {}, advAlert = 0;
     int streetForce[3] = {-1, -1, -1};
     bool deputy = false;                     // your deputy runs the routine (version 15)
+    std::vector<Operation> ops;              // operations offered, running and finished this posting (version 16)
+    int lastOpDay = -9999, opsWon = 0, opsLost = 0;
     int deputyDay = -1;                      // the last day he planned      // what you decided in the street today, block by block (the day is replayed with it)
     float distMod[8] = {1, 1, 1, 1, 1, 1, 1, 1};   // HIDDEN - how hard the watchers are working each district, as the months go by
     int lastCarDay = -99;
@@ -670,7 +682,7 @@ struct GameState {
     template <class A> void io(A& a) {
         a & version;
         a.ver = version;
-        if (!a.writing) version = 15;
+        if (!a.writing) version = 16;
         a & difficulty & nextTheatre & wallDown & bugs & totExfil & tut & tutTries & tutMarks & tutMax & tutA & tutB
           & tutMeet & tutDrop & tutSignal & tutRoll & tutText & tutLog & courseReport & pool & watchers & replateDay & months & krEst
           & wx & wxNext & temp & tempNext & sunset & sunrise & forecast & game & gameNext & gameRounds & gameFound & gameDoubt & gameSuspect & gameName & gameLog
@@ -693,5 +705,6 @@ struct GameState {
         if (a.ver >= 12) a & background & startTheatre & ironman & archived;
         if (a.ver >= 14) a & habit & habitD & advAlert & streetForce;
         if (a.ver >= 15) a & deputy & deputyDay;
+        if (a.ver >= 16) a & ops & lastOpDay & opsWon & opsLost;
     }
 };

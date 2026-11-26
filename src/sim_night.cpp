@@ -692,6 +692,8 @@ void Sim::dawn() {
     planDawn(d);
     if (g.phase != PH_PLAY) return;
     requirements();
+    opsDawn();
+    if (g.phase != PH_PLAY) return;
     if (pct(T().walkIn) && g.day - g.postStart > 20) walkIn();
     if (g.day - g.postStart > 60 && pct(0.10f)) krTip();
     // --- somebody takes an interest in you personally

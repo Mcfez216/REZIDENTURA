@@ -92,6 +92,9 @@ REFINEMENTS SINCE 1.6
     on the checklist.
   - Stamps across the desk for the moments that matter: a recruitment, an agent brought out,
     a promotion, a requirement met, material of considerable value - and an arrest.
+  - OPERATIONS: every few months Centre offers one - recruit a man before he leaves, find the
+    leak in the station, rescue an agent before his arrest, or a flash collection task. Each
+    has stages, a deadline and a reckoning, pinned above the brief on the Planner.
   - THE DEPUTY (on by default; button under the planner): he runs the routine - stores,
     the agenda of agreed meetings, a detection route before every act of the week, reports,
     rest, reading signal sites - and tells you what he did. The decisions stay yours.

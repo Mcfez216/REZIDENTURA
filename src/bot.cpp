@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
     }
     int reached[N_THEATRE] = {}, n91 = 0, saveFail = 0;
     double score[N_THEATRE] = {}, value[N_THEATRE] = {}, recruited[N_THEATRE] = {}, arrested[N_THEATRE] = {};
-    long streetAsked = 0;
+    long streetAsked = 0, opsW = 0, opsL = 0;
     int how[N_THEATRE][4] = {}, cnt[N_THEATRE] = {}, moleCaught = 0, moles = 0, cause[N_THEATRE][8] = {}, exfil = 0, courses = 0, coursePass = 0;
     double days[N_THEATRE] = {};
     std::map<std::string, int> endings;
@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
         Bot bot(s, careful);
         int guard = 0, checked = 0;
         while (s.g.phase != PH_OVER && guard++ < 12000) {
-            if (s.g.phase == PH_INTERLUDE) { if (immortal) { s.g.png = 0; s.g.recalls = 0; s.g.poorPostings = 0; } s.chooseInterlude((int)(seed % 3)); continue; }
+            if (s.g.phase == PH_INTERLUDE) { opsW += s.g.opsWon; opsL += s.g.opsLost; if (immortal) { s.g.png = 0; s.g.recalls = 0; s.g.poorPostings = 0; } s.chooseInterlude((int)(seed % 3)); continue; }
             int dPlan = s.g.day;
             for (auto& d : s.g.decisions) if (d.kind == DK_STREET) streetAsked++;
             bot.plan();
@@ -66,6 +66,7 @@ int main(int argc, char** argv) {
                 static bool reg = false; if (!reg) { reg = true; static auto* pacc = &acc; atexit([]() { for (auto& kv : *pacc) if (kv.second.second > 30) printf("   heat %+8.0f over %6d days (%+.2f/day)  %s\n", kv.second.first, kv.second.second, kv.second.first / kv.second.second, kv.first.c_str()); }); } }
             if (s.g.funds < 0 || s.g.fatigue != s.g.fatigue || s.g.standCentre != s.g.standCentre) { printf("BAD STATE seed %llu day %d\n", (unsigned long long)seed, s.g.day); break; }
         }
+        opsW += s.g.opsWon; opsL += s.g.opsLost;
         for (auto& rcd : s.g.record) {
             int t = rcd.theatre;
             reached[t]++; score[t] += rcd.score; value[t] += rcd.value; recruited[t] += rcd.recruited; arrested[t] += rcd.arrested; how[t][rcd.how]++; cnt[t]++; cause[t][rcd.cause & 7]++; days[t] += rcd.endDay - rcd.startDay;
@@ -84,7 +85,7 @@ int main(int argc, char** argv) {
     for (auto& e : endings) printf("  ending: %-32s %d\n", e.first.c_str(), e.second);
     printf("  traitors in stations: %d, removed before the end of the tour: %d\n", moles, moleCaught);
     printf("  exfiltrated agents: %d   courses taken: %d, completed: %d\n", exfil, courses, coursePass);
-    printf("  decisions taken in the street: %ld\n", streetAsked);
+    printf("  decisions taken in the street: %ld   operations won %ld, lost %ld\n", streetAsked, opsW, opsL);
     printf("  save/load failures: %d\n", saveFail);
     return saveFail ? 1 : 0;
 }

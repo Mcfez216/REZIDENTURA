@@ -481,6 +481,8 @@ void App::pushToasts(int fromDay, size_t cablesBefore) {
         for (size_t i = cablesBefore; i < sim.g.cables.size(); i++) {
             const Cable& cb = sim.g.cables[i];
             if (cb.subject == "Promotion") c.push_back({7, "ПОВЫШЕН В ЗВАНИИ", "PROMOTED", 0xA8801Cu});
+            else if (cb.subject.rfind("Operation ", 0) == 0 && hasTxt(cb.subject, "COMPLETED")) c.push_back({8, "ОПЕРАЦИЯ ЗАВЕРШЕНА", "OPERATION COMPLETE", 0x2F6B3Au});
+            else if (cb.subject.rfind("Operation ", 0) == 0 && hasTxt(cb.subject, "FAILED")) c.push_back({8, "ПРОВАЛ", "OPERATION FAILED", 0x3A1410u});
             else if (cb.subject.rfind("Arrest of ", 0) == 0 && !hasTxt(cb.subject, "neighbours")) c.push_back({4, "АРЕСТОВАН", "AGENT ARRESTED", 0x3A1410u});
             else if (hasTxt(cb.subject, "satisfied") || hasTxt(cb.subject, "carried out")) c.push_back({2, "ЗАДАНИЕ ВЫПОЛНЕНО", "REQUIREMENT MET", 0x4A3E8Eu});
             else if (cb.subject.rfind("Evaluation of material", 0) == 0 && hasTxt(cb.body, "OF CONSIDERABLE VALUE")) c.push_back({3, "ОСОБО ЦЕННО", "OF CONSIDERABLE VALUE", 0x4A3E8Eu});

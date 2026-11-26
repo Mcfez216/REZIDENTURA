@@ -525,7 +525,7 @@ struct PostRec {
 };
 
 struct GameState {
-    uint32_t version = 14;
+    uint32_t version = 15;
     std::string notes;                       // the player's notebook
     int background = 0;                      // where the officer came from (BACKGROUND_LABEL)
     int startTheatre = 0;                    // where the career was begun
@@ -593,7 +593,9 @@ struct GameState {
     // HIDDEN - what the adversary's analysts have learned of your habits from what their teams saw (version 14):
     // weight of your operational acts by weekday and block, and by district; and how hard they are pushing back
     float habit[7][3] = {}, habitD[8] = {}, advAlert = 0;
-    int streetForce[3] = {-1, -1, -1};      // what you decided in the street today, block by block (the day is replayed with it)
+    int streetForce[3] = {-1, -1, -1};
+    bool deputy = false;                     // your deputy runs the routine (version 15)
+    int deputyDay = -1;                      // the last day he planned      // what you decided in the street today, block by block (the day is replayed with it)
     float distMod[8] = {1, 1, 1, 1, 1, 1, 1, 1};   // HIDDEN - how hard the watchers are working each district, as the months go by
     int lastCarDay = -99;
     uint64_t seed = 0;
@@ -668,7 +670,7 @@ struct GameState {
     template <class A> void io(A& a) {
         a & version;
         a.ver = version;
-        if (!a.writing) version = 14;
+        if (!a.writing) version = 15;
         a & difficulty & nextTheatre & wallDown & bugs & totExfil & tut & tutTries & tutMarks & tutMax & tutA & tutB
           & tutMeet & tutDrop & tutSignal & tutRoll & tutText & tutLog & courseReport & pool & watchers & replateDay & months & krEst
           & wx & wxNext & temp & tempNext & sunset & sunrise & forecast & game & gameNext & gameRounds & gameFound & gameDoubt & gameSuspect & gameName & gameLog
@@ -690,5 +692,6 @@ struct GameState {
         if (a.ver >= 11) a & notes;
         if (a.ver >= 12) a & background & startTheatre & ironman & archived;
         if (a.ver >= 14) a & habit & habitD & advAlert & streetForce;
+        if (a.ver >= 15) a & deputy & deputyDay;
     }
 };

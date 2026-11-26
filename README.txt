@@ -92,6 +92,9 @@ REFINEMENTS SINCE 1.6
     on the checklist.
   - Stamps across the desk for the moments that matter: a recruitment, an agent brought out,
     a promotion, a requirement met, material of considerable value - and an arrest.
+  - THE DEPUTY (on by default; button under the planner): he runs the routine - stores,
+    the agenda of agreed meetings, a detection route before every act of the week, reports,
+    rest, reading signal sites - and tells you what he did. The decisions stay yours.
   - DECISIONS IN THE STREET: when a meeting or a drop of yours meets surveillance, the day
     stops and you decide on the spot - walk on, meet but pass nothing, or go through with
     it - with what you saw and what is at stake in front of you.

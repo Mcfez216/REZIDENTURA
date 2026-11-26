@@ -266,6 +266,7 @@ int main(int argc, char** argv) {
     check(s.g.phase == PH_PLAY && s.g.theatre == TH_LONDON, "the course is followed by London");
     // a fixed world, so that the pictures are repeatable
     s.newCareer(11, "Sokolov");
+    s.g.deputy = false;                                 // the scripted checks below give every order themselves; the deputy is tested on its own
     click("cable:0");
     shot("05-centre");
     const char* tabs[] = {"Planner", "Checklist", "Contacts", "City map", "Sites", "Case board", "Material", "Centre", "Daily report", "Station", "Surveillance", "Accounts", "Results", "Private life", "Career", "Handbook"};
@@ -317,6 +318,25 @@ int main(int argc, char** argv) {
     click("OK##note");
     // ---- let the test player work for five months, then look at every screen
     play(150);
+    // ---- the deputy: switched on from the planner, he keeps the routine of a hands-off month in order
+    {
+        std::vector<uint8_t> before = s.save();
+        click("tab:Planner");
+        click("Deputy: OFF###deputy");
+        if (onScreen("OK##note")) click("OK##note");
+        check(s.g.deputy, "the deputy is switched on from the planner");
+        bool logged = false;
+        s.g.paperwork = 12;
+        for (int k = 0; k < 30 && s.g.phase == PH_PLAY; k++) {
+            while (!s.g.decisions.empty()) s.decide(s.g.decisions[0].id, 0);
+            s.endDay();
+            auto it = s.g.reports.find(s.g.day - 1);
+            if (it != s.g.reports.end()) for (auto& l : it->second) if (l.rfind("Your deputy:", 0) == 0) logged = true;
+        }
+        shot("09-deputy-brief");
+        check(logged && s.g.paperwork <= 8, fstr("a month with only the deputy: he reports what he did, and the reports are up to date (%.1f h)", s.g.paperwork));
+        s.load(before);
+    }
     // ---- a decision in the street: a watched officer goes about his business until something is seen on the way to an act
     {
         std::vector<uint8_t> before = s.save();

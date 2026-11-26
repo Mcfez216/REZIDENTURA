@@ -6,7 +6,7 @@ project(Rezidentura CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(SIM src/content.cpp src/sim_day.cpp src/sim_night.cpp src/sim_career.cpp src/sim_spy.cpp src/sim_tutorial.cpp src/sim_life.cpp src/sim_world.cpp src/sim_events.cpp src/sim_office.cpp src/sim_trade.cpp src/sim_text.cpp)
+set(SIM src/content.cpp src/sim_day.cpp src/sim_night.cpp src/sim_career.cpp src/sim_spy.cpp src/sim_tutorial.cpp src/sim_life.cpp src/sim_world.cpp src/sim_events.cpp src/sim_office.cpp src/sim_trade.cpp src/sim_text.cpp src/sim_deputy.cpp)
 set(UI src/art.cpp src/gfx.cpp src/skin.cpp src/ui.cpp src/ui_tabs.cpp src/ui_extra.cpp src/ui_launch.cpp)
 set(IMGUI third_party/imgui/imgui.cpp third_party/imgui/imgui_draw.cpp third_party/imgui/imgui_tables.cpp third_party/imgui/imgui_widgets.cpp)
 include_directories(src third_party/imgui third_party/imgui/backends)

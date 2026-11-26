@@ -13,6 +13,7 @@ static bool has(const std::vector<int>& v, int x) { return std::find(v.begin(), 
  */
 void Sim::endDay() {
     if (g.phase != PH_PLAY || !g.decisions.empty()) return;
+    deputyPlan();
     bool mayAsk = askInStreet && !training();
     if (mayAsk) {
         mayAsk = false;
@@ -39,6 +40,7 @@ void Sim::endDayInner() {
     attempted.clear();
     say("OPERATIONS REPORT - " + upper(fmtDay(g.day)) + " - " + upper(T().city));
     say("");
+    if (g.deputy && !deputyLog.empty()) { say(deputyLog); say(""); }
     for (int b = 0; b < 3; b++) { sdrDone[b] = false; sdrRoute[b] = -1; }
     if (g.fatigue >= 92) {
         alert("You are ill with exhaustion and stayed in your flat all day. Today's orders were not carried out.");
@@ -76,6 +78,10 @@ void Sim::endDayInner() {
     g.plan.erase(g.day);
     for (int& f : g.streetForce) f = -1;
     if (g.phase == PH_PLAY) { g.day++; dawn(); }
+    if (g.phase == PH_PLAY && g.deputy) {          // he plans the new day before you see it, so that you can change what he did
+        deputyPlan();
+        if (!deputyLog.empty()) g.brief += "\nDEPUTY:\n  " + deputyLog.substr(deputyLog.find(": ") + 2) + "\n";
+    }
     // keep the save file from growing without limit
     while (!g.reports.empty() && g.reports.begin()->first < g.day - 500) g.reports.erase(g.reports.begin());
     while (!g.zenit.empty() && g.zenit.begin()->first < g.day - 500) g.zenit.erase(g.zenit.begin());

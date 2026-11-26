@@ -24,7 +24,8 @@ int main(int argc, char** argv) {
     for (uint64_t seed = first; seed < first + (uint64_t)n; seed++) {
         Sim s;
         s.newCareer(seed, "Testov", 1, course);
-        s.askInStreet = seed % 2 == 0;           // half the careers decide in the street, the other half leave it to the abort policy
+        s.askInStreet = seed % 2 == 0;
+        s.g.deputy = false;                      // the test player does its own routine           // half the careers decide in the street, the other half leave it to the abort policy
         Bot bot(s, careful);
         int guard = 0, checked = 0;
         while (s.g.phase != PH_OVER && guard++ < 12000) {

@@ -338,6 +338,14 @@ void App::tabPlanner() {
             }
         }
         if (!sim.training() && fl.btn("Book a countersurveillance team")) note = sim.requestCS(day);
+        if (!sim.training()) {
+            if (fl.btn(g.deputy ? "Deputy: ON###deputy" : "Deputy: OFF###deputy")) {
+                g.deputy = !g.deputy;
+                if (g.deputy) { g.deputyDay = -1; sim.deputyPlan(); note = sim.deputyLog.empty() ? "Your deputy will put the routine in order each morning." : sim.deputyLog; }
+            }
+            if (ImGui::IsItemHovered() && cfg.tooltips)
+                ImGui::SetTooltip("%s", "Your deputy puts the routine in order each morning, in blocks you have left to routine:\nstores on order, the agenda of agreed meetings, a detection route before every act,\nreports written up, rest when you are tired, signal sites read. He never changes an order you gave.\nWhat he did is in the morning brief and the daily report.");
+        }
         std::string selTxt = "  " + fmtDay(day) + ", " + BLOCK_LABEL[std::max(0, b)];
         ImGui::SameLine();
         if (ImGui::CalcTextSize(selTxt.c_str()).x > ImGui::GetContentRegionAvail().x) ImGui::NewLine();

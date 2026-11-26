@@ -21,7 +21,7 @@ bool Sim::load(const std::vector<uint8_t>& data) {
     a.writing = false; a.buf = data; a.pos = 4;
     GameState t;
     a & t;
-    if (!a.ok || a.ver < 8 || a.ver > 14 || t.theatre < 0 || t.theatre >= (int)THEATRES.size()) return false;
+    if (!a.ok || a.ver < 8 || a.ver > 15 || t.theatre < 0 || t.theatre >= (int)THEATRES.size()) return false;
     g = t;
     if (g.patronName.empty()) g.patronName = RU_LAST[(size_t)(g.seed % RU_LAST.size())];     // a save from before version 1.2
     if (a.ver < 9) g.planYear = dateOf(g.day).y;                                             // no plan until next January
@@ -191,6 +191,7 @@ void Sim::newCareer(uint64_t seed, const std::string& officerName_, const Career
     g = GameState();
     g.seed = seed;
     g.difficulty = std::max(0, std::min(2, difficulty));
+    g.deputy = true;                             // the routine is his; the decisions are yours (Planner: 'Deputy')
     g.rng.s = seed * 0x9E3779B97F4A7C15ull + 12345;
     std::string n = officerName_;
     while (!n.empty() && n.back() == ' ') n.pop_back();

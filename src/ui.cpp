@@ -848,23 +848,6 @@ void App::nav(ImVec2 a, ImVec2 b) {
 }
 
 // ============================================================================ the order form
-/** What an experienced officer puts on the agenda of an ordinary meeting with his agent: what he is owed,
-    film to keep him working, a camera if he has none, and instruction in whatever he is weakest at. */
-static void usualAgenda(Sim& sim, Order& o, const Person& p, int day) {
-    const GameState& g = sim.g;
-    o.collect = true;
-    if (!o.brush) o.longMeet = true;
-    o.pay = std::max(0, std::min(p.owed, g.funds));
-    o.film = p.camera && p.film < 2 ? std::min(2 - p.film, g.film) : 0;
-    o.camera = !p.camera && g.cameras > 0;
-    const float lv[] = {p.craft, p.skPhoto, p.skElicit, p.skSpot, p.skComms};
-    int weak = 0;
-    for (int i = 1; i < 5; i++) if (lv[i] < lv[weak]) weak = i;
-    o.train = o.longMeet && lv[weak] < 60;
-    o.trainWhat = weak;
-    o.present = !o.brush && sim.presentDue(p, day);
-}
-
 void App::beginEdit(int day, int block) {
     edDay = day; edBlock = block;
     ed = sim.order(day, block);
@@ -872,7 +855,7 @@ void App::beginEdit(int day, int block) {
     if (Person* p = sim.person(ed.person))
         if (ed.appointment && ed.type == O_MEET_CLAN && p->stage == AGENT && ed.pay == 0 && ed.film == 0 && !ed.camera && !ed.train && !ed.brush
             && prefilled.insert(((long long)day * 4 + block) * 100000 + p->id).second)
-            usualAgenda(sim, ed, *p, day);
+            sim.usualAgenda(ed, *p, day);
     edError.clear();
     openEditor = true;
 }
@@ -1065,7 +1048,7 @@ void App::orderEditor() {
     if (meet || load || overt) {
         ImGui::SeparatorText("Agenda");
         if (meet && agent && p) {
-            if (uiBtn("Fill in the usual agenda")) usualAgenda(sim, o, *p, edDay);
+            if (uiBtn("Fill in the usual agenda")) sim.usualAgenda(o, *p, edDay);
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", gx(p, "Pay what he is owed, bring his film up to two cassettes, a camera if he has none, instruction in what he is weakest at - and a present, if it is his birthday.").c_str());
         }
         if (meet && agent) uiCheck("Brush pass: twelve seconds in a crowd - packages only, no talk", &o.brush);

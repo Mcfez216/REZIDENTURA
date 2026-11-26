@@ -16,7 +16,7 @@ obj() {  # obj <source> <object>
   for h in "$1" $HDRS; do [ -f "$h" ] && [ "$h" -nt "$2" ] && stale=1; done
   if [ $stale = 1 ]; then echo "  compiling $1"; $CXX $FLAGS -c "$1" -o "$2"; fi
 }
-SIMSRC="content sim_day sim_night sim_career sim_spy sim_tutorial sim_life sim_world sim_events sim_office sim_trade sim_text"
+SIMSRC="content sim_day sim_night sim_career sim_spy sim_tutorial sim_life sim_world sim_events sim_office sim_trade sim_text sim_deputy"
 for f in $SIMSRC bot; do obj src/$f.cpp build/$f.o; done
 SIM=""; for f in $SIMSRC; do SIM="$SIM build/$f.o"; done
 $CXX -o build/bot $SIM build/bot.o

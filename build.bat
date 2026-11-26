@@ -2,7 +2,7 @@
 rem Rebuilds Rezidentura.exe from the source in this folder.
 rem Works from a "Developer Command Prompt for Visual Studio" (cl) or with MinGW-w64 (g++) on the PATH.
 cd /d "%~dp0"
-set SRC=src\content.cpp src\sim_day.cpp src\sim_night.cpp src\sim_career.cpp src\sim_spy.cpp src\sim_tutorial.cpp src\sim_life.cpp src\sim_world.cpp src\sim_events.cpp src\sim_office.cpp src\sim_trade.cpp src\sim_text.cpp src\art.cpp src\gfx.cpp src\skin.cpp src\ui.cpp src\ui_tabs.cpp src\ui_extra.cpp src\ui_launch.cpp src\main_win32.cpp
+set SRC=src\content.cpp src\sim_day.cpp src\sim_night.cpp src\sim_career.cpp src\sim_spy.cpp src\sim_tutorial.cpp src\sim_life.cpp src\sim_world.cpp src\sim_events.cpp src\sim_office.cpp src\sim_trade.cpp src\sim_text.cpp src\sim_deputy.cpp src\art.cpp src\gfx.cpp src\skin.cpp src\ui.cpp src\ui_tabs.cpp src\ui_extra.cpp src\ui_launch.cpp src\main_win32.cpp
 set IMGUI=third_party\imgui\imgui.cpp third_party\imgui\imgui_draw.cpp third_party\imgui\imgui_tables.cpp third_party\imgui\imgui_widgets.cpp third_party\imgui\backends\imgui_impl_win32.cpp third_party\imgui\backends\imgui_impl_dx11.cpp
 set INC=-Isrc -Ithird_party\imgui -Ithird_party\imgui\backends
 

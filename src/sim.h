@@ -37,6 +37,11 @@ extern const char* W_STAND[5];
 
 class Sim {
 public:
+    /** The deputy: on each morning he is on, he puts the routine in order (sim_deputy.cpp). Safe to call more than once a day. */
+    void deputyPlan();
+    std::string deputyLog;                                  // what he did this morning, for the brief and the report
+    /** What an experienced officer puts on the agenda of an ordinary meeting with his agent. */
+    void usualAgenda(Order& o, const Person& p, int day) const;
     /** When set, a meeting or a drop of yours that meets surveillance stops the day and asks you (DK_STREET). The screens set it from the settings. */
     bool askInStreet = false;
     /** Your own operational acts, as your surveillance log records them: when and where. Nothing hidden. */

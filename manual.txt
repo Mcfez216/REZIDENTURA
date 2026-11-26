@@ -1,7 +1,7 @@
 REZIDENTURA - OFFICER'S HANDBOOK
 First Chief Directorate, 1968-1991
 
-This file is manual.txt beside the program. You can read it in any editor, or print it.
+This handbook is on the Handbook screen of the game (F1), with a list of sections and a search. The same text is beside the program twice: as manual.txt, which any editor opens, and as "Officer's Handbook.pdf", made up as a file from the registry, to read on a second screen or to print.
 
 ============================================================
  1. WHAT YOU ARE DOING
@@ -9,32 +9,50 @@ This file is manual.txt beside the program. You can read it in any editor, or pr
 
 You are a case officer of the KGB's foreign intelligence service, working under diplomatic cover. Your product is secret documents, photographed by people you have recruited, delivered to Moscow, and judged there by people you will never meet.
 
-The career runs from London in September 1968 to Moscow in August 1991: four postings abroad, with years at Centre between them. You begin as a captain running two or three agents yourself. If you last, you end as a Rezident directing other officers who run them for you.
+The career runs from June 1968 to Moscow in August 1991: three weeks of field exercises in Moscow (if you want them), then four postings abroad, with years at Centre between them. Where you are sent depends on how the last tour went. You begin as a captain running two or three agents yourself. If you last, you end as a Rezident directing other officers who run them for you. A career can also be begun later, at any of the postings (section 42).
 
 Nothing is done by reflex. Everything is done by planning your days, reading your files, and deciding how much risk a piece of film is worth.
 
 THE ONE RULE THAT GOVERNS EVERYTHING: you are never shown the truth. A man's file holds YOUR ESTIMATE of what HE CHOOSES TO SHOW. The adversary's interest in you is never displayed; you infer it from what you see in the street and from Line KR's guess on Mondays. An agent who has been caught and turned looks exactly like one who has not - except in small ways, over time. So does a colleague who reports to the other side. Finding those small ways is the game.
 
 ============================================================
- 2. THE SCREEN
+ 2. THE DESK
 ============================================================
 
-Day Planner ........ Five weeks ahead, three blocks a day. Double-click a block to give an order. The right-hand sheet is the morning brief.
-Contacts & Agents .. One file per person: assessment, handling, communications plan, production record, running log. Who runs the case, and who else knows of it.
-Sites & Routes ..... Your meeting places, dead drops, signal sites and prepared detection routes.
-Material & Stores .. Every item of material and where it is in the chain; your safe; the cipher queue; requisitions.
-Centre ............. Requirements (left) and incoming cables (right). Unread cables are marked *.
-Operations Report .. What actually happened each day. Read it every day. Lines marked *** need a decision.
-Station ............ Your own abilities and condition; the districts; the other officers; your own officers and their orders.
-Surveillance Log ... Every surveillance check you have made, beside what Zenit said that morning.
-Accounts ........... Every unit of money in and out.
-Career ............. Your service record. After each posting the files are opened: this is where you learn what your agents really were.
+The game opens in a small window: the launcher. From it you continue the last game, begin a new career (section 42), load a saved game, read the service records of your past careers (section 43), change the settings or open this handbook as a PDF. When a career begins, the window grows into the desk; when you go back to the title screen, it shrinks to the launcher again. The launcher is moved by dragging its top edge.
 
-END DAY carries out today's three orders, then your officers' work, then the night (agents work, drops are serviced, the lab develops, the cipher clerk sends, the adversary investigates), and deals the next morning.
+The screen is your desk. Across the top, from the left: your name and post; the figures that matter, each with its icon - funds, fatigue, cover, hours of reports outstanding, and how your chief and Centre rate you; a coloured tag when something about today matters most (a decision waiting, stand-down, leave, reports in arrears); the date (hover over it for the weather and the forecast); and the buttons - End day, Skip ahead, Save and the Menu. A figure turns orange when it wants watching and red when it is hurting you. Down the left: the screens, in five groups. A red count on Centre is the number of unread cables; an orange count on Checklist is the number of things that will not wait. On the training course the instructor's card is pinned below the list. Every screen is a framed panel on the desk; what is on paper - a file, a cable, a report - is a real document, and the registers and tables beside it are the station's own.
 
-RUN TO NEXT EVENT keeps ending days on your standing orders until something needs you: a cable, a *** line, a decision, or the morning of one of your own agreed meetings. It carries out whatever is in the planner on the way, so plan first.
+Planner ............. Five weeks ahead, three blocks a day. Double-click a block to give an order. The sheet on the right is the morning brief, with the Zenit intercept; on the course it is the instructor's card instead.
+Checklist ........... What wants doing, drawn up fresh each morning from what you already know (section 41), and beside it your own notebook.
+Contacts ............ The card index on the left; the file of the one you select on the right: photograph, particulars, stamps (recruited, arrested, walk-in, officer of a foreign service, attention), assessment, handling, communications plan, production, the running log. The usual actions are buttons under the index; the rest are under "More actions". Contacts you have met only a few times are known from a surveillance photograph; agents and regular contacts have a file portrait. Hover over a name for the man's job.
+City map ............ The city: districts, parks, the river, main roads, the Embassy (red star), and every site you hold - meeting sites red, dead drops blue, signal sites green, detection routes as violet loops. Today's operational orders are pencilled in from the Embassy and numbered by block. Districts the watchers' radio named this morning are ringed in red. In Berlin the sector boundary is drawn, and our side of it shaded. Click a district or a mark to read about it.
+Sites ............... The register of your sites, and the card of the one selected, with a photograph of the place.
+Case board .......... A cork board on your wall: the officers of the station, your agents, the people you are developing and the places in use, each pinned up with a photograph - and string between them for everything your files say one knows of the other. Red string: he knows of it. Heavy red: he runs him. Black thread: a site in an agent's communications plan. A flag on a corner means something on that file wants looking at (hover to see what). Hover a card to follow only its strings; double-click it to open its file. An officer with string running to everything is the man to try a marked card on (section 11).
+Material ............ Every item of material (film, oral report, or tape from a listening device) and where it is in the chain; your safe, drawn with what is in it; the cipher queue; requisitions; safe flats.
+Centre .............. Requirements (left) and the register of cables (right). The cable you select is shown as the telegram form. Unread cables are in heavier type with a red dot. Routine traffic - grades of material, stores issued, the car log - is filed without being marked as new, and can be hidden. A walk-in's letter and the press cutting of an arrest are pinned to their cables.
+Daily report ........ What actually happened each day. Read it every day. Lines marked *** need attention. When surveillance was seen, a photograph from the street is clipped to the sheet. On the course the instructor writes his remarks under it, by hand.
+Station ............. Your own file (with the year's plan, today's weather, the next holiday, and any operational game you are playing); the officers of the station, with their file photographs - and, once you have worked for him a while, how your Rezident runs the station (section 42); your own officers and their orders.
+Surveillance ........ Every surveillance check you have made, beside what Zenit said that morning; below it, your card index of the watchers' cars (section 20).
+Accounts ............ Every unit of money in and out.
+Results ............. Your monthly figures for the whole career, drawn on graph paper: material graded and its worth, your standing with your chief and with Centre, agents on your books and new contacts, and Line KR's view of the interest the other side takes in you. Hover over a chart to read any month.
+Private life ........ Your family, your leave, your own money, your protector at Centre and the neighbours - and what can be done about each.
+Career .............. Your service record and decorations. After each posting the files are opened: this is where you learn what your agents really were.
+Handbook ............ This handbook.
 
-The game saves itself every night (saves\autosave.rez). Save makes a named copy.
+Any of these screens can be opened in a window of its own, and the windows put side by side or on a second monitor (section 39). The Menu button at the top right opens the settings (section 40).
+
+Every photograph in the game is drawn by the program from the game's own invented people and places. The look of the prints changes with the decade. Typed documents - files, cables, reports - are set in IBM Plex Mono; the desk itself in Oswald (titles and labels) and PT Sans (text). All have matching Latin and Cyrillic letters.
+
+END DAY (the red button, or Ctrl+Enter) carries out today's three orders, then your officers' work, then the night (agents work, drops are serviced, the lab develops, the cipher clerk sends, the adversary investigates), and deals the next morning.
+
+SKIP AHEAD (Ctrl+Shift+Enter) keeps ending days on your standing orders until something needs you: a *** line, a decision, or the morning of one of your own agreed meetings (the settings say which). It carries out whatever is in the planner on the way, so plan first.
+
+After each day a few short notices in the bottom right corner say what happened - the *** lines of the report and any cable that is not routine. Click one to go to the report or the cables. They can be turned off in the settings.
+
+When a decision is put to you, each answer has a number: click it, or press the number.
+
+The game saves itself every night (autosave.rez, in your Saved Games folder), and keeps the autosaves of the last three month-ends beside it. Save (Ctrl+S) makes a named copy. F5 makes a quick save and F9 goes back to it (section 41).
 
 ============================================================
  3. THE DAY
@@ -81,7 +99,7 @@ Every operational act begins with an approach, and every approach includes a che
   Short check en route ..... automatic. A new officer finds a good team less than one time in four this way.
   Full SDR ................. put "Surveillance detection route" in the block BEFORE the act. About an even chance for a new officer; better with experience.
   A prepared route ......... better still. See section 5.
-  Countersurveillance team . two officers watch your back. Adds about as much again, with far fewer false alarms. Arrange it at least a day ahead (Day Planner, select the day, button below the table), then tick the box on the order itself.
+  Countersurveillance team . two officers watch your back. Adds about as much again, with far fewer false alarms. Arrange it at least a day ahead (Planner, select the day, button below the table), then tick the box on the order itself.
 
 Your tradecraft, your knowledge of the city, your fatigue, the quality of the team and how well the site lets you see its approaches all move the odds.
 
@@ -91,6 +109,12 @@ The check reports one of three things:
   SURVEILLANCE CONFIRMED ... they are there.
 
 Each order carries an abort policy: Strict (abort on any doubt), Normal (abort on confirmed), Press on regardless. An aborted meeting is not free - the agent waits for nothing and the fall-back comes into force - but it is always cheaper than the alternative.
+
+DECISIONS IN THE STREET. When a meeting or a drop of your own meets surveillance - possible or confirmed - the day stops and the choice is yours, on the spot: walk on and make it an innocent errand; go to the meeting but let nothing change hands (no film, no money, no approach); or go through with all of it. You are told what you saw, who is waiting, what you are carrying and what hangs on it, and what your standing order would have done. Then the day plays out from that moment. (Settings: "Decide in the street yourself". Turned off, the abort policy decides, as before.)
+
+THEY LEARN YOUR HABITS. The other side's analysts keep a table of every act their teams have seen you make: the weekday, the time of day, the district. Once you have a habit, they have it too - teams are out on your usual evenings and waiting in your usual districts. A routine fades from their table in a couple of months if you break it. The Surveillance screen shows your own table for the last ninety days ("Your own pattern") with a word for how predictable it looks, and Line KR's Monday assessment remarks on it when it is obvious. Officers who keep spotting the teams on them get better teams put on them: Zenit sometimes hears the new call-signs.
+
+WATCHED. The figure at the top of the desk is Line KR's Monday estimate of how closely the other side watches you - little, at times, regularly, closely. It is an estimate, not the truth, and it changes once a week.
 
 WHAT HAPPENS IF YOU ARE COVERED AND GO AHEAD. The watchers see the act. A meeting seen puts your contact into a security file; a recruited agent seen with you is under investigation from that day. A site used under observation is known to them from then on, and a dead drop seen being serviced will have men waiting beside it. Their interest in you rises.
 
@@ -186,7 +210,7 @@ THE AGENDA of a meeting:
   Pay ................ his remuneration falls due on the 1st of each month. A man owed two months grumbles; then he sulks.
   Film, camera ....... he cannot photograph without both. One cassette is 50 frames.
   Pad sheets ......... with them he can receive broadcasts.
-  Security instruction raises his own tradecraft: fewer mistakes at the office, and a trained agent may put up the danger signal when he sees trouble coming.
+  Instruction ........ security instruction raises his own tradecraft: fewer mistakes at the office, and a trained agent may put up the danger signal when he sees trouble coming.
   Tempo, tasking ..... see below.
   Service A material . see section 10.
   Communications plan  any changes.
@@ -224,7 +248,7 @@ A drop the adversary has found is watched. Walk up to it with your agent's film 
 
 THE CALL-OUT. Place your mark at his signal site: if he sees it he comes to the next meeting site in his rotation on the third evening. Careless agents miss marks.
 
-RADIO. An agent who has been issued pad sheets (draw them on the Material & Stores screen, hand them over at a meeting) can be sent an instruction by Centre's one-way broadcast: a change of tempo or tasking, or a summons to a meeting three evenings later. Select the agent and use "Radio instruction". It costs a 60-group cable and one of his pad sheets, and arrives within a few days. You are told when the groups went out. You are not told whether he was listening: you find out from what he does. It is the only way to put a man on ice this week without going near him.
+RADIO. An agent who has been issued pad sheets (draw them on the Material screen, hand them over at a meeting) can be sent an instruction by Centre's one-way broadcast: a change of tempo or tasking, or a summons to a meeting three evenings later. Select the agent and use "Radio instruction". It costs a 60-group cable and one of his pad sheets, and arrives within a few days. You are told when the groups went out. You are not told whether he was listening: you find out from what he does. It is the only way to put a man on ice this week without going near him.
 
 ============================================================
  8. THE CHAIN TO MOSCOW
@@ -254,7 +278,7 @@ Material on the adversary's surveillance service itself (Security line) is the o
 
 On the 1st you receive the monthly advance: a basic sum (larger for each officer under you) plus four-fifths of the remuneration agreed with your agents. The other fifth, every lunch and gift, and your officers' expenses come out of the basic. A supplementary advance can be asked of Centre; they grant it to officers who are producing and resent being asked twice in two months.
 
-Stores are requisitioned on the Material & Stores screen and take days: film (5 cassettes, 1-3 days), camera (2-5 days), concealment containers (1-2 days), one-time pads (a day or two from the cipher clerk's reserve; three weeks by pouch when that is gone). The station's own stock is finite; when it runs out the resupply takes about three weeks. Order before you need.
+Stores are requisitioned on the Material screen and take days: film (5 cassettes, 1-3 days), camera (2-5 days), concealment containers (1-2 days), one-time pads (a day or two from the cipher clerk's reserve; three weeks by pouch when that is gone). The station's own stock is finite; when it runs out the resupply takes about three weeks. Order before you need.
 
 ============================================================
 10. SPECIAL TASKS: SERVICE A AND LINE N
@@ -301,14 +325,16 @@ AN APPROACH TO YOU. From your second posting on, the adversary may try to recrui
 
 From Vienna on you have officers under your command: one probationer at first, three as head of a line, five as Rezident. They are on the Station screen. Select one to give him an ASSIGNMENT and his ORDERS (abort policy):
 
+Your officers use their own judgement in the street. One who has seen surveillance, or whom Line KR names a priority target, lies low for two weeks or so: brush passes instead of meetings, drops emptied a few days late, no new contacts. When a meeting place of one of his agents has been used too often he moves the agent to a fresher one at the next meeting, and tells you so in the report.
+
   Support ........ he is available for your countersurveillance team. As head of line or Rezident you form the team from your own officers on Support (two needed; a Rezident needs one), up to four times a week, without asking anybody.
   Spotting ....... he goes to functions in the circle you choose and brings in contacts, which stay his cases.
   Handling ....... he works the agents and contacts you have given him.
   Stood down ..... he does nothing, and the watchers lose interest in him.
 
-Each officer does at most one thing a day, on his own judgement. It appears in the Operations Report under YOUR OFFICERS.
+Each officer does at most one thing a day, on his own judgement. It appears in the Daily report under YOUR OFFICERS.
 
-GIVING HIM A CASE. On Contacts & Agents, select the person and choose the "Case officer". A recruited agent takes a change of handler badly at first. An officer can carry five cases.
+GIVING HIM A CASE. On Contacts, select the person and choose the "Case officer". A recruited agent takes a change of handler badly at first. An officer can carry five cases.
 
 WHAT HE DOES WITH AN AGENT. He keeps the agreed meetings under the existing communications plan, pays what is owed from YOUR funds, issues film and a camera from YOUR safe, gives security instruction, re-tasks the agent when a requirement closes, and empties the agent's dead drop two days after it is filled. He brings back the agent's warnings; you read them in the report. On a serious warning he puts the agent on ice and takes no film, on his own judgement - unless his orders are "Press on".
 To change an agent's tempo or tasking, select the agent and use "Instruct": the officer passes it on at the next meeting.
@@ -325,13 +351,19 @@ YOUR OWN TIME. A head of line who still runs six agents personally has no evenin
 13. THE CAREER
 ============================================================
 
+  June 1968  Moscow ......... the training course (three weeks; optional)
   1968-1971  London ......... case officer
   1973-1977  Vienna ......... senior case officer (one officer under you)
+         or  New Delhi ...... senior case officer (one officer under you)
   1979-1984  Washington ..... head of line (three officers)
+         or  Berlin ......... head of line, Karlshorst (three officers)
   1986-1991  Bonn ........... Rezident (five officers)
+         or  Berlin ......... head of line, Karlshorst (four officers)
   August 1991, Moscow.
 
-Each city has its own adversary. Vienna is neutral ground and lightly watched, but full of people who report to somebody. Washington is the capital of the main adversary and watched as nowhere else. In Bonn you are in charge, and history arrives while you are there. The real calendar of each period runs in the background; an officer who knows his history will know which months to fear.
+WHERE CENTRE SENDS YOU depends on the last tour. A good London tour takes you to Vienna; a poor one, or a recall, to New Delhi. From either, a good tour takes you to Washington - unless you have ever been expelled, because the Americans do not give visas to officers whose photographs are in their files; then, or after a middling tour, you go to Berlin. For the last posting, a good tour and the rank of colonel make you Rezident in Bonn; an expulsion on your record, or a lesser tour, sends you back to Berlin. The order on posting tells you why.
+
+Each city has its own adversary. Vienna is neutral ground and lightly watched, but full of people who report to somebody. New Delhi is watched lightly, full of volunteers and Western diplomats, and Centre values its product less. Washington is the capital of the main adversary and watched as nowhere else. In Berlin the Western sectors are hostile ground but the East is ours: nobody follows you on our side of the boundary (until the frontier opens), and the friends' service answers traces quickly. In Bonn you are in charge, and history arrives while you are there. The real calendar of each period runs in the background; an officer who knows his history will know which months to fear.
 
 YOUR CHIEF AND CENTRE. Your immediate chief reviews you on the 1st of every month: new contacts, meetings held, material graded, reports in arrears, neglect of cover. As head of line or Rezident you are judged on your officers' work as well as your own. Both reputations fade: last quarter's success is forgotten, and so in time is last quarter's failure. If your chief's regard collapses altogether you are recalled.
 
@@ -356,15 +388,17 @@ RANK. Captain to Major to Lieutenant-Colonel to Colonel, one step for each good 
 14. YOUR FIRST WEEK (LONDON, SEPTEMBER 1968)
 ============================================================
 
+If this is your first game, take the training course instead (tick it when you begin a new career). It teaches all of this one exercise a day, and the instructor tells you afterwards what really happened. What follows is for an officer who went straight to London.
+
  1. Centre screen: read the two cables. Look at the requirements.
- 2. Contacts & Agents: read both files. Your inherited agent has a camera, two cassettes, a meeting plan and a dead drop. He is owed a month's money.
- 3. Day Planner: his agreed meeting is already there, Saturday evening, in red. Double-click it. Set the money to what he is owed. Tick security instruction. Leave the abort policy at Normal.
+ 2. Contacts: read both files. Your inherited agent has a camera, two cassettes, a meeting plan and a dead drop. He is owed a month's money.
+ 3. Planner: his agreed meeting is already there, Saturday evening, in red. Double-click it. Set the money to what he is owed. Tick security instruction. Leave the abort policy at Normal.
  4. Put a Surveillance detection route in Saturday AFTERNOON.
- 5. Material & Stores: requisition film and a camera now - you will want them for your first recruit and they take days.
+ 5. Material: requisition film and a camera now - you will want them for your first recruit and they take days.
  6. Weekdays: keep the mornings for cover. Give one afternoon to paperwork. Go to one or two functions in the evening. Take your inherited contact to lunch or dinner, and ask Centre for a trace on him.
  7. Sunday: scout one of the outer districts for a meeting site of your own.
  8. In the second week your agent services his dead drop (see the diary column). A day or two later, read his signal site; if it says "drop loaded", run a route and unload it.
- 9. Press END DAY and read the Operations Report every morning.
+ 9. Press End day and read the Daily report every morning.
 
 Then find your own people. One inherited agent will not carry three years. And look up what happened in London in September 1971 before you get there.
 
@@ -382,3 +416,391 @@ Then find your own people. One inherited agent will not carry three years. And l
   - If a source is too good to be true, somebody has gone to some trouble.
   - When Line KR says "regular coverage", stop for a month. The requirement will wait. Your agent's life will not.
   - Count who knew.
+
+============================================================
+16. THE TRAINING COURSE (MOSCOW, JUNE 1968)
+============================================================
+
+Three weeks of exercises in Moscow before London. The School is your "Embassy", lectures are your "cover duties", retired officers play the contacts and agents, and the training brigade of the Seventh Directorate plays the watchers - when it chooses, and without telling you.
+
+Each morning the instructor sets one exercise. It is on his card (Planner, right; and the small card under the list of screens) and in a cable. Give your orders, press End day, read the Daily report: he writes under it, by hand, what you did and what was really going on - who was behind you, what the place was really like, which contact was the plant. Nowhere else in the game will anybody tell you that.
+
+The nine exercises: finding a place; casing it; a dead drop and a signal site; a detection route (the brigade will be out); a contact (one of two is a plant - the file tells you, if you read it); preparing for a meeting; the meeting; servicing the drop; and the passing-out test. An exercise not done is set again. Marks count only for a first-time pass.
+
+At the end comes an order to London, the passing-out report (kept on the Career screen), and the choice of one specialisation. "End the course" on the instructor's card sends you to London at once.
+
+============================================================
+17. THE OTHER SIDE'S OWN PEOPLE
+============================================================
+
+Among the contacts you meet - at receptions, through Line KR, and now and then as a walk-in - are officers of foreign services: the local security service (the people who follow you), the adversary's intelligence service, or some third country's. Their files are stamped СОТРУДНИК СПЕЦСЛУЖБЫ.
+
+They are hard to recruit, trained, watched by their own security, and very often a provocation. But a genuine one is worth more than any other agent, because he can tell you what the other side knows: at meetings he reports "on our affairs" - which of your sites is on the watchers' list, whether men are waiting at one now, how the adversary rates you and your officers, whether a list of expulsions is being drawn up, sometimes that one of your agents is theirs, and sometimes that there is a source inside your own station and what rank he holds.
+
+A controlled one tells you things too: chosen to cost the adversary little, or to make you suspect the wrong man. Line KR's advice stands - believe nothing he says about our own affairs until something else confirms it. A person named by a source gets a note in his file and a pencilled "проверить!" (check!).
+
+============================================================
+18. GETTING A MAN OUT, DEVICES, BRUSH PASSES
+============================================================
+
+EXFILTRATION. When an agent is blown - his office is being searched, he is followed, a source says he is known - you may ask Centre to bring him out (Contacts: "Request exfiltration", 150 groups). Centre weighs what he has been worth against the cost to the route. If it agrees, a passport in another name and the route arrive in your safe in one to two weeks. Hand them over at a meeting (tick "travel documents" on the order): he leaves that night. His production ends; Centre counts a man saved, and so does the record of your tour: every agent brought out (up to three) is set against the evaluation, and the first earns a citation. If he is arrested first, the documents are wasted.
+
+LISTENING DEVICES. Order one from the technical officer (Material: "Order a listening device"; two to three weeks). Give it to an agent at a long meeting; he places it in his own office. While it lives, a tape reaches the technical officer every week or so and goes into the chain like film. It may be found in a sweep, and the battery dies after two to four months: either way the tapes simply stop. An agent nearly caught placing it will tell you so.
+
+BRUSH PASSES. Instead of a meeting, an agent can be passed in a crowd at his agreed meeting place: twelve seconds, packages only. You collect his film and hand over money, cassettes and pad sheets; nothing is said, so you hear none of his news, and no instruction or recruitment is possible. It is much harder for the watchers to catch than a meeting.
+
+============================================================
+19. HOW HARD
+============================================================
+
+When you begin a career you choose how hard the other side pushes back ("Opposition" in the new-career form). It changes how fast the adversary's interest in you grows, how often the people you meet are plants, how quickly an investigation at an agent's office closes in, and how surely a trap is sprung when they have one ready: a quarter less on Forgiving, a quarter more on Unforgiving. Standard is the game as designed. Nothing else changes, and nothing is ever shown to you that would not be shown on Standard.
+
+============================================================
+20. GETTING THERE, AND THE WATCHERS' CARS
+============================================================
+
+GETTING THERE. Every act in the street (casing, scouting, meetings, drops, signals) has a "Getting there" line on the order:
+  On foot and by public transport .. the usual way. Distance costs you fatigue.
+  Embassy car ...................... saves most of the fatigue of a far district. But a car is followed in relays by several cars and is hard to shake, so you see less of what is behind you; and its diplomatic plates are known - if you are watched, the car seen parked near the place marks the place.
+  Taxi ............................. costs fares, and saves some fatigue. Changing vehicles breaks a team's contact, so you see a little more. Some drivers report their fares to the police; in some cities more than others.
+On the Map, today's plan is pencilled in solid for the car, dash-and-dot for a taxi, and dashed on foot. A car is good for scouting a far district, where there is nothing yet to give away. Think twice before driving to a dead drop.
+
+THE WATCHERS' CARS. The other side follows you with a fleet of a dozen or so cars. When you see surveillance - or think you do - you often catch a car and its number, and it goes into your card index on the Surveillance screen: make, colour, plate, how often and where you have seen it. Some of those cars are theirs. Some belong to a dentist who happened to be going your way.
+  - A car in your log whose plate you know is recognised the moment it appears. Each of today's team cars that you know makes it easier to see the team.
+  - Once a month Line KR checks one entry against what it knows: ИХ (theirs), ЧАСТНАЯ (a private car - strike it off), or СНЯТА (theirs once, but the plates have been changed or the car withdrawn).
+  - Every few months the watchers change the plates on some of their cars, and replace others. A log you do not keep up goes stale.
+  - "Strike off" removes a card from use; "Restore" brings it back.
+The log belongs to the city: a new posting starts with an empty one.
+
+============================================================
+21. THE AGENTS' OWN LIVES
+============================================================
+
+Your agents have lives you do not control, and you usually hear of them only at the next meeting:
+  - promotion (more access) or a move to another section (less);
+  - trouble at home, a new partner who must not know, an inheritance that makes the money matter less;
+  - illness: weeks in hospital, in which nothing is photographed;
+  - retirement: access running down as he hands over his work;
+  - security interviews and clearance renewals - and in Washington, or for an officer of a service, the polygraph. A man under suspicion, or with weak nerves, may be called back for a second session;
+  - a posting abroad. When he tells you, you decide: let him go (Centre hands him to the rezidentura in that city and credits you with a source kept in good order), let him go but have him photograph all he can before he leaves, or ask him to turn it down - which he may not do, and which makes people ask why. If he leaves before you have met him, he simply goes, and Centre arranges the handover.
+
+BIRTHDAYS. Everybody has one, and it is on the file (Contacts: "Born"). The diary column of the planner marks the birthdays of your agents and of the people you are developing, and the checklist reminds you ten days ahead. At any meeting, lunch or dinner within ten days of the day, the order form offers "A present for his birthday": a few pounds' worth (more on a round birthday - forty, fifty, sixty) that buys warmth, a little commitment and, for an agent, a lighter heart. Centre's case officers were told to remember the round ones; an agent met just after his fiftieth without a word about it will mention it, and the relationship cools a little. One present a year is enough.
+
+============================================================
+22. WEATHER, LIGHT AND THE CALENDAR
+============================================================
+
+Each city has its own climate and its own clock. The date at the top of the desk carries a small sign for the day's weather; hold the mouse over it for the temperature, sunrise, sunset and the forecast for tomorrow (which is right about three times in four). The morning brief says the same.
+
+What the weather does in the street - and it works both ways:
+  After dark ....... in winter the evening block is in darkness. You see less behind you; the watchers lose you more often.
+  Rain ............. umbrellas and turned-up collars: a little harder to see them, a little easier to lose them.
+  Fog .............. much harder to see them; often they lose you altogether.
+  Snow ............. hard walking, and FOOTPRINTS: a dead drop serviced in fresh snow leaves a trail to it and away. The site is marked faster.
+  Heat or hard frost tire you sooner.
+Summer time comes and goes as it did in each country (Britain kept its clocks an hour ahead all year from 1968 to 1971; the Soviet Union began summer time in 1981; the Federal Republic and Austria in 1980).
+
+PUBLIC HOLIDAYS. The host country's holidays are marked in red in the planner and on the calendar: offices are closed, so agents photograph nothing and your cover work waits, and the watchers - who have holidays too - are thinner on the ground. On 7 November the Embassy holds its own reception for the anniversary of the Revolution. Every officer is there; your evening is set to it by default, and to stay away is noticed by the Rezident and the Ambassador.
+
+TRANSPORT STRIKES. Some years there are strikes: no buses or trains for some days. Every approach on foot is a long walk. The car or a taxi is the answer, with what that costs.
+
+============================================================
+23. SAFE FLATS
+============================================================
+
+From your second posting (once you hold a senior post) you can rent a flat through a cut-out - a local who signs the lease and asks no questions (Material: "Rent a safe flat..."). Three months' rent is paid at once, and it is ready in two to four weeks; then the rent comes out of each month's advance. The rezidentura is allowed two at a time (three if you are the Rezident).
+
+A flat is a meeting site with walls:
+  - natural cover is very high, but you cannot see the street from inside: what follows you to the door, you do not see;
+  - a long meeting there does not wear the place out the way a cafe table does, and instruction there goes further (about half as much again);
+  - an agent can bring the documents themselves out of his office for the evening, and you photograph them properly on the kitchen table: tick "He brings the documents themselves" on the order of an agreed meeting at the flat. It takes two of your cassettes and a long meeting, and yields far more and far better material than his own camera - but the files are missing from his office overnight, and a careful registry notices.
+  - NEIGHBOURS. Every visit is seen by somebody on the stairs. The more a flat is used, the more the neighbours and the concierge notice; a concierge who notices too much talks to the police, and the flat is known. The cut-out will tell you when the concierge starts asking questions - pay him, give the flat up, or take your chances. A flat that is not used is slowly forgotten.
+  - A flat that the watchers followed you to is very probably known.
+Put a flat in an agent's communications plan like any other meeting site. Never meet a man you are still developing there: it tells him what you are.
+
+============================================================
+24. VERIFYING YOUR AGENTS
+============================================================
+
+When Centre queries an agent's material, or you simply have doubts, ask Centre to verify him (Contacts: "Ask Centre to verify him", 60 groups). In two or three weeks Centre's control questions arrive - things it already knows the answers to - and his next two deliveries are checked against them. The answer comes by cable and is stamped on his file:
+  CONSISTENT ...... his answers agree with what Centre knows.
+  FALSE ........... his answers are false in particulars Centre can check: he may be the adversary's.
+  INVENTED ........ his material is made up: he is a fabricator.
+Verification finds most fabricators and most controlled agents, but not all of them, and about one honest agent in fifteen fails it. It is evidence, not proof: what you do with it is your decision.
+
+============================================================
+25. WHEN THEY PITCH YOU: THE OPERATIONAL GAME
+============================================================
+
+Sooner or later somebody from the other side will make you an offer. You may report it (correct), keep quiet (dangerous, if it comes out), or report it and PROPOSE TO PLAY ALONG. If Centre sanctions it, you go on meeting the man under Line KR's control, carrying material prepared by Centre - true, checkable and worthless - and every few weeks you decide what to give him and what to ask:
+  - Centre's material only: safe, but you learn little, and he grows impatient.
+  - The better material Centre allows: he trusts you more; Centre's doubts about you grow.
+  - Press him about what they know: you learn most - who in your own station talks to them, which of your agents are theirs, which of your places they know - but he begins to wonder about you.
+  - Close the game.
+Everything you learn goes into the Station screen and the files concerned. If he stops believing you, the other side ends it and makes your life difficult for a while; if Centre stops believing you, Centre ends it. If the game lasts, in the end he will make you the real offer. Refusing it and closing the game is a success Centre remembers. Accepting it ends your career - the other way.
+Be careful in the late game: when Centre's doubt is high, a false lead from him may name an innocent colleague.
+
+============================================================
+26. YOUR AGENTS' SKILLS
+============================================================
+
+An agent is more than his access. Each has skills that you see in his file, and raise by instruction at long meetings (tick "Give instruction", then choose what in):
+  Security ............ his own tradecraft: how slowly suspicion builds at his office, whether he spots trouble at a meeting.
+  Photography ......... how many pages he gets through in the same ten minutes, and how many of the frames can be read.
+  Elicitation ......... what his oral reports are worth: what he draws out of colleagues without asking. A man who asks a lot of questions is remembered, unless he is careful.
+  Talent-spotting ..... a spotter puts colleagues in your way - short of money, fed up, worth a lunch. The names arrive as new contacts in your card index. If the spotter is the adversary's, so are the people he finds for you.
+  Communications ...... how reliably and how carefully he services drops and signals and listens to the radio schedule.
+Officers of foreign services come to you with most of these skills already.
+
+============================================================
+27. THINGS THAT HAPPEN
+============================================================
+
+Every few weeks something comes across the desk that nobody planned: a delegation from Moscow that needs escorting for four days (no time of your own, good for your cover), a defection from the Embassy that stands every officer down for ten days, an audit of your accounts, a journalist asking for you by name, influenza, a collision in the Embassy car, a burglary at your own flat, an agent's wife who has found the money, an agent who wants more, a colleague who asks to borrow one of your sites (and who knows it afterwards), a flash requirement from Centre with a fortnight to meet it, a demonstration at the Embassy gate that ties up the police, a weekend invitation to a country house. Some ask for a decision (the СРОЧНО card); some only change the world.
+Days that belong to somebody else - a delegation, an illness - are shaded in the planner and stamped ЗАНЯТ in the header; your orders for them are not carried out, and an agent waiting for you waits in vain. A stand-down is stamped ОТБОЙ.
+
+============================================================
+28. A CITY THAT CHANGES
+============================================================
+
+The city does not stand still for you. Month by month:
+  - the watchers shift their effort from one district to another; sometimes they open a new observation post, and Line KR may hear of it;
+  - a cafe you use closes down, and somewhere new opens that might serve - uncased;
+  - building works start beside a dead drop or a signal site, and the place is not what your casing said it was. Case it again;
+  - the traffic scheme along one of your routes changes, for better or worse.
+A site register a year old is a register of how the city used to be.
+
+============================================================
+29. THE PLAN AND THE ATTESTATION
+============================================================
+
+Soon after you arrive, and every January after that, your chief asks for your personal work plan for the year: so many recruitments, so many points of evaluated material, so many new contacts, by 20 December. You choose how much to undertake:
+  A modest plan ..... easy to meet. Centre and the Rezident think a little less of you the day you hand it in.
+  A firm plan ....... what the post is expected to yield.
+  An ambitious plan . half as much again. It is noticed at once, to your credit.
+On 20 December comes the attestation: the plan against the result, written into your file in the proper form ("Politically literate, morally stable..."). A fulfilled plan raises your standing, and the bolder the plan the more it raises it; an ambitious plan overfulfilled is noticed by the people who decide careers. A plan not fulfilled costs you, and the bolder the plan the more it costs. The progress of the plan is on the Station screen; past attestations are on the Private life screen, and they are read when your next posting is decided.
+The attestation also records what the Party organisation knows of your household.
+
+============================================================
+30. HOME, AND LEAVE
+============================================================
+
+Your wife and children are at the post with you. How things are at home is shown, in words, on the Private life screen. Evenings at home and free weekends mend it slowly; every evening out on the Committee's business, every weekend worked, every delegation escorted wears it down. It matters:
+  - a man sleeps better in a quiet house: fatigue goes faster when things are good at home, slower when they are bad;
+  - when it is bad enough your wife will ask to go home. You can promise to mend your ways, ask the Rezident's wife to help, or let her go. An officer living alone abroad is noted by Line KR, loses part of his cover, and is of much more interest to the other side;
+  - left to get worse still, it reaches the Party organisation, the Rezident, and your attestation.
+What helps: evenings at home; something bought for the family out of your own money (not more than once a fortnight); and leave.
+
+YOUR WIFE AND THE SIGNAL SITE. Wives of officers have had a short course. If things are well enough at home you may ask yours to pass one signal site on her shopping every weekday and tell you in the evening what she saw: it saves you the walk and the exposure. It costs her something each day, and if the watchers are interested in you they are interested in her - a site she visits can be marked through her.
+
+LEAVE. After the first eight months of a tour, thirty days in the Union are due to you once in each calendar year (Private Life: "Apply for leave", at least a fortnight ahead). While you are away nothing you ordered is carried out; agreed meetings with your own agents are moved to the week of your return; nobody empties your dead drops (hand cases to an officer, or put agents on ice, or accept what will be lying there). The Rezident will not sign leave for an officer whose standing with him is poor. When leave begins you choose how to spend it:
+  - with the family: the most good at home;
+  - calling on the people who matter at Centre: see section 31;
+  - selling what you brought in the commission shops: money, and a small chance of a word from the Party commission.
+You come back with no fatigue, cooler in the eyes of the watchers, and with things better at home. A year without leave is held against you at home. A month on leave is not held against you in the monthly review. Use "Skip ahead" to pass the days.
+
+============================================================
+31. YOUR OWN MONEY, AND YOUR MAN AT CENTRE
+============================================================
+
+Apart from the operational funds, which are the Committee's, there is your own purse: what is left of your pay each month. It buys:
+  - something for the family (section 30);
+  - a present for the Rezident, which he remembers (not more than once a quarter);
+  - THINGS FOR MOSCOW: a cassette recorder, a sheepskin coat, jeans. Up to six will pass the customs. At home each is worth three times what you paid: as a present to the right man, or in a commission shop. Both happen on leave;
+  - in the end, the things people serve abroad for: a car, a cooperative flat, a dacha. They are what you have at the end of the career.
+
+YOUR MAN AT CENTRE. One general in the leadership of the directorate knows your name, or can be brought to know it. Calling on him during leave - and not empty-handed - raises you in his eyes; so does an ambitious plan overfulfilled, and a good tour. He forgets you slowly if you do nothing. What he does for you:
+  - your record at the end of a tour is read more kindly, which decides the next posting;
+  - once in a tour, if the station moves to have you recalled, he will speak for you - and then he will think a good deal less of you;
+  - if you are caught with your hand in the till (below), he may have the matter closed.
+Generals fall. When the General Secretary changes, or simply with age, yours may be retired, and his successor has never heard of you; if you were known as his man, that is remembered against you for a while.
+
+KEEPING BACK AGENTS' MONEY. You can keep for yourself a tenth, a fifth or three tenths of whatever you hand an agent in person (Private Life). The agent signs for the whole sum, so the books balance. But:
+  - the agent knows. Men who work for money like you less each time, and work less;
+  - an agent who is really the other side's tells them, and then they hold it against you (below);
+  - an audit that compares receipts with what agents say may find it, even if you spend two days on the books first;
+  - an agent you hand to another officer may tell him, and the officer will report it.
+Found out, a small sum is repaid with a reprimand and a great loss of standing. A large one is recall - unless your man at Centre speaks for you.
+
+WHAT THE OTHER SIDE HOLDS AGAINST YOU. If they learn that you steal, or if you walk into an acquaintance that was arranged for you, the next approach comes with an envelope of proof. You can tell Line KR everything (costly, and sometimes fatal to the posting, but it ends there); say nothing and hope they are bluffing (half the time the envelope goes to the Ambassador); or give them something small to keep it shut - which buys peace, costs one of your agents, and, if Directorate K ever hears of it, ends in a cell.
+
+============================================================
+32. COMPROMISE OPERATIONS
+============================================================
+
+A contact who will not come of his own accord can be given a reason (Contacts: "Prepare a compromise...", for a contact you are developing yourself and have met at least twice). Three methods:
+  Money against signed receipts ......... works on a man who needs money.
+  An arranged acquaintance, photographed  works on a man with a weakness. The most damaging when it works.
+  Photographs of him taking an envelope . weak, but it rarely fails; it hurts him more the stricter his employer's security.
+Centre must sanction it (90 groups; a week or two). It is then staged at your next DINNER with him - an overt social meeting in the evening - and paid for from operational funds. Whether it works depends on what he really is, which is not always what your estimate says:
+  - if it works, you hold material (stamped on his file), and a recruitment approach by COERCION bites far harder;
+  - if it fails, usually nothing is lost but the money. Sometimes he sees what was tried: you lose him, and he may go to his security officer, with a protest to the Embassy and more attention from the watchers.
+A contact who belongs to the other side will always let you believe it worked.
+Coerced agents are what they have always been: frightened, resentful, and more likely to break.
+
+============================================================
+33. THE NEIGHBOURS, AND OTHER MEN'S AMBITIONS
+============================================================
+
+Under the same roof works the rezidentura of military intelligence - "the neighbours". Relations with them are shown on the Private life screen. They will claim contacts in the military and scientific lines as theirs (give the man up, fight it, or work him jointly); they will offer trades (a man they cannot use, for one of your dead drops - which they then know); and now and then one of their officers is arrested, and every Soviet official in the city is watched harder for weeks. Bad relations reach the Ambassador, and through him the Rezident.
+Inside your own station there are colleagues who would like your credit, and say so at the weekly meeting in their own way.
+New things that happen (section 27): a man who pushes an envelope into your hands outside the gate - a volunteer, or a photograph waiting to be taken; an acquaintance at a reception who is either a source or a trap; and events in the world that move people who work for conviction - Line PR tells you when the climate of opinion has changed and which of your agents to see.
+
+============================================================
+34. CHICKEN FEED, AND PLAYING A MAN BACK
+============================================================
+
+CHICKEN FEED is true material that costs its owners nothing to lose. It is how a service makes you believe in a man it controls: his first deliveries are accurate, checkable and harmless, and only later does the false material begin. So:
+  - a controlled agent's early films pass every test, including Centre's verification. A clean verification early in a case proves little;
+  - Centre's analysts sometimes say so in their evaluation: "The material is accurate, but there is nothing in it that its owners would much mind losing." One such note means little - a clerk's honest film reads the same way. Several, from a source who ought to have better, mean a great deal.
+When you play an approach back at the other side (section 25), the prepared material Centre gives you is chicken feed of our own.
+
+PLAYING AN AGENT BACK. When you are sure an agent is the adversary's, you need not drop him. Propose a playback to Centre (Contacts: "Propose to play him back", 120 groups; Centre wants grounds - a failed verification, a Line KR report, an adverse trace). If it is sanctioned:
+  - nothing he brings is credited: it is read for what it shows, and otherwise disregarded;
+  - at each meeting you hand him Centre's chicken feed and task him as if you believed in him. While it lasts the other side thinks it can read your diary and watches you less; Centre credits the station's counter-intelligence work; and what he has been briefed to ask tells you things - a place of yours they know, a second agent of yours who reports to them, where their watchers are thickest;
+  - they can end it when they choose. Usually he simply stops coming, and they are bad-tempered for a while. Until then, every meeting with him is a meeting with a man who can have you arrested at it.
+If he was honest after all - verification is wrong about one honest agent in fifteen - you are throwing his real material in the waste-paper basket and handing him rubbish. Watch his file: a man who is "puzzled and hurt rather than watchful" is not behaving like bait.
+
+============================================================
+35. CONFIDENTIAL CONTACTS
+============================================================
+
+Not everybody who talks to a Soviet diplomat is an agent, or ever will be. A politician, a journalist, a trade-union official who knows perfectly well whom he is lunching with, and lunches anyway, can be registered with Centre as a CONFIDENTIAL CONTACT (Contacts: "Register as a confidential contact", 40 groups; he must be a contact you are developing, met at least four times, on friendly terms).
+Once registered, each lunch or dinner with him yields an oral report for the pouch - opinion, gossip, who is rising - worth what his position and his influence are worth, not more often than once a fortnight. He signs nothing, is never met clandestinely, and can still be recruited properly later. Centre carries only a few on one officer's books (three, and one more for each step in seniority).
+A confidential contact who belongs to the other side talks just as freely.
+
+WRITING UP THE NEWSPAPERS. Under pressure of the plan, officers have been known to write up three days of newspapers as the considered view of a well-placed source (Material). It counts like any other report. Centre subscribes to the same newspapers: each time you do it the chance grows that somebody there notices, and then it is on your file, and in your attestation in the words "inclined to present material from open sources as the product of his contacts".
+
+============================================================
+36. THE LETTER THROUGH THE DOOR
+============================================================
+
+Now and then somebody inside one of the adversary's secret departments offers himself without giving a name: an envelope through the letter-box at night, a sample of the real thing, and instructions - a drawing-pin pressed into a banister if we are interested, a strip of tape on a call-box in answer, a dead drop in a cinema cistern. It is either the best agent the station will ever have, or a provocation built to look exactly like one, and the letter is the same in both cases. Your Rezident will usually call it a provocation.
+  Take it up .......... the man comes into your card index with his sample (which is true either way). Then treat him as what he may be: trace him, get sanction, meet him covered. If he is bait, you have been photographed placing the pin.
+  Ask Centre .......... two or three weeks. Centre's analysts are right about three times in four. A man who writes such letters may not wait three weeks.
+  Do nothing .......... if it was a provocation, well done. If it was genuine you may read about it months later in the report of his trial: "the Russians never answered".
+ONE THING MORE. If there is a traitor in your own station, a genuine volunteer is given away within weeks of his letter being read - arrested "after some weeks of observation". If that happens, count who knew about the letter. It is the clearest sign of a traitor you will ever be given.
+
+============================================================
+37. THE STANDING ESCAPE PLAN
+============================================================
+
+Exfiltration (section 18) gets a man out tonight. A STANDING ESCAPE PLAN leaves him in place and working, with a way out that he can set in motion himself:
+  1. Ask Centre for his travel documents as for an exfiltration. He must have a signal site in his communications plan.
+  2. At a long meeting, tick "rehearse it as a standing escape plan" instead of handing the documents over. They stay in your safe. An agent who knows there is a door works more calmly.
+  3. If he comes to believe he is about to be arrested, he stands at his signal site in the evening with a carrier bag from a shop you have named. He goes on doing it every evening, while they close in.
+  4. Somebody of yours must walk past and see him - you (a Read Signal order), or your wife on her shopping (section 30). Whoever it is eats a bar of chocolate while passing, so that he knows he has been seen.
+  5. Three nights later he is at the pick-up, and it is out of your hands. Most get across. One who had been left waiting too long, or whose case officer is himself closely watched, may be taken on the way.
+If nobody passes the signal site for five days or so, he is arrested where he stands. A standing plan is a promise to read that site, every few days, for years.
+An agent who is the adversary's never uses it.
+
+============================================================
+38. THE SUMMONS
+============================================================
+
+An officer who has given the other side something to keep an envelope shut (section 31) has a secret that others may learn: the service has its own sources inside theirs. If that happens, a personal cable arrives: you are to fly to Moscow on Saturday "for consultations about your next appointment". Nobody is summoned for consultations at two days' notice.
+You can go. There will be a dacha, a housekeeper, sandwiches, and brandy that makes the room move, and two men who ask questions for five hours. A steady, rested officer with a protector at Centre may deny everything and be believed just enough to keep his liberty, though not his career. Or he may not.
+Or you can ring the number that the man who lunches on Thursdays once gave you. It works about half the time.
+
+============================================================
+39. THE DESK IN WINDOWS
+============================================================
+
+The desk shows one screen at a time. Any screen can also be lifted off it into a window of its own, so that the map can lie beside the planner, or the cables beside a man's file.
+  To open a screen in a window . right-click its name in the list on the left, or click the small mark that appears at the right of the name. (Settings has a tick-box for each screen as well.) The name stays in the list, greyed, with the mark showing; clicking it brings the window to the front.
+  To move a window ............. drag it by its title bar. Drag its edges or corners to change its size.
+  To a second monitor .......... drag the window out of the main one. It becomes a real window, and can go on any screen you have. (Settings: "Windows may leave the main window". Without the tick they stay inside.)
+  To make windows share a frame  drag one window by its title bar over another. Marks appear on the window underneath: drop on the left, right, top or bottom mark to put the two side by side, or on the middle one to stack them as tabs. Drag a title or a tab out again to separate them.
+  To put a screen back ......... close its window (the cross), or right-click its name again.
+The windows are live: an order given in one shows at once in the others. Questions (the order form, a decision, a note) come up over whichever window the mouse is in.
+Where the windows were is remembered between sessions (windows.ini beside your saved games). Two buttons in the settings clear the desk:
+  RESET WINDOWS ................ every screen back on the desk, and every remembered position and frame forgotten. Use it if a window has got lost on a monitor that is no longer there.
+  CLOSE ALL WINDOWS ............ every screen back on the desk; the places are kept for next time.
+
+============================================================
+40. SETTINGS AND KEYS
+============================================================
+
+The Menu button at the top right (or F10; or Settings in the launcher) opens the settings. They are kept in settings.ini beside your saved games, not in the saved game.
+  Windows ...................... the two buttons and the tick-boxes of section 39; whether windows may leave the main one; whether their places are remembered; full screen (F11).
+  Size of everything ........... 70 to 160 per cent of what the program would choose for your screen. Takes effect at the next start.
+  Explanations ................. the notes that appear when the mouse rests on something.
+  'Skip ahead' ................. what stops it besides a decision: the morning of a meeting with one of your own agents; a *** line in the report; any new cable (off to begin with - there are many cables); and in any case after so many days.
+  After End Day ................ whether the desk turns by itself to the cables or the report.
+  Ask before ending a day ...... while the checklist still has something under TODAY.
+  Notices ...................... the short notices after each day.
+  Monthly autosaves ............ whether the last three month-end autosaves are kept (never in an ironman career).
+  Save and go to the title screen.
+
+KEYS
+  Ctrl+Enter ................... end the day
+  Ctrl+Shift+Enter ............. skip ahead to the next event
+  1 to 9, and 0 ................ the first ten screens, in the order of the list
+  F1 ........................... this handbook
+  F2 ........................... checklist and notebook
+  F5 / F9 ...................... quick save / back to the quick save (it asks first; not in an ironman career)
+  Ctrl+S ....................... save a named copy
+  F10 .......................... settings
+  F11 .......................... full screen
+  Right-click a screen's name .. open that screen in its own window, or put it back
+  1, 2, 3 ... .................. answer a decision
+The keys do nothing while you are typing in a box or a question is on the table.
+
+============================================================
+41. SMALL CONVENIENCES
+============================================================
+
+THE CHECKLIST (F2). Drawn up fresh every morning, from what is already in your files and nowhere else - it knows nothing that you do not.
+  TODAY ........................ a meeting agreed for this evening; material in your hands on the day the pouch closes; a requirement about to lapse; reports so far in arrears that it is being noticed; a danger signal seen; a standing escape plan whose signal site has gone unread; a meeting or a drop today with no detection route in the block before it.
+  SOON ......................... meetings in the next three days; unread cables; an agent who has missed meetings; material waiting for the pouch; a sanction that has arrived; a 'drop loaded' mark seen and the drop not yet emptied; a signal site not read for some days; a package of yours left lying in a drop; an agent who failed verification; a meeting or a drop in the next two days with no detection route before it; an agent of yours with no film left; cables held in the cipher queue for two days; fatigue, cover, funds, things at home.
+  WORTH KNOWING ................ money owed to agents; an agent working without a camera; a contact friendly enough to be traced; a contact whose trace is clean and whose assessment is taking shape (time to propose him to Centre, if you mean to); a contact not seen for a month; film running short; leave; how the year's plan stands.
+THE PLANNER'S INKS. Orders you have given are written in ink; routine is left faint. Street work - meetings, drops, signals, casing and scouting - is in red pencil, detection routes in blue, agreed meetings in red ink. A meeting or a drop with no detection route in the block before it (and no countersurveillance team) is marked "!". Hold the pointer over any order for what it does.
+THE USUAL AGENDA. The first time you open an agreed meeting, the form is filled in as an experienced officer would fill it: pay what he is owed, bring his film up to two cassettes, a camera if he has none, instruction in whatever he is weakest at, and a present if his birthday is near. Change anything you like; "Fill in the usual agenda" puts it back.
+Click a line to go to the screen where it is dealt with. It is a memory, not an adviser: it will remind you of a meeting, and never tell you whether to keep it.
+THE NOTEBOOK. The right-hand page of the same screen is yours to type on. It is kept in the saved game.
+A NOTE ON A FILE. "Add a note" on a man's file keeps a few lines of your own with it - what you mean to ask him, what did not ring true. It appears on the file under YOUR NOTE, and nobody reads it but you.
+RENAMING. "Rename" on an agent's file gives him a new working name of your choosing. He appears under it everywhere from then on; the log records the change.
+FINDING A CARD. The box above the card index (Contacts) narrows it as you type: a name, a codename, an employer, a kind of work, "agent", "contact".
+REPEATING AN ORDER. In the order form, the list beside "Enter it" enters the same order again: every day for a week, every second day for a fortnight, every third day for a month, or weekly for four or eight weeks. Copies go only where the block is free and the order is allowed there; it tells you how many it placed. An agreed meeting is never repeated - meetings are agreed with the agent, not with the planner.
+QUICK SAVE. F5 writes quicksave.rez; F9 goes back to it, after asking. The nightly autosave and the three monthly ones are separate files, so a quick save never overwrites them. All of them are ordinary saved games and appear in the Load list.
+YOUR PERSONAL FILE AS TEXT. On the Career screen, "Export as a text file" writes your whole service record - postings, attestations, decorations, and what the opened files said about each agent - to a text file beside your saved games, and opens it.
+SEARCHING THE HANDBOOK. On the Handbook screen, the list on the left jumps to a section; the box above it finds a word, and marks the lines where it occurs.
+
+============================================================
+42. BEGINNING A CAREER
+============================================================
+
+"New career" in the launcher asks five things.
+  Surname ...................... yours. "Another" offers a different one.
+  Begin in ..................... where the career starts. Moscow, June 1968 is the training course and then London; London, September 1968 is the whole career without the course. You can also begin at a later posting - Vienna or New Delhi in 1973, Washington or East Berlin in 1979, or Bonn in 1986 as Rezident - with the rank and the experience the earlier postings would have given you. The career goes on from there as usual, and ends, as every career does, in August 1991.
+  Background ................... what you were before. Each starts the career differently: see below.
+  Opposition ................... how hard the other side pushes back (section 19).
+  World number ................. leave it blank for a new world. The same number always gives the same people, the same places and the same Rezidents, so two players can play the same world, or you can play one again knowing it.
+  Ironman ...................... one career, one file. There is no Save button and no quick save or quick load; the game saves itself every night and that is the only copy.
+
+BACKGROUNDS
+  Political line ............... the ordinary road: sound at everything, outstanding at nothing.
+  Counter-intelligence ......... six years watching foreigners in Moscow. Much better tradecraft; weaker at reading people, and your English is poorer.
+  Institute of Languages ....... excellent English and good German, and you read people well; your tradecraft is weaker.
+  Well connected ............... a protector at Centre from the first day, and Centre reads your reports more kindly; weaker at the work itself.
+
+YOUR REZIDENT. Every Rezident runs his station in his own way, and the way decides how your monthly review reads. You are not told which kind you have; after a month or two his file on the Station screen says what you have learnt of him.
+  Steady ....................... judges by results over months.
+  A careerist .................. expects more, praises good months loudly and remembers bad ones longer.
+  Cautious ..................... expects less, but holds it against you when the watchers take too much interest in you.
+  An old hand .................. little moves him either way, and he forgives late paperwork.
+  A stickler ................... late reports and a neglected cover cost twice as much.
+In Bonn you are the Rezident, and answer to the Department instead.
+
+============================================================
+43. SERVICE RECORDS
+============================================================
+
+When a career ends - in August 1991 or earlier, well or badly - its record is entered in the service records, in the launcher: who you were, where you began, the postings and their verdicts, the agents recruited, and the decorations.
+
+CITATIONS. Fifteen things a career can earn, from serving the full term to retiring as a general, recruiting ten agents, finishing a tour in Washington, commanding in Bonn, reaching 1991 on Unforgiving or as an ironman, or being taken in by a plant. Each is listed in the records, earned or not, with what it asks. "Every road" asks for careers with all four backgrounds.
+
+ENDINGS. A career can end seven ways: three in August 1991, depending on the rank you reached and how your postings went, and four that come sooner - a desk in the archives, the reserve, Lefortovo, and the other side. The records show which you have found.
+
+The records are kept in service-records.txt beside your saved games. Deleting it starts them afresh.
+

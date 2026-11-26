@@ -1,0 +1,2 @@
+While this file is beside Rezidentura.exe, saved games are kept in the "saves" folder here.
+Delete it to keep them in your Saved Games folder instead (as the installed game does).

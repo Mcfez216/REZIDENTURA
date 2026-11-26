@@ -135,6 +135,16 @@ static Theatre london() {
         {1971, 9, 24, "Rezident", "The expulsions", "", 0.75f, 0, 0, H_FOOT}};
     t.local = "The local surveillance service is stretched but it is not blind. Read the Zenit summary every morning.";
     t.tour = "";
+    t.slot = 0; t.cityRu = "ЛОНДОН";
+    fill(t.at, {Pt{0.30f, 0.50f}, Pt{0.50f, 0.56f}, Pt{0.49f, 0.43f}, Pt{0.58f, 0.36f}, Pt{0.40f, 0.17f}, Pt{0.64f, 0.23f}, Pt{0.86f, 0.71f}, Pt{0.10f, 0.81f}});
+    t.river = {{0.0f, 0.86f}, {0.07f, 0.72f}, {0.20f, 0.68f}, {0.32f, 0.63f}, {0.44f, 0.64f}, {0.53f, 0.62f}, {0.62f, 0.54f}, {0.72f, 0.60f}, {0.80f, 0.63f}, {0.88f, 0.60f}, {1.0f, 0.52f}};
+    t.spies = {
+        {"Officer, counter-espionage branch", "the Security Service", 75, 95, SVC_SECURITY},
+        {"Watcher, mobile surveillance section", "the Security Service", 48, 70, SVC_SECURITY},
+        {"Detective sergeant (Soviet section)", "Metropolitan Police Special Branch", 50, 74, SVC_SECURITY},
+        {"Desk officer", "the Secret Intelligence Service", 70, 93, SVC_ADVERSARY},
+        {"Second secretary (a station officer)", "the United States Embassy", 65, 90, SVC_ADVERSARY},
+        {"Attaché (an intelligence officer)", "a West European embassy", 45, 75, SVC_THIRD}};
     return t;
 }
 
@@ -232,7 +242,17 @@ static Theatre vienna() {
         {1976, 9, 9, "Embassy bulletin", "Death of Mao", "Mao Tse-tung is dead. Centre requires everything obtainable on the succession from the Chinese mission and from those who talk to it.", 0, 0, 0, H_NONE},
         {1977, 1, 20, "Embassy bulletin", "New administration in Washington", "The new American President has taken office and speaks of human rights. The Western missions here are waiting for instructions; so are we.", 0, 0, 0, H_NONE}};
     t.local = "Vienna is neutral ground. The State Police are few and mostly watch the Arabs. Do not let that make you careless: the Americans run their own people in these streets, and every second man who is friendly to you at an Agency reception reports to somebody.";
-    t.tour = "CENTRE, 1972-1973\n\nYou spent twenty months at Yasenevo: a desk in the Third Department, reading other officers' cables from Britain and Scandinavia, and a course at the Red Banner Institute. You learned how a cable from the field looks from the receiving end - how little of it is read, and by whom.\n\nIn the summer of 1973 the personnel directorate offered you Vienna.";
+    t.tour = "CENTRE, 1972-1973\n\nYou spent twenty months at Yasenevo: a desk in the Third Department, reading other officers' cables from Britain and Scandinavia, and a course at the Red Banner Institute. You learned how a cable from the field looks from the receiving end - how little of it is read, and by whom.\n\nYour London file was well regarded. In the summer of 1973 the personnel directorate offered you Vienna - the best opening a major can hope for.";
+    t.slot = 1; t.cityRu = "ВЕНА";
+    fill(t.at, {Pt{0.60f, 0.60f}, Pt{0.50f, 0.50f}, Pt{0.47f, 0.67f}, Pt{0.62f, 0.41f}, Pt{0.40f, 0.23f}, Pt{0.20f, 0.68f}, Pt{0.85f, 0.33f}, Pt{0.21f, 0.11f}});
+    t.river = {{0.26f, 0.0f}, {0.40f, 0.12f}, {0.52f, 0.22f}, {0.66f, 0.32f}, {0.78f, 0.46f}, {0.90f, 0.56f}, {1.0f, 0.62f}};
+    t.spies = {
+        {"Inspector, counter-espionage group", "the State Police", 62, 88, SVC_SECURITY},
+        {"Observer, surveillance group", "the State Police", 45, 68, SVC_SECURITY},
+        {"Second secretary (a station officer)", "the United States Embassy", 70, 93, SVC_ADVERSARY},
+        {"Vice-consul (a station officer)", "the British Embassy", 65, 88, SVC_ADVERSARY},
+        {"Press attaché (an officer of the Federal Intelligence Service)", "the West German Embassy", 60, 85, SVC_THIRD},
+        {"Correspondent (an officer of a Middle Eastern service)", "a foreign news agency", 45, 72, SVC_THIRD}};
     return t;
 }
 
@@ -337,6 +357,16 @@ static Theatre washington() {
         {1984, 2, 9, "Centre", "Death of Yu. V. Andropov", "The General Secretary is dead. Work continues under the existing instructions.", 0, 0, 0, H_NONE}};
     t.local = "This is the capital of the main adversary. The Bureau has more watchers than we have officers, radio cars on every avenue, and a lookout post opposite our gate. You may not travel more than twenty-five miles from the White House without notifying the State Department. Assume coverage until you have proved otherwise, and then go on assuming it.";
     t.tour = "CENTRE, 1977-1979\n\nTwo years in the First Department - North America - as a desk officer for the Washington rezidentura: you drafted the requirements that other men ran risks to meet, and graded what they sent. You also sat on two commissions of inquiry into failed operations, and saw how blame is distributed.\n\nIn 1979 the department's chief put your name forward for Washington, as head of a line.";
+    t.slot = 2; t.cityRu = "ВАШИНГТОН";
+    fill(t.at, {Pt{0.52f, 0.46f}, Pt{0.47f, 0.35f}, Pt{0.36f, 0.41f}, Pt{0.66f, 0.52f}, Pt{0.28f, 0.59f}, Pt{0.30f, 0.14f}, Pt{0.45f, 0.88f}, Pt{0.59f, 0.09f}});
+    t.river = {{0.02f, 0.18f}, {0.16f, 0.30f}, {0.28f, 0.42f}, {0.38f, 0.52f}, {0.46f, 0.62f}, {0.52f, 0.74f}, {0.55f, 0.86f}, {0.60f, 1.0f}};
+    t.spies = {
+        {"Special agent, Soviet counter-intelligence squad", "the FBI's Washington field office", 75, 96, SVC_SECURITY},
+        {"Surveillance specialist", "the FBI's Washington field office", 48, 72, SVC_SECURITY},
+        {"Case officer, Soviet division", "the Central Intelligence Agency", 78, 97, SVC_ADVERSARY},
+        {"Analyst, counter-intelligence staff", "the Central Intelligence Agency", 70, 93, SVC_ADVERSARY},
+        {"Investigator", "the Naval Investigative Service", 55, 80, SVC_SECURITY},
+        {"Attaché (an intelligence officer)", "the embassy of a NATO ally", 45, 75, SVC_THIRD}};
     return t;
 }
 
@@ -436,8 +466,313 @@ static Theatre bonn() {
         {1990, 7, 1, "Embassy bulletin", "Monetary union", "The West German mark is from today the currency of the GDR. The state we were allied with is ceasing to exist by the week.", 0, 0, 0, H_NONE},
         {1990, 10, 3, "Embassy bulletin", "Unification", "The GDR acceded to the Federal Republic at midnight. The friends' service no longer exists; its officers are being questioned, and some of them are answering. Every source ever shared with them, or known to them, must be treated as named.", 0.2f, 0, 4, H_NONE}};
     t.local = "You are the Rezident. The Cologne office is twenty minutes up the autobahn and has had forty years to study this Embassy. Your officers will take their habits from you. The friends in Berlin have more agents in this town than we do; do not rely on them, and do not let them know more of ours than they must.";
-    t.tour = "CENTRE, 1984-1986\n\nYou served two years in Directorate K, external counter-intelligence, and they were the years to be there. In 1985 one agent after another inside the Committee and the military neighbours was uncovered and brought home; nobody at your level was told how. In the same summer the acting Rezident in London was recalled, questioned, and then vanished from under surveillance in Moscow - to reappear in Britain. You read the damage assessments. Every one of them was about who had known what.\n\nIn 1986 you were appointed Rezident in Bonn.";
+    t.tour = "CENTRE, 1984-1986\n\nYou served two years in Directorate K, external counter-intelligence, and they were the years to be there. In 1985 one agent after another inside the Committee and the military neighbours was uncovered and brought home; nobody at your level was told how. In the same summer the acting Rezident in London was recalled, questioned, and then vanished from under surveillance in Moscow - to reappear in Britain. You read the damage assessments. Every one of them was about who had known what.\n\nYour record abroad was clean and your tours had been good ones. In 1986 you were appointed Rezident in Bonn.";
+    t.slot = 3; t.cityRu = "БОНН";
+    fill(t.at, {Pt{0.49f, 0.67f}, Pt{0.41f, 0.42f}, Pt{0.45f, 0.54f}, Pt{0.59f, 0.40f}, Pt{0.69f, 0.75f}, Pt{0.77f, 0.28f}, Pt{0.25f, 0.17f}, Pt{0.09f, 0.06f}});
+    t.river = {{0.74f, 1.0f}, {0.64f, 0.80f}, {0.57f, 0.64f}, {0.52f, 0.50f}, {0.49f, 0.38f}, {0.42f, 0.26f}, {0.32f, 0.14f}, {0.20f, 0.06f}, {0.14f, 0.0f}};
+    t.spies = {
+        {"Officer, counter-espionage department", "the Office for the Protection of the Constitution", 75, 95, SVC_SECURITY},
+        {"Observer, surveillance group", "the Office for the Protection of the Constitution", 48, 70, SVC_SECURITY},
+        {"Officer, Soviet desk", "the Federal Intelligence Service", 70, 93, SVC_ADVERSARY},
+        {"Officer", "the Military Counter-Intelligence Service", 58, 85, SVC_SECURITY},
+        {"Second secretary (a station officer)", "the United States Embassy", 70, 93, SVC_ADVERSARY},
+        {"Attaché (an intelligence officer)", "the embassy of a NATO ally", 45, 75, SVC_THIRD}};
     return t;
 }
 
-const std::vector<Theatre> THEATRES = {london(), vienna(), washington(), bonn()};
+// ============================================================================ MOSCOW, JUNE 1968 - THE TRAINING COURSE
+// Not a posting: three weeks of practical exercises in the city before you are sent abroad. The "adversary"
+// is the training brigade of the Seventh Directorate, and the people you meet are retired officers playing parts.
+static Theatre moscow() {
+    Theatre t{};
+    t.slot = -1; t.training = true; t.cityRu = "МОСКВА";
+    t.city = "Moscow"; t.country = "the exercise area";
+    t.cover = "trainee, Red Banner Institute"; t.embassy = "School No. 101, in the woods beyond the ring road";
+    t.adversary = "the training brigade of the Seventh Directorate"; t.watchers = "training brigade"; t.currency = "roubles"; t.chief = "Instructor";
+    t.lang = 0;
+    t.sy = 1968; t.sm = 6; t.sd = 3; t.ey = 1968; t.em = 6; t.ed = 30;
+    t.role = 0; t.subs = 0; t.colleagues = 2;
+    t.price = 1; t.a4Base = 0.8f; t.heat0 = 10; t.blownHeat = 0; t.dangle = 0; t.walkIn = 0; t.valuePar = 100;
+    fill(t.district, {"Lubyanka", "Arbat", "Zamoskvorechye", "Krasnaya Presnya", "Sokolniki", "Lenin Hills", "Izmailovo", "Fili"});
+    fill(t.dist, {0, 1, 1, 1, 2, 2, 3, 3});
+    fill(t.density, {0.15f, 0.15f, 0.15f, 0.15f, 0.12f, 0.12f, 0.10f, 0.10f});
+    fill(t.at, {Pt{0.54f, 0.42f}, Pt{0.40f, 0.48f}, Pt{0.56f, 0.64f}, Pt{0.34f, 0.34f}, Pt{0.72f, 0.22f}, Pt{0.28f, 0.76f}, Pt{0.88f, 0.38f}, Pt{0.13f, 0.50f}});
+    t.river = {{0.0f, 0.40f}, {0.10f, 0.58f}, {0.22f, 0.66f}, {0.34f, 0.62f}, {0.44f, 0.56f}, {0.52f, 0.54f}, {0.62f, 0.58f}, {0.72f, 0.70f}, {0.84f, 0.80f}, {1.0f, 0.88f}};
+    streets(t, {"Kuznetsky Most", "Sretenka", "Kirov Street", "the Arbat", "Sivtsev Vrazhek", "Gogol Boulevard",
+                "Pyatnitskaya Street", "Bolshaya Ordynka", "Novokuznetskaya Street", "Bolshaya Gruzinskaya", "Malaya Bronnaya", "Krasnaya Presnya Street",
+                "Rusakovskaya Street", "Stromynka", "Sokolnichesky Val", "Universitetsky Prospekt", "Michurinsky Prospekt", "Vorobyovskoye Shosse",
+                "Pervomaiskaya Street", "Izmailovsky Boulevard", "Shchyolkovskoye Shosse", "Bolshaya Filyovskaya", "Kastanayevskaya Street", "Minskaya Street"});
+    fill(t.park, {"the Alexander Garden", "the boulevard gardens", "the Tretyakov gardens", "the Zoo park", "Sokolniki Park", "the Lenin Hills embankment", "Izmailovo Park", "Fili Park"});
+    fill(t.station, {"Dzerzhinskaya metro station", "Arbatskaya metro station", "Novokuznetskaya metro station", "Krasnopresnenskaya metro station",
+                     "Sokolniki metro station", "Leninskiye Gory metro station", "Izmailovskaya metro station", "Fili metro station"});
+    t.venue = {"the Pelmennaya", "Café Druzhba", "the Shashlychnaya", "Café Sever", "the Praga buffet", "the Blinnaya"};
+    t.meetT = {"%P, %S", "tea-room, %S", "cinema foyer, %S", "bench walk, %K"};
+    t.dropT = {"loose brick, courtyard wall off %S", "hollow behind the third bench, %K", "magnetic container under railing, %S", "drainpipe bracket, yard off %S"};
+    t.signalT = {"chalk mark, lamp-post, %S", "drawing-pin, bench in %K", "strip of tape, railing outside %T"};
+    t.male = {"Alan", "Brian", "Colin", "Derek", "Edward", "Frank", "Gordon", "Harold", "Kenneth", "Leonard", "Norman", "Raymond", "Stanley", "Walter"};
+    t.female = {"Barbara", "Doreen", "Margaret", "Sheila"};
+    t.last = {"Ashworth", "Barlow", "Chadwick", "Dacre", "Fenwick", "Garside", "Hartley", "Jessop", "Lomax", "Naylor", "Pickering", "Rudge", "Tetlow", "Varley"};
+    for (int i = 0; i < 4; i++) t.jobs[i] = {{"'Clerk in a ministry' - a part played by a retired officer", "exercise FOREIGN CAPITAL", 50, 70, 50, 20, false}};
+    t.local = "";
+    t.tour = "";
+    return t;
+}
+
+// ============================================================================ NEW DELHI 1973-1977
+// The alternative to Vienna. Lightly watched, cheap, full of volunteers - and Centre has more Indian
+// cabinet papers than it can read. The targets that count are the Americans, the Chinese and the bomb.
+static Theatre delhi() {
+    Theatre t{};
+    t.slot = 1; t.cityRu = "ДЕЛИ"; t.gradeMult = 0.8f;
+    t.city = "New Delhi"; t.country = "India";
+    t.cover = "Second Secretary (Cultural)"; t.embassy = "Embassy of the USSR, Shantipath, Chanakyapuri, New Delhi";
+    t.adversary = "the Intelligence Bureau and the Americans"; t.watchers = "Intelligence Bureau"; t.currency = "rupees"; t.chief = "Rezident";
+    t.lang = 0;
+    t.sy = 1973; t.sm = 9; t.sd = 3; t.ey = 1977; t.em = 6; t.ed = 30;
+    t.role = 1; t.subs = 1; t.colleagues = 6;
+    t.price = 6; t.a4Base = 0.45f; t.heat0 = 8; t.blownHeat = 2; t.dangle = 0.08f; t.walkIn = 0.55f; t.valuePar = 1500;
+    fill(t.district, {"Chanakyapuri", "Connaught Place", "Raisina Hill", "Lodi Colony", "Old Delhi", "Defence Colony", "Hauz Khas", "Mehrauli"});
+    fill(t.dist, {0, 1, 1, 1, 2, 2, 3, 3});
+    fill(t.density, {0.20f, 0.14f, 0.20f, 0.07f, 0.05f, 0.05f, 0.03f, 0.02f});
+    fill(t.at, {Pt{0.34f, 0.56f}, Pt{0.50f, 0.38f}, Pt{0.45f, 0.50f}, Pt{0.55f, 0.60f}, Pt{0.60f, 0.18f}, Pt{0.66f, 0.70f}, Pt{0.46f, 0.80f}, Pt{0.38f, 0.95f}});
+    t.river = {{0.74f, 0.0f}, {0.72f, 0.16f}, {0.76f, 0.34f}, {0.80f, 0.52f}, {0.84f, 0.72f}, {0.90f, 1.0f}};
+    streets(t, {"Shantipath", "Nyaya Marg", "Panchsheel Marg", "Janpath", "Barakhamba Road", "Kasturba Gandhi Marg",
+                "Rajpath", "Rafi Marg", "Akbar Road", "Lodi Road", "Max Mueller Marg", "Jor Bagh Road",
+                "Chandni Chowk", "Daryaganj", "Netaji Subhash Marg", "the Ring Road", "Lajpat Rai Marg", "Bhisham Pitamah Marg",
+                "Aurobindo Marg", "Green Park Main Road", "the Outer Ring Road", "the Qutb road", "Chattarpur Road", "the Badarpur road"});
+    fill(t.park, {"Nehru Park", "the Central Park", "the India Gate lawns", "the Lodi Gardens", "the Red Fort lawns", "the colony park", "the Deer Park", "the Qutb ruins"});
+    fill(t.station, {"the Chanakyapuri bus stand", "the Regal cinema", "the Central Secretariat bus terminus", "the Lodi Colony railway halt",
+                     "Old Delhi railway station", "the Defence Colony market", "the Green Park bus stand", "the Qutb Minar bus stand"});
+    t.venue = {"the Coffee House", "Gaylord", "the United Coffee House", "Moti Mahal", "the Embassy restaurant", "the Volga", "Nirula's", "Wenger's tea-room", "Kwality", "the Standard"};
+    t.meetT = {"%P, %S", "tea stall, %S", "club verandah, %S", "cinema foyer, %S", "hotel coffee shop, %S", "bench walk, %K"};
+    t.dropT = {"loose stone, tomb wall in %K", "hollow in the old banyan, %K", "behind the cistern, lavatory at %T", "magnetic container under the culvert rail, %S",
+               "drainpipe bracket, lane off %S", "under the marked milestone, %S"};
+    t.signalT = {"chalk mark, letter-box, %S", "drawing-pin, bench in %K", "strip of tape, railing outside %T", "chalk mark, electricity pole, %S"};
+    t.male = {"Rajesh", "Ashok", "Vijay", "Suresh", "Ramesh", "Anil", "Mohan", "Prakash", "Arun", "Krishna", "Harish", "Satish", "Dinesh", "Mahesh",
+              "Naresh", "Vinod", "Pradeep", "Gopal", "Balraj", "Inder", "Kuldip", "Harbans", "Iqbal", "Salim", "Joseph", "James", "Robert",
+              "William", "Richard", "Donald"};
+    t.female = {"Sunita", "Asha", "Kamala", "Usha", "Meena", "Shanti", "Lakshmi", "Rekha", "Mary", "Helen"};
+    t.last = {"Sharma", "Verma", "Gupta", "Mehta", "Kapoor", "Malhotra", "Khanna", "Chopra", "Singh", "Bhatia", "Nair", "Menon", "Iyer", "Rao",
+              "Reddy", "Banerjee", "Mukherjee", "Chatterjee", "Sen", "Das", "Joshi", "Desai", "Patel", "Shah", "Agarwal", "Saxena", "Mathur",
+              "Sinha", "Mishra", "Pandey", "Khan", "Ahmed", "Hussain", "D'Souza", "Fernandes", "Thompson", "Harris", "Walker", "Miller", "Baker"};
+    t.jobs[POLITICAL] = {
+        {"Private secretary to a minister", "the Government of India", 60, 88, 35, 20, false},
+        {"Section officer", "the Ministry of External Affairs", 50, 78, 40, 15, false},
+        {"Secretary to a member", "the Lok Sabha", 30, 55, 12, 55, false},
+        {"Correspondent", "a Delhi English-language daily", 25, 50, 6, 90, false},
+        {"Editor", "a weekly review", 20, 45, 5, 92, false},
+        {"Official", "the Congress party headquarters", 35, 62, 12, 65, false},
+        {"Second secretary", "the embassy of a Western state", 45, 72, 55, 20, false},
+        {"Attaché", "the Chinese Embassy", 50, 80, 76, 5, true},
+        {"First secretary", "the High Commission of Pakistan", 50, 78, 62, 10, true}};
+    t.jobs[MILITARY] = {
+        {"Staff officer", "Army Headquarters", 50, 78, 50, 5, true},
+        {"Clerk", "the Ministry of Defence, South Block", 45, 75, 45, 5, false},
+        {"Wing commander", "Air Headquarters", 50, 80, 55, 5, true},
+        {"Sergeant", "the United States defence attaché's office", 55, 85, 72, 5, true},
+        {"Engineer", "the liaison office of the state aircraft works", 40, 65, 35, 10, false},
+        {"Defence correspondent", "a national daily", 25, 45, 8, 80, false}};
+    t.jobs[SCITECH] = {
+        {"Scientist", "the Department of Atomic Energy", 55, 88, 60, 20, false},
+        {"Engineer", "the space research organisation", 45, 75, 45, 15, false},
+        {"Official", "the Department of Electronics", 40, 65, 30, 10, false},
+        {"Representative", "the Delhi office of a Western computer firm", 40, 70, 30, 10, false},
+        {"Chemist", "a pharmaceuticals laboratory", 25, 50, 10, 5, false},
+        {"Librarian", "the United States Information Service", 25, 50, 35, 15, false}};
+    t.jobs[SECURITY] = {
+        {"Deputy central intelligence officer", "the Intelligence Bureau", 55, 82, 62, 5, true},
+        {"Clerk", "the Foreigners' Regional Registration Office", 35, 60, 25, 5, false},
+        {"Communications clerk", "the United States Embassy", 62, 92, 80, 5, false},
+        {"Local employee", "the British High Commission", 35, 62, 45, 5, false},
+        {"Inspector", "Delhi Police Special Branch", 40, 65, 35, 5, true},
+        {"Private enquiry agent", "self-employed (ex-police)", 25, 50, 5, 15, true}};
+    t.spies = {
+        {"Officer, counter-intelligence", "the Intelligence Bureau", 62, 88, SVC_SECURITY},
+        {"Watcher, surveillance unit", "the Intelligence Bureau", 42, 65, SVC_SECURITY},
+        {"Second secretary (a station officer)", "the United States Embassy", 70, 93, SVC_ADVERSARY},
+        {"First secretary (a station officer)", "the British High Commission", 65, 88, SVC_ADVERSARY},
+        {"Officer", "the Research and Analysis Wing", 55, 82, SVC_THIRD},
+        {"Attaché (an officer of Pakistani intelligence)", "the High Commission of Pakistan", 50, 78, SVC_THIRD}};
+    t.reqs = {
+        {SCITECH, "The Indian nuclear programme", "Intentions, timetable and technical state of work on a nuclear explosive device; plutonium stocks; the attitude of the Prime Minister's office.", 0, 220, 0, RK_COLLECT},
+        {SECURITY, "The American Embassy", "Communications, personnel and methods of the main adversary's station in Delhi; its sources in the Indian government and press.", 0, 240, 0, RK_COLLECT},
+        {POLITICAL, "Service A: the main adversary in India", "ACTIVE MEASURE. Place material in the Indian press on American interference in Indian politics and American support for the opposition. Three placements required.", 1, 3, 240, RK_ACTIVE},
+        {POLITICAL, "The Chinese Embassy", "Activities and reporting of the Chinese mission; Peking's approaches to Delhi and to the Indian left.", 0, 180, 0, RK_COLLECT},
+        {MILITARY, "Western arms offers", "Western proposals to supply strike aircraft and tanks; the views of Air and Army Headquarters; who is paid by whom.", 3, 180, 0, RK_COLLECT},
+        {POLITICAL, "Indo-Pakistani relations", "Indian intentions in the talks with Pakistan; the Pakistani mission's assessments; Kashmir.", 5, 150, 200, RK_COLLECT},
+        {MILITARY, "The American base in the Indian Ocean", "Indian knowledge of, and reaction to, the expansion of the base on Diego Garcia; American naval movements.", 8, 170, 0, RK_COLLECT},
+        {POLITICAL, "Service A: the Indian Ocean", "ACTIVE MEASURE. Place material in the Indian press and Parliament against the American base on Diego Garcia. Three placements required.", 14, 3, 240, RK_ACTIVE},
+        {POLITICAL, "The internal situation", "The Prime Minister's intentions toward the opposition movement; the cohesion of the Congress; the role of her son.", 18, 160, 150, RK_COLLECT},
+        {SECURITY, "The Intelligence Bureau", "Organisation and methods of Indian counter-intelligence against the Soviet colony; liaison with Western services.", 10, 150, 0, RK_COLLECT},
+        {SCITECH, "Western computers and electronics", "Western equipment supplied to Indian establishments; documentation and samples obtainable locally.", 12, 180, 0, RK_COLLECT},
+        {POLITICAL, "The emergency", "How long the emergency is to last; intended constitutional changes; Western embassies' reporting.", 23, 170, 200, RK_COLLECT},
+        {POLITICAL, "The general election", "A forecast of the result of the general election, with the evidence for it. Centre will act on your assessment.", 41, 140, 60, RK_COLLECT},
+        {POLITICAL, "Service A: forged cables", "ACTIVE MEASURE. Place Service A's documents on American plans against the Prime Minister with editors who will print them. Three placements required.", 26, 3, 240, RK_ACTIVE},
+        {MILITARY, "The Indian Navy", "The Navy's foreign purchases and its exercises with Western fleets.", 28, 160, 0, RK_COLLECT},
+        {SECURITY, "The Research and Analysis Wing", "Personnel, liaison and operations of the external service.", 30, 170, 0, RK_COLLECT}};
+    t.hist = {
+        {1973, 10, 6, "Embassy bulletin", "War in the Middle East", "Egypt and Syria have attacked Israel. The Americans in Delhi will be reporting the Indian reaction and the oil position; so should we.", 0, 0, 0, H_NONE},
+        {1973, 11, 26, "Rezident", "The General Secretary in Delhi", "L. I. Brezhnev arrives in Delhi on a state visit. The Intelligence Bureau and the police are wholly taken up with his protection. For a week nobody in this city has time to follow a Second Secretary.", 0, -0.35f, -2, H_NONE},
+        {1974, 5, 18, "Centre", "Indian nuclear explosion", "India has exploded a nuclear device underground in Rajasthan. Centre learned of it from the wire services. An explanation is required of why the rezidentura gave no warning, and every source with access to the atomic establishment is to be put to work.", 0, 0, 0, H_NONE},
+        {1975, 6, 26, "Rezident", "State of emergency", "The President has proclaimed a state of emergency. The opposition leaders were arrested in the night; the newspapers are under censorship. The police have other work than us for the present - but editors will print nothing that has not been passed, and that includes what we give them.", -0.05f, -0.3f, 0, H_NONE},
+        {1975, 8, 15, "Embassy bulletin", "Coup in Dacca", "The President of Bangladesh has been killed with his family in a military coup. Delhi sees the Americans behind it. Centre wants the evidence, if there is any.", 0, 0, 0, H_NONE},
+        {1976, 9, 9, "Embassy bulletin", "Death of Mao", "Mao Tse-tung is dead. The Chinese mission is the best window on the succession that this rezidentura has.", 0, 0, 0, H_NONE},
+        {1977, 1, 18, "Embassy bulletin", "Elections called", "The Prime Minister has announced a general election for March and released the opposition leaders. Centre requires a forecast.", 0, 0, 0, H_NONE},
+        {1977, 3, 22, "Centre", "The election result", "", 0.1f, 0, 0, H_JANATA}};
+    t.local = "India is the friendliest ground you will ever work on. The Intelligence Bureau watches us because it must, and not very hard. Half the people you meet will offer to sell you something before the second whisky. That is the difficulty: Centre is tired of paying for what it could read in the Hindustan Times. The Americans, the Chinese and the atomic establishment are what will make your name here.";
+    t.tour = "CENTRE, 1972-1973\n\nYou spent twenty months at Yasenevo, at a desk in the Seventeenth Department - South Asia - which was not the desk you had asked for. The personnel directorate had read the file on your London tour and drawn its conclusions: a quiet station, a friendly country, and time to show what you can do.\n\nIn the summer of 1973 you were posted to New Delhi.";
+    return t;
+}
+
+// ============================================================================ BERLIN-KARLSHORST (GDR), 1979-84 and 1986-91
+// The alternative to Washington and to Bonn: the KGB's largest station abroad, on friendly soil, working
+// against the Western sectors across the Wall. In the East nobody follows you; your agents have to cross.
+static Theatre berlinBase() {
+    Theatre t{};
+    Theatre de = bonn();
+    t.male = de.male; t.female = de.female; t.last = de.last;
+    t.cityRu = "БЕРЛИН"; t.friends = true;
+    t.city = "Berlin"; t.country = "the Western sectors of Berlin";
+    t.embassy = "KGB Representation, Zwieseler Strasse, Berlin-Karlshorst";
+    t.adversary = "the Allied security services and the West Berlin political police"; t.watchers = "West Berlin police and Allied"; t.currency = "marks";
+    t.chief = "Head of the Representation";
+    t.lang = 1;
+    fill(t.district, {"Karlshorst", "Mitte", "Pankow", "Köpenick", "Kreuzberg", "Charlottenburg", "Wedding", "Zehlendorf"});
+    fill(t.east, {true, true, true, true, false, false, false, false});
+    fill(t.dist, {0, 1, 1, 1, 2, 3, 2, 3});
+    fill(t.density, {0.0f, 0.0f, 0.0f, 0.0f, 0.24f, 0.30f, 0.12f, 0.14f});
+    fill(t.at, {Pt{0.84f, 0.62f}, Pt{0.60f, 0.42f}, Pt{0.62f, 0.14f}, Pt{0.92f, 0.82f}, Pt{0.50f, 0.60f}, Pt{0.26f, 0.44f}, Pt{0.42f, 0.20f}, Pt{0.16f, 0.82f}});
+    t.river = {{0.0f, 0.36f}, {0.16f, 0.38f}, {0.34f, 0.36f}, {0.50f, 0.40f}, {0.62f, 0.48f}, {0.74f, 0.58f}, {0.86f, 0.72f}, {1.0f, 0.78f}};
+    t.wall = {{0.50f, 0.0f}, {0.53f, 0.14f}, {0.50f, 0.28f}, {0.54f, 0.38f}, {0.52f, 0.48f}, {0.58f, 0.56f}, {0.64f, 0.66f}, {0.62f, 0.80f}, {0.68f, 1.0f}};
+    streets(t, {"Treskowallee", "Ehrenfelsstraße", "Rheinsteinstraße", "Friedrichstraße", "Unter den Linden", "Karl-Liebknecht-Straße",
+                "Breite Straße", "Schönholzer Straße", "Wollankstraße", "Bahnhofstraße", "Müggelheimer Straße", "Grünstraße",
+                "Oranienstraße", "Mehringdamm", "Bergmannstraße", "Kantstraße", "the Kurfürstendamm", "Bismarckstraße",
+                "Müllerstraße", "Seestraße", "Badstraße", "Clayallee", "Teltower Damm", "Argentinische Allee"});
+    fill(t.park, {"the racecourse grounds", "the Monbijou park", "the Schlosspark", "the Müggelsee shore", "the Viktoriapark", "the Lietzensee park", "the Humboldthain", "the Grunewald"});
+    fill(t.station, {"Karlshorst S-Bahn station", "Friedrichstraße station", "Pankow S-Bahn station", "Köpenick S-Bahn station",
+                     "Kottbusser Tor U-Bahn station", "Zoo station", "Gesundbrunnen station", "Krumme Lanke U-Bahn station"});
+    t.venue = {"Gaststätte zur Linde", "Café Moskau", "Zum Nußbaum", "Café Kranzler", "Bierstube Alt-Berlin", "Weinstube Habel", "Café Möhring",
+               "Zur Letzten Instanz", "Gasthaus Krone", "Eckkneipe Zum Anker"};
+    t.meetT = {"%P, %S", "Konditorei, %S", "corner pub, %S", "cinema foyer, %S", "hotel bar, %S", "bench walk, %K"};
+    t.dropT = {"loose brick, cemetery wall off %S", "hollow behind the bench, %K", "behind the timetable case, %T", "magnetic container under the bridge rail, %S",
+               "coal-cellar grating, courtyard off %S", "under the marked stone, path in %K"};
+    t.signalT = {"chalk mark, advertising column, %S", "drawing-pin, bench in %K", "strip of tape, railing outside %T", "chalk mark, hydrant, %S"};
+    t.jobs[POLITICAL] = {
+        {"Official", "the Senate Chancellery of West Berlin", 55, 82, 60, 15, false},
+        {"Political adviser", "the United States Mission, Berlin", 62, 90, 78, 10, false},
+        {"Clerk", "the British Military Government", 55, 82, 70, 5, false},
+        {"Editor", "the American radio station in the Western sectors", 35, 60, 40, 85, false},
+        {"Reporter", "a West Berlin daily", 25, 50, 6, 85, false},
+        {"Aide", "a party group in the House of Representatives", 30, 58, 12, 55, false},
+        {"Official", "the Federal Plenipotentiary's office", 50, 78, 58, 15, false},
+        {"Organiser", "the Alternative List", 20, 45, 5, 65, false}};
+    t.jobs[MILITARY] = {
+        {"Linguist", "the Allied listening station on the Teufelsberg", 70, 95, 84, 5, false},
+        {"Sergeant, operations section", "the United States Berlin Brigade", 55, 82, 70, 5, true},
+        {"Clerk", "the Allied Staff, Berlin", 60, 88, 74, 5, false},
+        {"Technician", "the signals unit at Tempelhof", 60, 88, 76, 5, true},
+        {"Driver-interpreter", "the French military government", 40, 65, 50, 5, true},
+        {"Liaison NCO", "the British military mission", 50, 78, 66, 5, true},
+        {"Civilian employee", "a United States Army supply depot", 35, 60, 40, 5, false}};
+    t.jobs[SCITECH] = {
+        {"Engineer", "a West Berlin electrical concern", 50, 82, 45, 10, false},
+        {"Chemist", "a West Berlin pharmaceuticals firm", 40, 68, 40, 10, false},
+        {"Researcher", "the Technical University", 35, 62, 10, 20, false},
+        {"Physicist", "the nuclear research institute at Wannsee", 50, 80, 50, 20, false},
+        {"Export clerk", "a forwarding agent at the Tegel freight terminal", 45, 75, 15, 5, false},
+        {"Programmer", "the West Berlin office of an American computer firm", 45, 78, 40, 10, false},
+        {"Technician", "a telecommunications works", 40, 68, 35, 5, true}};
+    t.jobs[SECURITY] = {
+        {"Clerk", "the State Office for the Protection of the Constitution", 60, 88, 82, 5, false},
+        {"Detective", "the West Berlin political police", 50, 78, 62, 5, true},
+        {"Interviewer", "the refugee reception centre at Marienfelde", 50, 80, 60, 5, false},
+        {"Customs officer", "the transit checkpoint at Dreilinden", 35, 60, 40, 5, true},
+        {"Local guard", "the United States Mission", 40, 68, 55, 5, true},
+        {"Private detective", "self-employed (ex-police)", 25, 50, 5, 15, true}};
+    t.spies = {
+        {"Case officer", "the American intelligence base in Berlin", 75, 96, SVC_ADVERSARY},
+        {"Agent, counter-intelligence", "United States Army intelligence, Berlin", 62, 88, SVC_SECURITY},
+        {"Officer", "the State Office for the Protection of the Constitution", 65, 90, SVC_SECURITY},
+        {"Officer", "the British security organisation in Berlin", 62, 88, SVC_SECURITY},
+        {"Officer", "the Berlin outstation of the Federal Intelligence Service", 65, 90, SVC_ADVERSARY},
+        {"Officer", "French military security", 45, 72, SVC_THIRD}};
+    t.local = "You live and work in the East, among friends. Nobody follows you in Karlshorst, Mitte, Pankow or Köpenick, and a meeting there cannot be watched by the adversary. But the people worth meeting live in the Western sectors. Either you cross to them - under the eyes of the Allied services and the West Berlin police, without a diplomat's protection - or they cross to you, and every crossing is written down by somebody. The friends in the Normannenstrasse answer a trace in days. Remember that whatever they are asked, they file.";
+    return t;
+}
+
+static Theatre berlin1() {
+    Theatre t = berlinBase();
+    t.slot = 2;
+    t.cover = "Second Secretary, Soviet Embassy to the GDR";
+    t.sy = 1979; t.sm = 9; t.sd = 3; t.ey = 1984; t.em = 6; t.ed = 29;
+    t.role = 2; t.subs = 3; t.colleagues = 6;
+    t.price = 3; t.a4Base = 1.0f; t.heat0 = 16; t.blownHeat = 4; t.dangle = 0.13f; t.walkIn = 0.45f; t.valuePar = 2000;
+    t.reqs = {
+        {MILITARY, "The Teufelsberg station", "Tasking, equipment and product of the American and British listening station on the Teufelsberg: what it hears of the Group of Soviet Forces and of the GDR.", 0, 300, 0, RK_COLLECT},
+        {POLITICAL, "Allied contingency planning for Berlin", "Tripartite plans for a crisis over the access routes; the papers of the 'Live Oak' staff.", 0, 240, 0, RK_COLLECT},
+        {SECURITY, "Western services in Berlin", "Bases, safe houses, personnel and agent-running methods of the American, British and West German services working against the GDR from the Western sectors.", 0, 220, 0, RK_COLLECT},
+        {SCITECH, "Microelectronics", "Process documentation and embargoed production equipment for integrated circuits, obtainable through West Berlin firms and forwarding agents.", 0, 260, 0, RK_COLLECT},
+        {MILITARY, "The Allied garrisons", "Order of battle, alert procedures and reinforcement plans of the three Western garrisons.", 6, 200, 0, RK_COLLECT},
+        {SECURITY, "Escape-helper organisations", "Identity, methods and funding of the groups smuggling GDR citizens to the West.", 8, 150, 0, RK_COLLECT},
+        {POLITICAL, "The Senate and the house occupations", "The governing crisis in the West Berlin Senate; the occupation movement, its leaders and its money.", 14, 130, 180, RK_COLLECT},
+        {SCITECH, "Embargoed computers", "Channels for the purchase of American minicomputers through West Berlin intermediaries.", 16, 220, 0, RK_COLLECT},
+        {POLITICAL, "Service A: the missiles and the city", "ACTIVE MEASURE. Place material with West Berlin journalists and peace groups on what the new American missiles mean for the city. Three placements required.", 20, 3, 300, RK_ACTIVE},
+        {MILITARY, "RYAN: Berlin indicators", "Indicators of preparation for a surprise attack observable in the Western garrisons: alert states, plans to evacuate dependants, fuel and blood stocks.", 22, 180, 0, RK_COLLECT},
+        {SECURITY, "Interrogation of refugees", "What the Western services learn at the Marienfelde reception centre, and how they use it.", 26, 160, 0, RK_COLLECT},
+        {POLITICAL, "The American President's visit", "Programme, security arrangements and political purpose of the President's visit to the Western sectors.", 31, 110, 70, RK_COLLECT},
+        {POLITICAL, "Inner-German contacts", "The intentions of Bonn and of the Senate in their dealings with the GDR; the billion-mark credit.", 40, 150, 180, RK_COLLECT},
+        {POLITICAL, "Service A: the American radio station", "ACTIVE MEASURE. Place material in the West Berlin press on the staffing and financing of the American radio station. Three placements required.", 44, 3, 300, RK_ACTIVE}};
+    t.hist = {
+        {1979, 12, 12, "Embassy bulletin", "The NATO decision", "NATO has decided to station new American missiles in Europe unless negotiations succeed. West Berlin will be a centre of the movement against them; Service A will have work for us.", 0, 0, 0, H_NONE},
+        {1979, 12, 27, "Head of the Representation", "Afghanistan", "A limited contingent of Soviet forces has entered Afghanistan at the request of its government. Expect harder treatment at the crossing points and a hostile press in the Western sectors. Centre wants Allied intentions at once.", 0.05f, 0, 2, H_NONE},
+        {1980, 12, 12, "Embassy bulletin", "Riots in Kreuzberg", "Street fighting in Kreuzberg after the police cleared occupied houses. Every policeman in the Western sectors is on the street; nobody is watching the U-Bahn exits.", 0, -0.3f, 0, H_NONE},
+        {1981, 5, 25, "Centre", "Operation RYAN", "", 0, 0, 0, H_RYAN},
+        {1981, 9, 22, "Embassy bulletin", "Death of a demonstrator", "A young man was killed under a bus when the police cleared eight occupied houses. Barricades in Schöneberg. The political police have no men to spare for some days.", 0, -0.35f, 0, H_NONE},
+        {1982, 6, 11, "Embassy bulletin", "The American President in Berlin", "The American President is in the Western sectors today. Ten thousand police, Allied military police on every corner, and helicopters. No operational acts in the West this week.", 0, 0.7f, 0, H_NONE},
+        {1982, 11, 10, "Centre", "Death of L. I. Brezhnev", "The General Secretary is dead. Comrade Yu. V. Andropov, for fifteen years Chairman of this Committee, succeeds him. Reporting will now be read at the very top, and read by a professional.", 0, 0, 0, H_NONE},
+        {1983, 9, 1, "Head of the Representation", "The Korean airliner", "A South Korean airliner has been destroyed in Soviet airspace off Sakhalin. Demonstrations at the crossing points. Reduce acts in the West to those that cannot wait.", 0.15f, 0.3f, 3, H_NONE},
+        {1983, 11, 7, "Centre", "FLASH - RYAN", "", 0, 0, 0, H_ABLE},
+        {1984, 2, 9, "Centre", "Death of Yu. V. Andropov", "The General Secretary is dead. Work continues under the existing instructions.", 0, 0, 0, H_NONE}};
+    t.tour = "CENTRE, 1977-1979\n\nTwo years at Yasenevo, and not in the department you wanted. The Americans do not give visas to officers whose photographs are in their files, and the First Department had other candidates. You worked in the Fourth - the two Germanies - reading what Karlshorst sent in and learning how much of it came from the friends.\n\nIn 1979 you were posted to the Representation in Berlin, as head of a line working the Western sectors.";
+    return t;
+}
+
+static Theatre berlin2() {
+    Theatre t = berlinBase();
+    t.slot = 3;
+    t.cover = "First Secretary, Soviet Embassy to the GDR";
+    t.sy = 1986; t.sm = 9; t.sd = 1; t.ey = 1991; t.em = 6; t.ed = 28;
+    t.role = 2; t.subs = 4; t.colleagues = 5;
+    t.price = 4; t.a4Base = 0.95f; t.heat0 = 18; t.blownHeat = 4; t.dangle = 0.12f; t.walkIn = 0.45f; t.valuePar = 3200;
+    t.reqs = {
+        {MILITARY, "The Teufelsberg station", "Tasking, equipment and product of the Allied listening station on the Teufelsberg; what it has learned of the new command systems of the Group of Soviet Forces.", 0, 300, 0, RK_COLLECT},
+        {SECURITY, "Western services in Berlin", "Bases, personnel and agent-running methods of the American, British and West German services working from the Western sectors.", 0, 240, 0, RK_COLLECT},
+        {SCITECH, "Semiconductor production equipment", "Lithography, clean-room and test equipment of the newest generation; documentation, and channels through West Berlin.", 0, 280, 0, RK_COLLECT},
+        {POLITICAL, "Allied views of the Soviet reforms", "How the three Western missions and the Senate judge perestroika and what they report home.", 0, 170, 0, RK_COLLECT},
+        {POLITICAL, "Service A: the anniversary year", "ACTIVE MEASURE. Place material in the West Berlin press on the cost and the politics of the Senate's 750th-anniversary celebrations. Three placements required.", 2, 3, 300, RK_ACTIVE},
+        {MILITARY, "The Allied garrisons", "Order of battle and planning of the Western garrisons under reduced tension.", 4, 200, 0, RK_COLLECT},
+        {SCITECH, "Research networks", "Access to computers of Western research establishments through the open data networks.", 5, 240, 0, RK_COLLECT},
+        {POLITICAL, "The American President's speech", "Advance text and purpose of the American President's speech at the Brandenburg Gate.", 8, 110, 50, RK_COLLECT},
+        {POLITICAL, "Inner-German relations", "Bonn's and the Senate's intentions towards the GDR leadership; credits; the visit of the General Secretary of the SED to Bonn.", 10, 160, 200, RK_COLLECT},
+        {SECURITY, "Emigration and the Western services", "Use made by the Western services of GDR citizens leaving through Hungary and the embassies.", 34, 170, 150, RK_COLLECT},
+        {SECURITY, "The opened frontier", "How the Western services are exploiting the opened frontier: recruitment of GDR officials, purchase of documents, approaches to our own people.", 39, 220, 0, RK_COLLECT},
+        {POLITICAL, "The German question: Allied positions", "The real positions of the three Western powers on German unity, alliance membership and the future of their garrisons.", 40, 260, 240, RK_COLLECT},
+        {SECURITY, "The files of the friends", "What the Western services have obtained of the records of the Ministry for State Security, and whom they name.", 42, 220, 0, RK_COLLECT},
+        {MILITARY, "Withdrawal of the Western Group of Forces", "Western intentions and intelligence collection against the withdrawal of Soviet forces from Germany.", 46, 220, 0, RK_COLLECT}};
+    t.hist = {
+        {1986, 10, 12, "Embassy bulletin", "Reykjavik", "The meeting between the General Secretary and the American President in Iceland ended without agreement, but everything is now on the table. Allied reactions are required.", 0, 0, 0, H_NONE},
+        {1987, 6, 12, "Embassy bulletin", "The American President at the Brandenburg Gate", "The American President spoke today on the Western side of the Brandenburg Gate and called on the General Secretary to tear down the Wall. Twenty-five thousand police. No operational acts in the West this week.", 0, 0.7f, 0, H_NONE},
+        {1987, 9, 7, "Embassy bulletin", "The General Secretary of the SED in Bonn", "The East German leader begins an official visit to the Federal Republic. He believes it is the summit of his life's work. The friends are in excellent spirits.", 0, -0.1f, 0, H_NONE},
+        {1989, 9, 11, "Head of the Representation", "Hungary opens its frontier", "Hungary has opened its frontier to Austria for citizens of the GDR. They are leaving by the thousand. The friends ask us daily what Moscow intends. We have no instructions to give them.", 0, 0, 0, H_NONE},
+        {1989, 10, 9, "Embassy bulletin", "Leipzig", "Seventy thousand people marched through Leipzig last night. The security forces had orders and did not carry them out. Our forces stayed in barracks.", 0, 0, 0, H_NONE},
+        {1989, 10, 18, "Embassy bulletin", "Change of leadership", "The General Secretary of the SED has been relieved of his offices 'at his own request'. Nobody in the Normannenstrasse can tell us who is now in charge of what.", 0, 0, 0, H_NONE},
+        {1989, 11, 9, "Embassy bulletin", "The frontier is open", "", -0.1f, -0.3f, 0, H_WALL},
+        {1990, 1, 15, "Line KR", "The Normannenstrasse", "", 0.1f, 0, 0, H_ORPHANS},
+        {1990, 7, 1, "Embassy bulletin", "Monetary union", "The West German mark is from today the currency of the GDR. The state that is our host is ceasing to exist by the week; its officers are looking for new employers, and finding them.", 0, 0, 0, H_NONE},
+        {1990, 10, 3, "Head of the Representation", "Unification", "", 0.25f, 0, 6, H_UNIFY}};
+    t.tour = "CENTRE, 1984-1986\n\nTwo years in Directorate K, external counter-intelligence, and they were the years to be there. In 1985 one agent after another inside the Committee was uncovered and brought home; nobody at your level was told how. You read the damage assessments. Every one of them was about who had known what.\n\nNo Western government would now accept you as a diplomat. In 1986 you went back to Karlshorst, to head the department that works the Western sectors.";
+    return t;
+}
+
+// The order here must match the TH_ numbers in content.h.
+const std::vector<Theatre> THEATRES = {moscow(), london(), vienna(), delhi(), washington(), berlin1(), bonn(), berlin2()};

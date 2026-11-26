@@ -64,6 +64,7 @@ void Sim::file(Person& p, const std::string& s) { p.file.push_back(pad(fmtShort(
 void Sim::cable(const std::string& from, const std::string& subject, const std::string& body) {
     Cable c;
     c.day = g.day; c.from = from; c.subject = subject; c.body = gx(subj, body);
+    c.read = c.routine();
     g.cables.push_back(c);
     attention = true;
 }
@@ -91,6 +92,7 @@ void Sim::witness(std::vector<int>& list, int officerId) {
 }
 /** The adversary's interest in whoever is acting just now. */
 void Sim::heat(float d) {
+    if (d > 0) d *= hard();
     A->heat = clampf(A->heat + d, 0, 100);
     if (A->heat > A->peakHeat) A->peakHeat = A->heat;
 }
@@ -112,7 +114,9 @@ std::string Sim::shortSite(const Site* s) {
 // ============================================================================ the day planner
 Order Sim::routine(int day, int b) const {
     Order o;
-    o.type = (weekend(day) || b == 2) ? O_REST : O_COVER;
+    o.type = (dayOff(day) || b == 2) ? O_REST : O_COVER;
+    Date d = dateOf(day);
+    if (b == 2 && d.m == 11 && d.d == 7 && !training()) { o.type = O_FUNCTION; o.sector = POLITICAL; }   // the Embassy's own reception
     return o;
 }
 bool Sim::isSet(int day, int b) const { auto it = g.plan.find(day); return it != g.plan.end() && it->second[b].set; }
@@ -124,6 +128,8 @@ std::string Sim::describe(const Order& o) {
     Person* p = person(o.person);
     Site* s = site(o.site);
     std::string pn = p ? p->label() : "?";
+    std::string tr = isOp(o.type) && o.travel ? (o.travel == 1 ? "  (car)" : "  (taxi)") : "";
+    std::string d = [&]() -> std::string {
     switch (o.type) {
         case O_COVER: return "Cover duties";
         case O_OFFICE: return "Paperwork";
@@ -133,7 +139,7 @@ std::string Sim::describe(const Order& o) {
         case O_SCOUT: return std::string("Scout ") + T().district[o.district] + " (" + SITETYPE_LABEL[o.siteType] + ")";
         case O_SDR: return o.route >= 0 && site(o.route) ? "SDR: " + shortSite(site(o.route)) : "SDR - improvised route";
         case O_MEET_OVERT: return "Social: " + pn + (o.am >= 0 ? " [Service A]" : "");
-        case O_MEET_CLAN: return std::string(o.appointment ? "MEET* " : "MEET ") + pn + (o.pitch >= 0 ? " [PITCH]" : "") + " @ " + shortSite(s);
+        case O_MEET_CLAN: return std::string(o.appointment ? "MEET* " : "MEET ") + pn + (o.pitch >= 0 ? " [PITCH]" : "") + (o.brush ? " [BRUSH]" : "") + (o.exfil ? " [EXFIL]" : "") + " @ " + shortSite(s);
         case O_LOAD_DROP: return "LOAD drop for " + pn + ": " + shortSite(s);
         case O_UNLOAD_DROP: return "UNLOAD drop: " + shortSite(s);
         case O_READ_SIGNAL: return "Read signal: " + shortSite(s);
@@ -142,6 +148,8 @@ std::string Sim::describe(const Order& o) {
         case O_CONTROL: return "CONTROL op: " + shortSite(s);
         default: return "?";
     }
+    }();
+    return d + tr;
 }
 
 bool Sim::isOp(int t) {
@@ -149,13 +157,55 @@ bool Sim::isOp(int t) {
 }
 
 /** Returns "" if the order is legal for that slot, otherwise the reason it is not. */
+// ============================================================================ birthdays
+int Sim::birthday(const Person& p, int year) const {
+    uint32_t h = (uint32_t)(g.seed * 2654435761u) ^ ((uint32_t)p.id * 40503u + 0x9E37u);
+    h ^= h >> 13; h *= 0x5bd1e995u; h ^= h >> 15;
+    return dayOf(year, 1, 1) + (int)(h % 365);
+}
+int Sim::nearBirthday(const Person& p, int day) const {
+    int y = dateOf(day).y;
+    for (int yy = y - 1; yy <= y + 1; yy++) { int b = birthday(p, yy); if (std::abs(b - day) <= 10) return b; }
+    return -99999;
+}
+bool Sim::presentDue(const Person& p, int day) const {
+    int b = nearBirthday(p, day);
+    return b > -99999 && p.giftYear != dateOf(b).y;
+}
+
+/** A present for his birthday - or, on a round one, the absence of one. */
+void Sim::birthdayMeeting(const Order& o, Person& p) {
+    int b = nearBirthday(p, g.day);
+    if (b <= -99999 || p.giftYear == dateOf(b).y || !me()) return;
+    int turns = dateOf(b).y - birthYear(p);
+    bool round = turns % 10 == 0;
+    if (o.present) {
+        int cost = std::min(g.funds, P(round ? 12 : 5));
+        money(-cost, "Birthday present for " + p.label());
+        p.giftYear = dateOf(b).y;
+        p.rapport = clampf(p.rapport + rnd(5, 9) * (round ? 1.6f : 1.f), 0, 100);
+        p.commitment = clampf(p.commitment + (round ? 5 : 2), 0, 100);
+        if (p.stage == AGENT) p.stress = clampf(p.stress - (round ? 10 : 5), 0, 100);
+        static const char* const GIFT[] = {"a bottle of Armenian brandy", "a lacquered Palekh box", "a set of Melodiya records", "a tin of caviar and a card signed 'from friends'", "a Zenit camera of his own"};
+        std::string what = round ? std::string(GIFT[(p.id + turns) % 5]) : std::string("a small present");
+        say(fstr("    You gave him %s for his birthday%s. ", what.c_str(), round ? fstr(" - his %dth", turns).c_str() : "") + std::string(round ? "He was moved, and did not try to hide it." : "He had not thought you would remember."));
+        file(p, round ? fstr("Given a present on his %dth birthday.", turns) : std::string("Given a birthday present."));
+    } else if (round && g.day > b) {
+        p.giftYear = dateOf(b).y;
+        p.rapport = clampf(p.rapport - 4, 0, 100);
+        say(fstr("    He mentioned, a little pointedly, that he had turned %d on ", turns) + DOW[dateOf(b).dow] + ". Nobody had remembered.");
+    }
+}
+
 std::string Sim::validate(const Order& o, int day, int b) {
     Person* p = person(o.person);
     Site* s = site(o.site);
     auto bad = [&](const std::string& m) { return gx(p, m); };
     bool usesPerson = o.type == O_MEET_OVERT || o.type == O_MEET_CLAN || o.type == O_LOAD_DROP || o.type == O_PLACE_SIGNAL;
     if (usesPerson && p && p->handler != 0 && !o.appointment)
-        return bad(p->label() + " is run by " + handlerName(*p) + ". Take the case back yourself first (Contacts & Agents).");
+        return bad(p->label() + " is run by " + handlerName(*p) + ". Take the case back yourself first (Contacts).");
+    if (o.present && (!p || (o.type != O_MEET_OVERT && o.type != O_MEET_CLAN) || o.brush || !presentDue(*p, day)))
+        return "A present is for a birthday within ten days of the meeting, and only once a year.";
     switch (o.type) {
         case O_FUNCTION:
             if (b == 0) return "Receptions, lectures and society meetings are afternoon or evening affairs.";
@@ -181,6 +231,13 @@ std::string Sim::validate(const Order& o, int day, int b) {
                 if (ag && ag->id != s->id) return p->label() + " will go to the agreed site: " + ag->name + ".";
             }
             if (o.pitch >= 0 && p->stage == AGENT) return p->label() + " is already recruited.";
+            if (o.brush && p->stage != AGENT) return "A brush pass is for a recruited agent who has been drilled in it.";
+            if (o.exfil && (p->stage != AGENT || p->exfil != 2)) return bad("The travel documents for " + p->label() + " are not in your safe. Ask Centre first (Contacts, 'Request exfiltration').");
+            if (o.exfil && o.brush) return bad("He must be told his route and made to repeat it. A brush pass will not do.");
+            if (o.standing && (p->stage != AGENT || p->exfil != 2)) return bad("A standing escape plan needs the travel documents for " + p->label() + " in your safe. Ask Centre first (Contacts, 'Request exfiltration').");
+            if (o.standing && (o.brush || !o.longMeet || o.exfil)) return "The escape plan is rehearsed at a long meeting - and he either goes tonight or stays with the plan standing, not both.";
+            if (o.docs && (p->stage != AGENT || !s->flat)) return "Documents can be brought out and photographed only by an agent, at a safe flat.";
+            if (o.docs && (o.brush || !o.longMeet)) return "Photographing his documents takes the whole evening: a long meeting.";
             break;
         case O_LOAD_DROP:
             if (!s || s->type != ST_DROP || s->retired) return "Choose a dead drop.";
@@ -222,7 +279,7 @@ std::string Sim::validate(const Order& o, int day, int b) {
         Requirement* q = req(o.am);
         if (!q || q->closed || q->kind != RK_ACTIVE) return "That active measure is no longer open.";
     }
-    if (o.cs) { auto it = g.csDays.find(day); if (it == g.csDays.end() || it->second.state != 2) return "No countersurveillance team has been arranged for that day. Arrange one first (Day Planner)."; }
+    if (o.cs) { auto it = g.csDays.find(day); if (it == g.csDays.end() || it->second.state != 2) return "No countersurveillance team has been arranged for that day. Arrange one first (Planner)."; }
     return "";
 }
 
@@ -375,6 +432,8 @@ std::string Sim::setHandler(Person& p, int officerId) {
     }
     p.handler = officerId;
     p.pitchAuth = false;
+    if (officerId != 0 && p.stage == AGENT && p.shortPaid > P(30) && !controlled(p) && pct(35))
+        pend(g.day + 20 + r().n(40), P_SKIM, p.id, 1);       // sooner or later he tells his new case officer what he was really paid
     if (p.stage == AGENT) {
         p.rapport = clampf(p.rapport - 8, 0, 100); p.stress = clampf(p.stress + 6, 0, 100);
         // an agreed meeting moves from one diary to the other
@@ -502,6 +561,7 @@ static const char* const TELLS[] = {
 
 void Sim::tells(Person& p) {
     float c = controlled(p) ? 4 + noseNow() * 0.08f : 1.2f;
+    if (training()) c = controlled(p) ? 100.f : 0.f;      // on the course the provocation always leaves one mark, and only he does
     if (pct(c)) { std::string t = pick(TELLS); file(p, t); say("    " + t); }
 }
 
@@ -545,6 +605,8 @@ Sim::Ap Sim::approach(const Order& o, int b, int district, Site* st) {
     bool cov = A->covered[b];
     int q = A->teamQ[b];
     if (!cov && g.hot[district] && pct(25)) { cov = true; q = 55; }
+    bool home = eastSide(district);
+    if (home) cov = false;
     bool longSdr = me() ? (b > 0 && sdrDone[b - 1]) : (O->a.tradecraft > 30);
     Site* route = me() && longSdr ? site(sdrRoute[b - 1]) : nullptr;
     bool cs = csToday(o);
@@ -559,21 +621,82 @@ Sim::Ap Sim::approach(const Order& o, int b, int district, Site* st) {
             if (route->burned) det -= 15;
         } else det -= 5;                                                        // made up as you went along
     }
+    // how you get there
+    int tr = me() ? o.travel : 0;
+    float dist = (float)T().dist[district];
+    if (tr == 1) {                    // the Embassy car: a short journey, but a car is followed by several in relays, and its plates are known
+        g.fatigue -= dist * 2 + 1;
+        det -= 8;
+    } else if (tr == 2) {             // a taxi: changing vehicles breaks a team's contact, but it costs money, and some drivers talk
+        int fare = P(2) + P(1) * (int)dist;
+        money(-std::min(g.funds, fare), "Taxi fares");
+        g.fatigue -= dist * 1.5f;
+        det += 4;
+        bool talk = g.theatre == TH_DELHI || g.theatre == TH_VIENNA || g.theatre == TH_MOSCOW;
+        if (!home && pct(talk ? 8 : 3)) { heat(1.5f); if (st && pct(30)) st->burned = true; }
+    }
+    if (me() && cov) det += recognise(b);       // a car you know by its plate is a team you see at once
+    if (tr == 1 && me()) g.lastCarDay = g.day;
+    // the weather and the light: what hides them from you also hides you from them
+    std::string wx;
+    bool dark = b == 2 && g.sunset < 19 * 60 + 15;
+    if (dark) { det -= 4; wx = ", after dark"; if (cov && pct(15)) cov = false; }
+    switch (g.wx) {
+        case WX_RAIN: det -= 3; wx += ", in the rain"; if (cov && pct(8)) cov = false; break;
+        case WX_FOG: det -= 8; wx += ", in fog"; if (cov && pct(25)) cov = false; break;
+        case WX_SNOW: det -= 2; wx += ", in snow"; if (cov && pct(6)) cov = false; tire(2); break;
+        default: break;
+    }
+    if (g.temp >= 31 || g.temp <= -12) { tire(2); wx += g.temp > 0 ? fstr(", %d C in the shade", g.temp) : fstr(", %d C", g.temp); }
+    if (tr == 0 && strikeToday(g) && !home) { tire(5); wx += ", on foot through the strike"; }
+    if (home) cov = false;
     det = clampf(det, 4, 95);
     int signs = 0;
     if (cov) {
         float x = r().f() * 100;
         if (x < det) signs = 2; else if (x < det + (100 - det) * 0.35f) signs = 1;
+        // what the team saw goes into the adversary's file on your habits; a team that knows it was blown is replaced by a better one
+        if (me() && !home) {
+            g.habit[dateOf(g.day).dow][b] += 1;
+            g.habitD[district] += 1;
+            if (signs == 2) g.advAlert = std::min(6.f, g.advAlert + 1);
+        }
+        if (!me() && signs == 2) O->waryUntil = std::max(O->waryUntil, g.day + 12 + r().n(8));   // an officer who has seen them lies low for a while
         if (A->heat < 60) heat(longSdr ? 1.2f : 0.4f);   // a diplomat seen dry-cleaning himself is noted as an intelligence officer
     } else {
         float fa = clampf((cs ? 3 : 13) - A->tradecraft * 0.08f + fat * 0.05f, 1, 25);
-        if (pct(fa)) signs = 1;
+        if (!home && pct(fa)) signs = 1;
     }
-    std::string how = std::string(longSdr ? (route ? "prepared route" : "improvised route") : "short check en route") + (cs ? ", countersurveillance team out" : "");
+    std::string how = std::string(home ? "own territory; " : "") + std::string(longSdr ? (route ? "prepared route" : "improvised route") : "short check en route") + (cs ? ", countersurveillance team out" : "")
+                      + (tr == 1 ? ", by car" : tr == 2 ? ", by taxi" : "") + wx;
     if (signs == 0) a.txt = "SDR (" + how + "): no surveillance detected.";
     else if (signs == 1) a.txt = "SDR (" + how + "): POSSIBLE surveillance - " + pick(WEAK) + ".";
     else a.txt = "SDR (" + how + "): SURVEILLANCE CONFIRMED - " + pick(STRONG) + ".";
     a.abort = (signs == 2 && o.policy != 2) || (signs == 1 && o.policy == 0);
+    // your own meeting or drop, with something seen: the decision is yours, on the spot
+    bool hotAct = o.type == O_MEET_CLAN || o.type == O_LOAD_DROP || o.type == O_UNLOAD_DROP || o.type == O_LINE_N;
+    if (me() && signs > 0 && hotAct && askInStreet && !training() && rep) {
+        int f = g.streetForce[b];
+        if (f < 0) {
+            StreetHalt h;
+            h.block = b;
+            Person* p = person(o.person);
+            std::string where = st ? st->name : std::string(T().district[district]);
+            std::string up = where;
+            for (auto& ch : up) ch = (char)toupper((unsigned char)ch);
+            h.title = signs == 2 ? "SURVEILLANCE - " + up : "SOMETHING NOT RIGHT - " + up;
+            std::string seen = a.txt.substr(a.txt.find(": ") + 2);
+            h.text = fstr("%s, %s. ", DOW[dateOf(g.day).dow], BLOCK_LABEL[b]) + "On your way to " + (o.type == O_MEET_CLAN ? "meet " + (p ? p->label() : std::string("your man")) : std::string(OTYPE_LABEL[o.type])) + " at " + where + ".\n\n"
+                     + "You saw: " + seen + "\n\n" + streetStakes(o, st)
+                     + "\n\nYour standing order for this act: " + POLICY[std::max(0, std::min(2, o.policy))] + ".";
+            if (o.type == O_MEET_CLAN) h.opts = {"Walk on. Make it an innocent errand and go home", "Go to the meeting, but let nothing change hands", "Go through with all of it"};
+            else h.opts = {"Walk on. Make it an innocent errand and go home", "Go through with it"};
+            throw h;
+        }
+        a.abort = f == 0;
+        static const char* const WHAT[] = {" You walked on.", " You went to the meeting, and nothing changed hands.", " You went through with it."};
+        a.txt += WHAT[std::max(0, std::min(2, f))];
+    }
     if (a.abort) {
         a.txt += " Act aborted; the route was completed as an innocent errand.";
         if (me()) { g.mAborts++; g.totAborts++; }
@@ -581,6 +704,11 @@ Sim::Ap Sim::approach(const Order& o, int b, int district, Site* st) {
     } else if (signs > 0) a.txt += me() ? " You pressed on." : " He pressed on.";
     a.observed = cov && !a.abort;
     a.signs = signs;
+    if (me() && !home) a.txt += noteVehicle(b, district, signs, cov);
+    if (tr == 1 && a.observed && st) {        // the car with diplomatic plates was seen parked by the place
+        st->exposure += 6;
+        if (pct(20)) st->burned = true;
+    }
     if (me()) {
         SdrLog l;
         l.day = g.day; l.block = b; l.district = district; l.signs = signs; l.abort = a.abort;
@@ -598,6 +726,14 @@ void Sim::advNotices(Person& p) {
     p.overtObserved++;
     if (p.stage == AGENT || controlled(p)) return;
     float x = r().f() * 100;
+    if (p.service != SVC_NONE) {              // a professional seen with one of us is asked about it by his own service
+        if (x < 35) {
+            p.stage = BROKEN;
+            file(p, "No longer answers. An officer of a service who is seen with one of us either explains it or is finished.");
+            alert(p.name + " has broken off contact (see his file).");
+        } else if (x < 60) makeDangle(p);      // he explained it, and was told to go on
+        return;
+    }
     if (p.empSec > 45 && x < 30) {
         p.stage = BROKEN;
         file(p, "Telephoned to cancel future engagements: his department has 'reminded staff to report contacts with Soviet-bloc officials'. Contact broken.");
@@ -647,15 +783,17 @@ void Sim::flagrante(Person* p, Site* s) {
 
 // ============================================================================ resolving the day's orders
 void Sim::spot(int sector, const std::string& how, int handler) {
-    float dangle = T().dangle + (g.you.heat > 45 ? 0.08f : 0);
-    Person p = makePerson(sector, dangle);
+    float dangle = T().dangle * hard() + (g.you.heat > 45 ? 0.08f : 0);
+    bool spy = sector == SECURITY && !training() && !T().spies.empty() && pct(22);
+    Person p = spy ? makeSpy(0.28f + dangle) : makePerson(sector, dangle);
     p.handler = handler;
     if (handler) witness(p.witting, handler);
     g.persons.push_back(p);
     Person& q = g.persons.back();
     g.mSpotted++; g.totSpotted++;
     file(q, "Met " + how + ". " + q.job + ", " + q.employer + ".");
-    alert("New contact " + how + ": " + q.name + fstr(", %d, ", q.age) + q.job + ", " + q.employer + ".");
+    if (spy) file(q, "Line KR confirms: an officer of " + q.employer + ". He will have reported meeting one of us - or he has not, and that is interesting.");
+    alert("New contact " + how + ": " + q.name + fstr(", %d, ", q.age) + q.job + ", " + q.employer + "." + (spy ? " LINE KR: HE IS AN OFFICER OF THAT SERVICE." : ""));
 }
 
 void Sim::casingEstimate(Site& s) {
@@ -712,7 +850,15 @@ void Sim::resolve(const Order& o, int b) {
             break;
         }
         case O_MEET_OVERT: meetOvert(o, b); break;
-        case O_MEET_CLAN: meetClan(o, b); break;
+        case O_MEET_CLAN: {
+            if (g.streetForce[b] == 1) {             // decided in the street: a meeting at which nothing changes hands
+                Order t = o;
+                t.collect = false; t.longMeet = false; t.docs = false; t.exfil = false; t.pitch = -1; t.bug = false;
+                t.film = 0; t.camera = false; t.pads = 0; t.pay = 0;
+                meetClan(t, b);
+            } else meetClan(o, b);
+            break;
+        }
         case O_LOAD_DROP: loadDrop(o, b); break;
         case O_UNLOAD_DROP: unloadDrop(o, b); break;
         case O_READ_SIGNAL: readSignal(o, b); break;
@@ -759,7 +905,7 @@ void Sim::scout(const Order& o, int b) {
     Ap a = approach(o, b, o.district, nullptr);
     say("    " + a.txt);
     if (a.abort) return;
-    if (!pct(65 + A->street * 0.3f)) { say("    Nothing suitable found."); return; }
+    if (!training() && !pct(65 + A->street * 0.3f)) { say("    Nothing suitable found."); return; }
     Site s = makeSite(o.siteType, o.district);
     if (A->street > 35 || pct(A->tradecraft)) {      // an experienced eye picks the better of two candidates
         Site t = makeSite(o.siteType, o.district);
@@ -781,7 +927,7 @@ void Sim::meetOvert(const Order& o, int b) {
     const char* what = b == 0 ? "Coffee" : (b == 1 ? "Lunch" : "Dinner");
     int cost = P(b == 0 ? 1 : (b == 1 ? 4 : 9));
     tire(5);
-    if (!pct(55 + p.rapport * 0.45f) && !controlled(p)) {
+    if (!pct(55 + p.rapport * 0.45f) && !controlled(p) && !training()) {
         say(std::string("  ") + what + " with " + p.name + ": he telephoned his apologies. Another time.");
         return;
     }
@@ -789,6 +935,9 @@ void Sim::meetOvert(const Order& o, int b) {
     money(-cost, std::string(what) + " with " + p.name);
     say(std::string("  ") + what + " with " + p.name + fstr(" (%d %s).", cost, T().currency));
     socialGain(p, 1.0f);
+    birthdayMeeting(o, p);
+    confidTalk(p);
+    if (b == 2 && me() && p.kompState == 2) { stageCompromise(p); if (!p.live() || g.phase != PH_PLAY) return; }
     if (o.favour) favour(p);
     if (p.live() && o.pay > 0) gift(p, o.pay);
     if (p.live() && o.am >= 0) placeAM(o, p);
@@ -912,8 +1061,10 @@ void Sim::meetClan(const Order& o, int b) {
     if (!pp || !sp || !pp->live()) { say("  Order void: contact not available."); return; }
     Person& p = *pp; Site& s = *sp;
     bool agent = p.stage == AGENT;
+    bool brush = agent && o.brush;
+    bool home = eastSide(s.district);          // our side of the frontier: the adversary cannot watch here
     attempted.insert(p.id);
-    say("  Meeting with " + p.label() + " at " + s.name + ".");
+    say(std::string(brush ? "  Brush pass with " : "  Meeting with ") + p.label() + " at " + s.name + ".");
     tire(9 + T().dist[s.district] * 3);
     Ap a = approach(o, b, s.district, &s);
     say("    " + a.txt);
@@ -922,8 +1073,16 @@ void Sim::meetClan(const Order& o, int b) {
         return;
     }
     float show = agent ? 95 - p.stress / 5.f : 45 + p.rapport * 0.4f + p.commitment * 0.3f - (p.commitment < 15 ? 20 : 0);
+    if (!agent && home) show -= 15;            // a man who is not yet ours thinks twice about crossing to us
     if (agent && p.callout) show = show * p.diligence / 100.f;
-    if (controlled(p)) show = 98;
+    if (controlled(p) || training()) show = 98;
+    // an agent already under investigation who tries to cross a frontier is stopped at it
+    if (home && agent && !controlled(p) && p.suspicion >= 75 && pct(40)) {
+        say("    " + p.label() + " did not appear.");
+        p.suspicion = 100;
+        arrest(p, "ARRESTED at the crossing point on his way to a meeting in the East.");
+        return;
+    }
     if (!pct(show)) {
         say("    " + p.label() + " did not appear. After fifteen minutes the place was left.");
         s.exposure += 4;
@@ -934,7 +1093,7 @@ void Sim::meetClan(const Order& o, int b) {
     }
     bool cs = csToday(o);
     bool observed = a.observed;
-    if (agent && !controlled(p) && p.suspicion >= 50 && pct((p.suspicion - 35) * 1.5f)) {
+    if (!home && agent && !controlled(p) && p.suspicion >= 50 && pct((p.suspicion - 35) * 1.5f)) {
         float seen = 18 + A->tradecraft / 4.f + p.craft / 3.f + (s.sight - 50) * 0.2f + (cs ? 20 : 0);
         if (pct(seen)) {
             alert(p.label() + " ARRIVED WITH COMPANY: two men off the same bus, one took the table by the door. No contact was made.");
@@ -946,31 +1105,64 @@ void Sim::meetClan(const Order& o, int b) {
         }
         observed = true;
     }
-    if (s.burned && pct(50)) observed = true;
-    if (controlled(p)) { s.burned = true; if (A->heat < 38) heat(38 - A->heat); }     // whoever meets their man is a case officer, and is carded as one
+    if (!home && s.burned && pct(50)) observed = true;
+    if (brush && observed && !pct(35)) observed = false;            // twelve seconds on a staircase: most teams miss it
+    if (controlled(p) && !home && !training()) { s.burned = true; if (A->heat < 38) A->heat = 38; }   // whoever meets their man is carded as a case officer
     if (cs) csWitness(&p, &s);
     if (!me()) { witness(p.witting, O->id); witness(s.witting, O->id); }
 
-    // a controlled agent's masters choose their evening: once they are ready, most meetings are the one
-    // (nothing can be "caught in the act" at a meeting where no material changes hands)
+    // Caught in the act. (Nothing can be "caught" at a meeting where no material changes hands, nor on our own ground.)
     bool handover = o.collect && !p.held.empty();
-    if (agent && controlled(p) && p.trapDay >= 0 && g.day >= p.trapDay && handover && pct(60)) { flagrante(&p, &s); return; }
-    if (agent && observed && p.suspicion >= 75 && handover && pct(35)) { flagrante(&p, &s); return; }
+    if (!home && !training() && agent && handover) {
+        if (controlled(p) && p.trapDay >= 0 && g.day >= p.trapDay && pct(60 * hard())) { flagrante(&p, &s); return; }
+        if (observed && p.suspicion >= 75 && pct(35 * hard())) { flagrante(&p, &s); return; }
+    }
 
-    say(std::string("    Meeting held (") + (o.longMeet ? "about two hours" : "ten minutes") + ").");
-    if (agent) agentAgenda(o, p, s); else contactAgenda(o, p, s);
+    if (brush) { say("    The pass was made: twelve seconds, no words."); brushAgenda(o, p); }
+    else {
+        say(std::string("    Meeting held (") + (o.longMeet ? "about two hours" : "ten minutes") + ").");
+        if (agent) agentAgenda(o, p, s); else contactAgenda(o, p, s);
+    }
     if (g.phase != PH_PLAY) return;
 
-    s.uses++; s.lastUsed = g.day; s.exposure += o.longMeet ? 12 : 6;
-    if (s.exposure > 60 && pct(s.exposure - 60)) s.burned = true;
+    s.uses++; s.lastUsed = g.day; s.exposure += brush ? 2 : (o.longMeet ? 12 : 6);
+    if (s.flat && !home) flatMeeting(s, p, observed, o.longMeet && !brush);
+    if (!home && s.exposure > 60 && pct(s.exposure - 60)) s.burned = true;
+    if (home && !controlled(p) && p.stage == AGENT) {
+        p.suspicion += 5 * p.empSec / 100.f;
+        say("    (He crossed to our side to meet you. On the other side of the frontier, somebody writes such crossings down.)");
+    }
     if (observed) {
         heat(5);
         if (agent) p.suspicion += 18;
         advNotices(p);
     }
-    p.lastContact = g.day; p.meetings++; g.mMeetings++; paper(2);
+    p.lastContact = g.day; p.meetings++; g.mMeetings++; paper(brush ? 1 : 2);
     if (me()) g.assessment = std::min(92.f, g.assessment + 0.12f);
     if (p.stage == AGENT) nextAppointment(p);
+}
+
+/** A brush pass: packages change hands in a crowd and nothing is said. */
+void Sim::brushAgenda(const Order& o, Person& p) {
+    if (o.collect && !p.held.empty()) {
+        int n = 0;
+        for (int id : p.held) if (Roll* x = roll(id)) { x->state = R_YOU; x->stateDay = g.day; n++; }
+        p.held.clear();
+        say(fstr("    Received %d exposed cassette%s.", n, n == 1 ? "" : "s"));
+    } else if (o.collect) say("    He had nothing for you.");
+    int amt = std::min(o.pay, g.funds);
+    if (amt > 0) {
+        money(-amt, "Remuneration, agent " + p.codename + " (by brush pass; no receipt)");
+        p.owed -= amt; p.paidTotal += amt; p.paid90 += amt;
+        payAgent(p, amt);
+        say(fstr("    Passed him %d %s.", amt, T().currency));
+    }
+    int nf = std::min(o.film, g.film);
+    if (nf > 0) { g.film -= nf; p.film += nf; say(fstr("    Passed him %d fresh cassette%s.", nf, nf == 1 ? "" : "s")); }
+    int np = std::min(o.pads, g.pads);
+    if (np > 0 && p.radio) { g.pads -= np; p.pads += np; say(fstr("    Passed him %d pad sheet%s.", np, np == 1 ? "" : "s")); }
+    p.stress = clampf(p.stress + 2, 0, 100);       // he has seen you, and been told nothing
+    if (!p.warn.empty()) say("    (Whatever he had to tell you, he could not tell you there.)");
 }
 
 Roll& Sim::newRoll(Person& p) {
@@ -983,11 +1175,12 @@ Roll& Sim::newRoll(Person& p) {
 }
 
 void Sim::agentAgenda(const Order& o, Person& p, Site& s) {
-    (void)s;
     for (auto& w : p.warn) alert(p.label() + " " + w);
     for (auto& w : p.warn) file(p, "Agent " + w);
     p.warn.clear();
+    postingDecision(p);
     say("    Agent's manner: " + mood(p) + ".");
+    if (!o.brush) birthdayMeeting(o, p);
     // material
     if (o.collect && !p.held.empty()) {
         int n = 0;
@@ -999,9 +1192,10 @@ void Sim::agentAgenda(const Order& o, Person& p, Site& s) {
     if (o.longMeet) {
         Roll& x = newRoll(p);
         x.oral = true; x.frames = 0;
-        x.value = x.genuine ? p.tru[A_ACCESS] * rnd(0.15f, 0.4f) : rnd(10, 30);
+        x.value = x.genuine ? clampf(p.tru[A_ACCESS] * rnd(0.15f, 0.4f) * (0.8f + p.skElicit / 70.f), 1, 100) : rnd(10, 30);
         x.state = R_YOU;
         paper(1.5f);
+        if (!controlled(p) && p.skElicit > 30 && p.tempo > 0) p.suspicion += (p.skElicit - 30) / 60.f * (1 - p.craft / 120.f);   // a man who asks questions is remembered
         say(fstr("    Oral debriefing taken; the written report will go forward as item No. %d.", x.id));
     }
     // money
@@ -1009,7 +1203,8 @@ void Sim::agentAgenda(const Order& o, Person& p, Site& s) {
     if (amt > 0) {
         money(-amt, "Remuneration, agent " + p.codename + " (receipt held)");
         p.owed -= amt; p.paidTotal += amt; p.paid90 += amt;
-        if (p.tru[A_MONEY] > 40) p.rapport = clampf(p.rapport + std::min(6.f, amt * 3.f / (p.salary + P(10))), 0, 100);
+        int got = payAgent(p, amt);
+        if (p.tru[A_MONEY] > 40) p.rapport = clampf(p.rapport + std::min(6.f, got * 3.f / (p.salary + P(10))), 0, 100);
         say(fstr("    Paid %d %s against receipt.", amt, T().currency) + (p.owed > 0 ? fstr(" Still owed: %d.", p.owed) : std::string("")));
     } else if (p.owed > 0) say(fstr("    He was not paid. Owed: %d %s.", p.owed, T().currency));
     // supplies
@@ -1026,10 +1221,9 @@ void Sim::agentAgenda(const Order& o, Person& p, Site& s) {
         say(fstr("    Issued %d one-time pad sheet%s and rehearsed the broadcast schedule. He now holds %d.", np, np == 1 ? "" : "s", p.pads));
     } else if (o.pads > 0) say("    You had no pad sheets to give him.");
     // instruction
-    if (o.train && o.longMeet) {
-        p.craft = std::min(80.f, p.craft + 5 + A->tradecraft * 0.05f);
-        say("    Security instruction given: routes to meetings, handling of the camera at work, what to say if questioned.");
-    }
+    if (o.train && o.longMeet) trainAgent(p, o.trainWhat, s.flat);
+    if (o.docs && o.longMeet && s.flat) docSession(o, p, s);
+    if (o.longMeet) referral(p);
     if (o.tempo >= 0 && o.tempo != p.tempo) {
         p.tempo = o.tempo;
         say(std::string("    Tempo of collection set to: ") + TEMPO[p.tempo] + ".");
@@ -1041,12 +1235,23 @@ void Sim::agentAgenda(const Order& o, Person& p, Site& s) {
         say("    Tasked against: " + (q ? q->title : std::string("general collection")) + ".");
     }
     if (o.am >= 0) placeAM(o, p);
+    if (o.bug && o.longMeet && p.bug == 0) {
+        if (g.bugs > 0) {
+            g.bugs--; p.bug = 1; p.bugDay = g.day + 2 + r().n(6); p.stress += 6;
+            say("    Gave him the listening device and went through the placing of it twice. He will put it in when he can.");
+            file(p, "Issued a listening device for his office.");
+        } else say("    You had no device to give him.");
+    }
+    if (o.longMeet) ciReport(p);
     commsPlan(o, p);
     float relief = (o.longMeet ? rnd(8, 16) : rnd(2, 5)) * (0.5f + p.rapport / 100.f);
     p.stress = clampf(p.stress - relief, 0, 100);
     p.rapport = clampf(p.rapport + (o.longMeet ? rnd(1, 4) : 0.5f), 0, 100);
     if (o.longMeet) learnSome(p, 2, 20);
     tells(p);
+    if (o.exfil) exfiltrate(p);
+    else if (o.standing && o.longMeet) rehearseEscape(p);
+    if (p.stage == AGENT && p.play == 2) playbackMeet(p, s);
 }
 
 void Sim::commsPlan(const Order& o, Person& p) {
@@ -1069,6 +1274,7 @@ void Sim::commsPlan(const Order& o, Person& p) {
 
 void Sim::contactAgenda(const Order& o, Person& p, Site& s) {
     socialGain(p, o.longMeet ? 1.1f : 0.4f);
+    birthdayMeeting(o, p);
     if (o.favour) favour(p);
     if (!p.live()) return;
     if (o.pay > 0 && o.pitch < 0) gift(p, o.pay);
@@ -1089,7 +1295,9 @@ void Sim::pitch(const Order& o, Person& p, Site& s) {
     static const int attr[] = {A_MONEY, A_IDEO, A_EGO, A_VULN};
     float motive = p.tru[attr[o.pitch]];
     float score = 0.40f * motive + 0.25f * p.rapport + 0.35f * p.commitment - 40;
-    if (o.pitch == 3) score = 0.75f * motive + 0.15f * p.commitment - 30 - p.tru[A_NERVE] * 0.15f;
+    if (o.pitch == 3) score = 0.75f * motive + 0.15f * p.commitment - 30 - p.tru[A_NERVE] * 0.15f + (p.kompState == 3 ? p.komp * 0.5f : 0);
+    if (o.pitch == 3 && p.kompState == 3) say("    You put the material on the table between you, and let him look at it for as long as he liked.");
+    if (p.service != SVC_NONE) score -= 8;               // he knows exactly what is being asked of him, and what it costs
     float chance = clampf(score / 50.f * 100.f, 2, 92);
     bool yes = controlled(p) ? pct(92) : pct(chance);
     if (yes) {
@@ -1099,6 +1307,7 @@ void Sim::pitch(const Order& o, Person& p, Site& s) {
         g.codenameIdx++;
         p.commitment = std::max(p.commitment, 70.f);
         p.salary = P(o.pitch == 0 ? 20 + (int)std::lround(p.tru[A_MONEY] * 0.7f / 5) * 5 : (int)std::lround(p.tru[A_MONEY] * 0.3f / 5) * 5);
+        if (p.service != SVC_NONE) p.salary = (int)std::lround(p.salary * 1.5f / 5) * 5 + P(20);
         p.owed = 0;
         p.tempo = o.tempo >= 0 ? o.tempo : 1;
         if (o.pitch == 3) { p.stress += 30; p.tru[A_HONEST] = clampf(p.tru[A_HONEST] - 25, 0, 100); p.rapport = clampf(p.rapport - 25, 0, 100); }
@@ -1109,7 +1318,7 @@ void Sim::pitch(const Order& o, Person& p, Site& s) {
         if (p.meetEvery <= 0) p.meetEvery = 21;
         commsPlan(o, p);
         int amt = std::min(o.pay, g.funds);
-        if (amt > 0) { money(-amt, "First payment, agent " + p.codename + " (receipt held)"); p.paidTotal += amt; p.paid90 += amt; say(fstr("    First payment: %d %s against a signed receipt.", amt, T().currency)); }
+        if (amt > 0) { money(-amt, "First payment, agent " + p.codename + " (receipt held)"); p.paidTotal += amt; p.paid90 += amt; payAgent(p, amt); say(fstr("    First payment: %d %s against a signed receipt.", amt, T().currency)); }
         int nf = std::min(o.film, g.film);
         if (nf > 0) { g.film -= nf; p.film += nf; }
         if (o.camera && g.cameras > 0) { g.cameras--; p.camera = true; }
@@ -1126,8 +1335,9 @@ void Sim::pitch(const Order& o, Person& p, Site& s) {
     }
     // refusal
     float report = (100 - p.tru[A_DISC]) * 0.5f + p.empSec * 0.2f + (o.pitch == 3 ? 20 : 0);
+    if (p.service != SVC_NONE) report = std::max(report, 75.f);
     if (pct(report)) {
-        heat(10); g.standRez -= 8 / (1 + 0.5f * T().role);
+        heat(p.service != SVC_NONE ? 15.f : 10.f); g.standRez -= 8 / (1 + 0.5f * T().role);
         p.knownAdv = true;
         if (pct(30)) {     // the adversary sends him back
             makeDangle(p);
@@ -1173,6 +1383,7 @@ void Sim::loadDrop(const Order& o, int b) {
     if (o.reqId > -2) s.reqNote = o.reqId;
     if (o.container && g.containers > 0) { g.containers--; s.container = true; }
     s.forAgent = p.id; s.loadedDay = g.day; s.uses++; s.lastUsed = g.day; s.exposure += 5;
+    if (g.wx == WX_SNOW) { s.exposure += 6; say("    Fresh snow: your footprints lead to the place and away again."); }
     paper(1);
     if (csToday(o)) csWitness(&p, &s);
     say(std::string("    Loaded: ") + (cash > 0 ? fstr("%d %s, ", cash, T().currency) : std::string("")) + (nf > 0 ? fstr("%d cassettes, ", nf) : std::string(""))
@@ -1207,7 +1418,7 @@ void Sim::unloadDrop(const Order& o, int b) {
     if (!me()) witness(s.witting, O->id);
     if (s.staked) {
         if (stakeoutSeen(o, s)) return;
-        if (has && pct(50)) {              // as often as not they let it run, to see who else comes
+        if (has && pct(50 * hard())) {     // as often as not they let it run, to see who else comes
             Person* owner = s.rolls.empty() ? person(s.forAgent) : (roll(s.rolls[0]) ? person(roll(s.rolls[0])->agentId) : nullptr);
             flagrante(owner, &s);
             return;
@@ -1215,6 +1426,7 @@ void Sim::unloadDrop(const Order& o, int b) {
         heat(20);
     }
     s.uses++; s.lastUsed = g.day; s.exposure += 5; paper(1);
+    if (g.wx == WX_SNOW) { s.exposure += 6; say("    Fresh snow: your footprints lead to the place and away again."); }
     if (!has) { say("    The drop was empty."); if (a.observed) { s.burned = true; heat(6); } return; }
     int n = 0;
     for (int id : s.rolls) if (Roll* x = roll(id)) { x->state = R_YOU; x->stateDay = g.day; n++; }
@@ -1242,8 +1454,9 @@ void Sim::readSignal(const Order& o, int b) {
     g.cover = std::min(100.f, g.cover + 0.6f);
     s.markSeen = s.mark; s.markSeenDay = g.day;
     if (A->covered[b] && pct(10)) s.burned = true;
-    std::string t = s.mark == 0 ? "no mark." : (s.mark == 1 ? "the 'drop loaded' mark is up." : (s.mark == 2 ? "THE DANGER SIGNAL IS UP." : "your own call-out mark is still there."));
+    std::string t = s.mark == 0 ? "no mark." : (s.mark == 1 ? "the 'drop loaded' mark is up." : (s.mark == 2 ? "THE DANGER SIGNAL IS UP." : s.mark == 4 ? "a man is standing there with a carrier bag." : "your own call-out mark is still there."));
     if (s.mark == 2) alert("Signal site " + s.name + ": " + t); else say("  You walked past " + s.name + ": " + t);
+    if (s.mark == 4) { say("    You walked past him eating a bar of chocolate, and did not look at him."); escapeSeen(s); }
 }
 
 void Sim::placeSignal(const Order& o, int b) {
@@ -1315,4 +1528,27 @@ void Sim::controlOp(const Order& o, int b) {
     } else if (a.observed) { s.burned = true; heat(4); }
     of->file.push_back(pad(fmtShort(g.day), 11) + "Control operation at " + s.name + ": nothing seen at the site.");
     say("    Dummy package placed and recovered. Nothing seen at the site.");
+}
+
+/** What hangs on the next few minutes, as an officer in the street would put it to himself. */
+std::string Sim::streetStakes(const Order& o, Site* st) {
+    Person* p = person(o.person);
+    std::string sb;
+    if (o.type == O_MEET_CLAN && p) {
+        bool agent = p->stage == AGENT;
+        bool carry = !p->held.empty() && o.collect && agent;
+        if (agent) sb += gx(p, p->label() + " will be there" + std::string(carry ? " with exposed film on him." : ".") + " If you are caught together with it, you are expelled and he goes to prison. ");
+        else sb += gx(p, p->name + " will be waiting" + std::string(o.pitch >= 0 ? ", and tonight you mean to recruit him. " : ". "));
+        if (o.pay > 0 || o.film > 0) sb += "You are carrying " + (o.pay > 0 ? fstr("%d %s", o.pay, T().currency) : std::string("")) + (o.pay > 0 && o.film > 0 ? " and " : "") + (o.film > 0 ? fstr("%d cassette%s", o.film, o.film == 1 ? "" : "s") : std::string("")) + ". ";
+        if (agent) sb += gx(p, "If you walk on, he waits fifteen minutes and goes home; the fall-back is in a week, and he will wonder why.");
+        else sb += gx(p, "If you walk on, he will wonder why, and it will cost you some of his goodwill.");
+    } else if (o.type == O_UNLOAD_DROP) {
+        sb += "If the drop is loaded and they are watching it, you will be taken with the material in your hand. If you walk on, it lies there another day - and so does the risk that somebody else finds it.";
+    } else if (o.type == O_LOAD_DROP) {
+        sb += gx(p, "If they see you load it, they will have the drop - and whoever comes to empty it. If you walk on, " + std::string(p ? p->label() : "he") + " finds nothing at his next servicing.");
+    } else if (o.type == O_LINE_N) {
+        sb += "If they see the package placed, an illegal walks into their arms in a week, and years of somebody's work are lost. Centre will not forget it.";
+    }
+    (void)st;
+    return sb;
 }

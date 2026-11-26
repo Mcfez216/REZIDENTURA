@@ -35,10 +35,26 @@ extern const char* W_COMMIT[5];
 extern const char* W_LEVEL[5];
 extern const char* W_STAND[5];
 
+/** A short scenario: one posting, one operation, a few months, and a graded result (sim_ops.cpp). */
+struct ScenarioDef { const char* name; const char* blurb; int theatre; int opKind; };
+extern const ScenarioDef SCENARIOS[];
+extern const int N_SCENARIO;
+
 class Sim {
 public:
+    // ---- operations (sim_ops.cpp)
+    Operation* activeOp();
+    std::vector<std::pair<std::string, bool>> opStages(const Operation& o);   // each stage, and whether it is done
+    std::string nameTraitor();                              // opens the decision that ends a leak hunt
+    /** The deputy: on each morning he is on, he puts the routine in order (sim_deputy.cpp). Safe to call more than once a day. */
+    void deputyPlan();
+    std::string deputyLog;                                  // what he did this morning, for the brief and the report
+    /** What an experienced officer puts on the agenda of an ordinary meeting with his agent. */
+    void usualAgenda(Order& o, const Person& p, int day) const;
     /** When set, a meeting or a drop of yours that meets surveillance stops the day and asks you (DK_STREET). The screens set it from the settings. */
     bool askInStreet = false;
+    /** When set, your own meetings with agents, and recruitment approaches, are played as a scene (DK_SCENE). */
+    bool askScenes = false;
     /** Your own operational acts, as your surveillance log records them: when and where. Nothing hidden. */
     struct Pattern { int grid[7][3] = {}; int dist[8] = {}; int n = 0, slotDow = -1, slotB = -1, slotN = 0, topDist = -1, topDistN = 0; };
     Pattern myPattern(int days) const;
@@ -57,7 +73,7 @@ public:
     // ---- starting, saving, loading
     void newCareer(uint64_t seed, const std::string& officer, int difficulty = 1, bool withTraining = false);
     /** A career begun anywhere: at the course (TH_MOSCOW) or at any posting, with a background, difficulty and ironman rule. */
-    struct CareerOpts { int start = TH_MOSCOW; int background = 0; int difficulty = 1; bool ironman = false; };
+    struct CareerOpts { int start = TH_MOSCOW; int background = 0; int difficulty = 1; bool ironman = false; int scenario = 0; };
     void newCareer(uint64_t seed, const std::string& officer, const CareerOpts& o);
     static int startRank(int theatre);
     const Officer* rezident() const;
@@ -176,7 +192,14 @@ public:
     int unread() const;
 
 private:
-    struct StreetHalt { int block; std::string title, text; std::vector<std::string> opts; };
+    void opsDawn();
+    void scenarioSetup(int k);
+    void scenarioFinish(bool forced, const std::string& why);
+    void opOffer(int kind);
+    void opEnd(Operation& o, bool won, const std::string& why);
+    void opDecide(const Decision& d, int option);
+    struct StreetHalt { int block; std::string title, text; std::vector<std::string> opts; int kind = DK_STREET; };
+    void scene(Order& o, Person& p, int b);
     void endDayInner();
     std::string streetStakes(const Order& o, Site* st);
     void birthdayMeeting(const Order& o, Person& p);

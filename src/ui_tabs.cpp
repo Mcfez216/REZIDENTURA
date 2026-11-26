@@ -338,6 +338,14 @@ void App::tabPlanner() {
             }
         }
         if (!sim.training() && fl.btn("Book a countersurveillance team")) note = sim.requestCS(day);
+        if (!sim.training()) {
+            if (fl.btn(g.deputy ? "Deputy: ON###deputy" : "Deputy: OFF###deputy")) {
+                g.deputy = !g.deputy;
+                if (g.deputy) { g.deputyDay = -1; sim.deputyPlan(); note = sim.deputyLog.empty() ? "Your deputy will put the routine in order each morning." : sim.deputyLog; }
+            }
+            if (ImGui::IsItemHovered() && cfg.tooltips)
+                ImGui::SetTooltip("%s", "Your deputy puts the routine in order each morning, in blocks you have left to routine:\nstores on order, the agenda of agreed meetings, a detection route before every act,\nreports written up, rest when you are tired, signal sites read. He never changes an order you gave.\nWhat he did is in the morning brief and the daily report.");
+        }
         std::string selTxt = "  " + fmtDay(day) + ", " + BLOCK_LABEL[std::max(0, b)];
         ImGui::SameLine();
         if (ImGui::CalcTextSize(selTxt.c_str()).x > ImGui::GetContentRegionAvail().x) ImGui::NewLine();
@@ -349,9 +357,44 @@ void App::tabPlanner() {
     float rw = ImGui::GetContentRegionAvail().x;
     if (sim.training()) instructorCard(rw);
     else {
+        float opH = 0;
+        if (Operation* op = sim.activeOp()) {     // the operation under way: a folder pinned above the brief
+            auto st = sim.opStages(*op);
+            opH = std::floor((112 + 25 * st.size() + (op->kind == OP_LEAK ? 40 : 0)) * S);
+            std::string hint = fstr("%d days left", std::max(0, op->due - g.day));
+            if (docPanel("opCard", ImVec2(rw, opH), C_MANILA, 14, ("Operation " + op->name).c_str(), hint.c_str(), ImGuiWindowFlags_NoScrollbar)) {
+                ImDrawList* odl = ImGui::GetWindowDrawList();
+                ImGui::PushFont(F.uiBold);
+                ImGui::PushTextWrapPos(0);
+                ImGui::TextUnformatted(op->title.c_str());
+                ImGui::PopTextWrapPos();
+                ImGui::PopFont();
+                ImGui::Dummy(ImVec2(1, 2 * S));
+                bool next = true;
+                for (auto& s2 : st) {
+                    ImVec2 q = ImGui::GetCursorScreenPos();
+                    odl->AddRect(q + ImVec2(2 * S, 4 * S), q + ImVec2(14 * S, 16 * S), rgb(C_INK), 0, 0, 1.4f * S);
+                    if (s2.second) {         // a tick in red pencil
+                        odl->AddLine(q + ImVec2(3 * S, 9 * S), q + ImVec2(7 * S, 14 * S), rgb(C_PENCIL_RED), 2.2f * S);
+                        odl->AddLine(q + ImVec2(7 * S, 14 * S), q + ImVec2(16 * S, 1 * S), rgb(C_PENCIL_RED), 2.2f * S);
+                    }
+                    ImU32 col = s2.second ? rgb(C_INK_FADED) : next ? rgb(C_RED) : rgb(C_INK);
+                    odl->AddText(F.ui, F.ui->FontSize, q + ImVec2(22 * S, 1 * S), col, s2.first.c_str());
+                    if (!s2.second) next = false;
+                    ImGui::Dummy(ImVec2(1, 22 * S));
+                }
+                if (op->kind == OP_LEAK && op->stage < 9) {
+                    if (uiBtn("Name the traitor...")) { std::string r = sim.nameTraitor(); if (!r.empty()) note = r; }
+                }
+                stamp(odl, ImGui::GetWindowPos() + ImVec2(ImGui::GetWindowWidth() - 70 * S, 52 * S), "СЕКРЕТНО", rgb(C_RED, 0.55f), 8, F.stamp, 15 * S, 1);
+                if (ImGui::IsWindowHovered() && cfg.tooltips) ImGui::SetTooltip("%s", (op->brief + "\n\n" + op->stakes).c_str());
+            }
+            docEnd();
+            opH += 10 * S;
+        }
         ImDrawList* dl = ImGui::GetWindowDrawList();
         ImVec2 p = ImGui::GetCursorScreenPos();
-        if (docPanel("brief", ImVec2(rw, avail.y), C_TELETYPE, 16, "Morning brief", nullptr)) {
+        if (docPanel("brief", ImVec2(rw, avail.y - opH), C_TELETYPE, 16, "Morning brief", nullptr)) {
             uiTyped(g.brief, rgb(C_INK), F.body, [](const std::string& l, ImU32& c, ImFont*& f) {
                 if (heading(l) || has(l, "ZENIT") || has(l, "LINE KR") || l.rfind("TODAY", 0) == 0) f = F.bold;
                 if (has(l, "HEAVY") || has(l, "priority target") || has(l, "arrears") || has(l, "over-tired") || has(l, "stand him down")) c = rgb(C_RED);

@@ -7,7 +7,7 @@ mkdir -p build/win dist
 ZIG="python3 -m ziglang"
 FLAGS="-target x86_64-windows-gnu -O2 -std=c++17 -DNDEBUG -DUNICODE -D_UNICODE -Isrc -Ithird_party/imgui -Ithird_party/imgui/backends"
 OBJS=""
-for f in src/content.cpp src/sim_day.cpp src/sim_night.cpp src/sim_career.cpp src/sim_spy.cpp src/sim_tutorial.cpp src/sim_life.cpp src/sim_world.cpp src/sim_events.cpp src/sim_office.cpp src/sim_trade.cpp src/sim_text.cpp \
+for f in src/content.cpp src/sim_day.cpp src/sim_night.cpp src/sim_career.cpp src/sim_spy.cpp src/sim_tutorial.cpp src/sim_life.cpp src/sim_world.cpp src/sim_events.cpp src/sim_office.cpp src/sim_trade.cpp src/sim_text.cpp src/sim_deputy.cpp src/sim_ops.cpp src/sim_scene.cpp \
          src/art.cpp src/gfx.cpp src/skin.cpp src/ui.cpp src/ui_tabs.cpp src/ui_extra.cpp src/ui_launch.cpp src/main_win32.cpp \
          third_party/imgui/imgui.cpp third_party/imgui/imgui_draw.cpp third_party/imgui/imgui_tables.cpp third_party/imgui/imgui_widgets.cpp \
          third_party/imgui/backends/imgui_impl_win32.cpp third_party/imgui/backends/imgui_impl_dx11.cpp; do

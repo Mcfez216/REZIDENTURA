@@ -81,8 +81,24 @@ struct Bot {
     int choose(const Decision& d) {
         int n = (int)d.opts.size();
         switch (d.kind) {
+            case DK_SCENE: {                      // a pitch: the angle it had planned; an agent: calm him if he is frightened, else praise him
+                Order o = s.order(g.day, std::max(0, std::min(2, d.ref)));
+                if (n == 5) return o.pitch >= 0 && o.pitch < 4 ? o.pitch : 4;
+                if (d.text.find("frightened") != std::string::npos || d.text.find("followed") != std::string::npos || d.text.find("searched") != std::string::npos) return 0;
+                return careful ? (g.funds > s.P(60) ? 2 : 0) : 1;
+            }
             case DK_STREET: return careful ? (d.title.rfind("SURVEILLANCE", 0) == 0 ? 0 : 1) : n - 1;   // careful: walk on from a confirmed team
             case DK_ORPHANS: return (int)(g.seed % 3);
+            case DK_OP_OFFER: return careful || g.seed % 3 ? 0 : 1;
+            case DK_OP_NAME: {                    // the officer a marked card caught, if any; otherwise nobody
+                int i = 0;
+                for (auto& x : g.officers) {
+                    if (x.gone || !(x.role == ROLE_COLLEAGUE || x.role == ROLE_SUB || x.role == ROLE_TECH)) continue;
+                    for (auto& f : x.file) if (f.find("stake-out was waiting") != std::string::npos) return i;
+                    i++;
+                }
+                return n - 1;
+            }
             case DK_APPROACH: if (d.ref == 1) return careful ? 0 : 1 + (int)(g.seed % 2);
                               return careful ? (g.seed % 3 == 0 ? 2 : 0) : (g.seed % 2 ? 2 : 1);
             case DK_PLAN: return careful ? 1 : 2;
@@ -124,6 +140,17 @@ struct Bot {
         const Theatre& t = s.T();
         int day = g.day;
         while (!g.decisions.empty()) s.decide(g.decisions[0].id, choose(g.decisions[0]));
+        // an operation: a leak hunt is closed with a name a week before the day; a rescue starts with the documents
+        if (Operation* op = s.activeOp()) {
+            if (op->kind == OP_LEAK && g.day >= op->due - 7) { s.nameTraitor(); while (!g.decisions.empty()) s.decide(g.decisions[0].id, choose(g.decisions[0])); }
+            if (op->kind == OP_RESCUE) if (Person* p = s.person(op->ref)) {
+                if (p->exfil == 0) s.requestExfil(*p);
+                // documents in the safe and his meeting a long way off: call him out
+                if (p->exfil == 2 && p->stage == AGENT && p->signalSite >= 0 && !p->meetSites.empty() && (p->nextMeet < 0 || p->nextMeet > day + 5) && !s.isSet(day, 1)) {
+                    Order c = mk(O_PLACE_SIGNAL); c.person = p->id; put(1, c);
+                }
+            }
+        }
         // ---- stores and staff work
         if (g.film < 4) s.requestFilm();
         if (g.cameras < 1 && day % 7 == 0) s.requestCamera();
@@ -223,6 +250,9 @@ struct Bot {
             o.train = true;
             o.standing = p.exfil == 2;
             o.present = !o.brush && s.presentDue(p, day);
+            if (Operation* op = s.activeOp()) {
+                if (op->kind == OP_RESCUE && op->ref == p.id && p.exfil == 2) { o.exfil = true; o.standing = false; o.longMeet = true; o.brush = false; }
+            }
             o.trainWhat = p.craft < 55 ? 0 : (p.camera && p.skPhoto < 50) ? 1 : p.skSpot < 40 ? 3 : p.skComms < 50 ? 4 : 2;
             if (Site* at = s.agreedSite(p)) o.docs = at->flat && g.film >= 4 && !warned(p) && p.estV[A_ACCESS] > 40 && day % 2 == 0;
             o.longMeet = true;
@@ -238,6 +268,7 @@ struct Bot {
             auto cs = g.csDays.find(day);
             o.cs = cs != g.csDays.end() && cs->second.state == 2;
             for (auto& q : g.reqs) if (!q.closed && q.kind == RK_COLLECT && q.sector == p.sector) { o.reqId = q.id; break; }
+            if (Operation* op = s.activeOp()) if (op->kind == OP_FLASH) if (Requirement* fq = s.req(op->ref)) if (!fq->closed && fq->sector == p.sector) o.reqId = fq->id;
             // move him on to sites of our own when we have them
             Site* a = nullptr; Site* b2 = nullptr;
             for (auto& x : g.sites) if (x.type == ST_MEET && !x.retired && x.casing >= 2 && x.exposure < 40) { if (!a) a = &x; else if (!b2) b2 = &x; }

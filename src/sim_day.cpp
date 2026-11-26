@@ -1121,7 +1121,9 @@ void Sim::meetClan(const Order& o, int b) {
     if (brush) { say("    The pass was made: twelve seconds, no words."); brushAgenda(o, p); }
     else {
         say(std::string("    Meeting held (") + (o.longMeet ? "about two hours" : "ten minutes") + ").");
-        if (agent) agentAgenda(o, p, s); else contactAgenda(o, p, s);
+        Order oo = o;
+        if (me() && askScenes && rep && !training() && o.longMeet) scene(oo, p, b);     // you play it yourself; this may stop the day to ask
+        if (agent) agentAgenda(oo, p, s); else contactAgenda(oo, p, s);
     }
     if (g.phase != PH_PLAY) return;
 

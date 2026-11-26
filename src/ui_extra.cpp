@@ -45,6 +45,7 @@ void App::loadSettings() {
         else if (k == "tooltips") cfg.tooltips = b();
         else if (k == "confirmEndDay") cfg.confirmEndDay = b();
         else if (k == "streetChoices") cfg.streetChoices = b();
+        else if (k == "scenes") cfg.scenes = b();
         else if (k == "toasts") cfg.toasts = b();
         else if (k == "popped" && cfg.rememberWindows) for (int i = 0; i < N_TAB && i < (int)v.size(); i++) popped[i] = v[(size_t)i] == '1';
     }
@@ -59,7 +60,7 @@ void App::saveSettings() {
     for (int i = 0; i < N_TAB; i++) pop += popped[i] ? '1' : '0';
     f << "multiMonitor=" << cfg.multiMonitor << "\nrememberWindows=" << cfg.rememberWindows << "\nuiScale=" << cfg.uiScale << "\nfullscreen=" << cfg.fullscreen
       << "\nmonthlyBackups=" << cfg.monthlyBackups << "\nrunStopMeeting=" << cfg.runStopMeeting << "\nrunStopCable=" << cfg.runStopCable << "\nrunStopAlert=" << cfg.runStopAlert
-      << "\nrunMaxDays=" << cfg.runMaxDays << "\njumpAfterDay=" << cfg.jumpAfterDay << "\ntooltips=" << cfg.tooltips << "\nconfirmEndDay=" << cfg.confirmEndDay << "\nstreetChoices=" << cfg.streetChoices << "\ntoasts=" << cfg.toasts << "\npopped=" << pop << "\n";
+      << "\nrunMaxDays=" << cfg.runMaxDays << "\njumpAfterDay=" << cfg.jumpAfterDay << "\ntooltips=" << cfg.tooltips << "\nconfirmEndDay=" << cfg.confirmEndDay << "\nstreetChoices=" << cfg.streetChoices << "\nscenes=" << cfg.scenes << "\ntoasts=" << cfg.toasts << "\npopped=" << pop << "\n";
 }
 
 /** Keep the autosaves of the last three months: autosave-1 is the newest. */
@@ -261,6 +262,7 @@ void App::settingsPopup(ImVec2 centre) {
     changed |= ImGui::SliderInt("and in any case after (days)", &cfg.runMaxDays, 2, 90);
     changed |= uiCheck("After End Day, turn to the cables or the report by itself", &cfg.jumpAfterDay);
     changed |= uiCheck("Ask before ending a day while something urgent is undone (see Checklist)", &cfg.confirmEndDay);
+    changed |= uiCheck("Play my own long meetings and recruitment approaches as scenes (choose how to handle the man at the table)", &cfg.scenes);
     changed |= uiCheck("Decide in the street yourself when a meeting or a drop of yours meets surveillance (otherwise the abort policy decides)", &cfg.streetChoices);
     changed |= uiCheck("Show a short notice of what happened after each day", &cfg.toasts);
     changed |= uiCheck("Keep the autosaves of the last three months as well (autosave-month-1 ... 3)", &cfg.monthlyBackups);
@@ -481,6 +483,8 @@ void App::pushToasts(int fromDay, size_t cablesBefore) {
         for (size_t i = cablesBefore; i < sim.g.cables.size(); i++) {
             const Cable& cb = sim.g.cables[i];
             if (cb.subject == "Promotion") c.push_back({7, "ПОВЫШЕН В ЗВАНИИ", "PROMOTED", 0xA8801Cu});
+            else if (cb.subject.rfind("Operation ", 0) == 0 && hasTxt(cb.subject, "COMPLETED")) c.push_back({8, "ОПЕРАЦИЯ ЗАВЕРШЕНА", "OPERATION COMPLETE", 0x2F6B3Au});
+            else if (cb.subject.rfind("Operation ", 0) == 0 && hasTxt(cb.subject, "FAILED")) c.push_back({8, "ПРОВАЛ", "OPERATION FAILED", 0x3A1410u});
             else if (cb.subject.rfind("Arrest of ", 0) == 0 && !hasTxt(cb.subject, "neighbours")) c.push_back({4, "АРЕСТОВАН", "AGENT ARRESTED", 0x3A1410u});
             else if (hasTxt(cb.subject, "satisfied") || hasTxt(cb.subject, "carried out")) c.push_back({2, "ЗАДАНИЕ ВЫПОЛНЕНО", "REQUIREMENT MET", 0x4A3E8Eu});
             else if (cb.subject.rfind("Evaluation of material", 0) == 0 && hasTxt(cb.body, "OF CONSIDERABLE VALUE")) c.push_back({3, "ОСОБО ЦЕННО", "OF CONSIDERABLE VALUE", 0x4A3E8Eu});

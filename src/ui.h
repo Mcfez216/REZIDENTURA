@@ -28,7 +28,8 @@ struct Settings {
     bool jumpAfterDay = true;                 // after End Day, turn to the report or the cables by itself
     bool tooltips = true;
     bool toasts = true;                       // after each day, short notices of what happened
-    bool streetChoices = true;                // decide yourself when a meeting or a drop meets surveillance
+    bool streetChoices = true;
+    bool scenes = true;                       // play your own long meetings and recruitment approaches as scenes                // decide yourself when a meeting or a drop meets surveillance
     bool confirmEndDay = false;               // ask before ending a day on which something urgent is still undone
 };
 
@@ -140,7 +141,7 @@ private:
     bool peekDone = false, peekOk = false, lastInGame = false;
     std::string peekLine1, peekLine2;
     std::string newName = "Sokolov", newSeed;
-    int newStart = 0, newBackground = 0;
+    int newStart = 0, newBackground = 0, newScenario = 0;
     bool newIronman = false;
     std::vector<std::string> loadInfo;
     std::vector<Record> archive;

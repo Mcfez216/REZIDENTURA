@@ -208,6 +208,7 @@ int main(int argc, char** argv) {
     App::recordRects = true;
     a.cfg.toasts = false;                               // the notices after each day are tested on their own, below
     a.cfg.streetChoices = false;                        // and so are the decisions in the street
+    a.cfg.scenes = false;                               // and the meetings played as scenes
     Sim& s = a.sim;
 
     auto t0 = std::chrono::steady_clock::now();
@@ -247,6 +248,17 @@ int main(int argc, char** argv) {
         s.newCareer(5, "Ivanov", o);
         check(s.rezident()->temper == t1, "the same world number gives the same Rezident");
     }
+    // ---- scenarios: one operation, a few months, a score
+    for (int k = 1; k < N_SCENARIO; k++) {
+        Sim::CareerOpts o;
+        o.scenario = k;
+        s.newCareer(20 + (uint64_t)k, "Petrov", o);
+        check(s.g.phase == PH_PLAY && s.g.scenario == k && s.activeOp() != nullptr && s.g.theatre == SCENARIOS[k].theatre, std::string("a scenario begins with its operation running: ") + SCENARIOS[k].name);
+        if (k == 2) { click("tab:Planner"); shot("06-scenario-planner"); }
+        play(200);
+        check(s.g.phase == PH_OVER && s.g.overTitle.find("SCENARIO") == 0, "and it ends with a score: " + s.g.overTitle);
+        if (k == 2) shot("06-scenario-end");
+    }
     s.newCareer(11, "Sokolov", 1, true);
     // ---- the course, played by the test player, with pictures on the way
     shot("02-course-planner");
@@ -266,6 +278,7 @@ int main(int argc, char** argv) {
     check(s.g.phase == PH_PLAY && s.g.theatre == TH_LONDON, "the course is followed by London");
     // a fixed world, so that the pictures are repeatable
     s.newCareer(11, "Sokolov");
+    s.g.deputy = false;                                 // the scripted checks below give every order themselves; the deputy is tested on its own
     click("cable:0");
     shot("05-centre");
     const char* tabs[] = {"Planner", "Checklist", "Contacts", "City map", "Sites", "Case board", "Material", "Centre", "Daily report", "Station", "Surveillance", "Accounts", "Results", "Private life", "Career", "Handbook"};
@@ -317,6 +330,84 @@ int main(int argc, char** argv) {
     click("OK##note");
     // ---- let the test player work for five months, then look at every screen
     play(150);
+    // ---- the deputy: switched on from the planner, he keeps the routine of a hands-off month in order
+    {
+        std::vector<uint8_t> before = s.save();
+        click("tab:Planner");
+        click("Deputy: OFF###deputy");
+        if (onScreen("OK##note")) click("OK##note");
+        check(s.g.deputy, "the deputy is switched on from the planner");
+        bool logged = false;
+        s.g.paperwork = 12;
+        for (int k = 0; k < 30 && s.g.phase == PH_PLAY; k++) {
+            while (!s.g.decisions.empty()) s.decide(s.g.decisions[0].id, 0);
+            s.endDay();
+            auto it = s.g.reports.find(s.g.day - 1);
+            if (it != s.g.reports.end()) for (auto& l : it->second) if (l.rfind("Your deputy:", 0) == 0) logged = true;
+        }
+        shot("09-deputy-brief");
+        check(logged && s.g.paperwork <= 8, fstr("a month with only the deputy: he reports what he did, and the reports are up to date (%.1f h)", s.g.paperwork));
+        s.load(before);
+    }
+    // ---- an operation: offered by Centre, accepted, and pinned above the brief
+    {
+        std::vector<uint8_t> before = s.save();
+        for (auto& o : s.g.ops) if (o.state == OPS_ACTIVE || o.state == OPS_OFFERED) o.state = OPS_DECLINED;
+        s.g.lastOpDay = -9999;
+        bool offered = false;
+        for (int k = 0; k < 10 && s.g.phase == PH_PLAY && !offered; k++) {
+            for (auto& d : s.g.decisions) if (d.kind == DK_OP_OFFER) offered = true;
+            if (offered) break;
+            while (!s.g.decisions.empty()) s.decide(s.g.decisions[0].id, 0);
+            s.endDay();
+        }
+        check(offered, "Centre offers an operation");
+        if (offered) {
+            frames(4);
+            shot("09-operation-offer");
+            if (onScreen("decision:0")) click("decision:0");
+            while (!s.g.decisions.empty()) s.decide(s.g.decisions[0].id, 0);
+            check(s.activeOp() != nullptr, "the operation is taken on");
+            click("tab:Planner");
+            shot("09-operation-card");
+            if (s.activeOp() && s.activeOp()->kind == OP_LEAK) {
+                click("Name the traitor...");
+                frames(4);
+                check(onScreen("decision:0"), "a leak hunt ends with a name");
+                shot("09-operation-name");
+                while (!s.g.decisions.empty()) s.decide(s.g.decisions[0].id, 0);
+            }
+        }
+        s.load(before);
+    }
+    // ---- a meeting played as a scene: the evening stops at the table, and you choose how to handle him
+    {
+        std::vector<uint8_t> before = s.save();
+        s.askScenes = true;
+        Bot sb(s, true);
+        bool met = false;
+        for (int k = 0; k < 120 && s.g.phase == PH_PLAY && !met; k++) {
+            for (auto& d : s.g.decisions) if (d.kind == DK_SCENE) met = true;
+            if (met) break;
+            int d0 = s.g.day; sb.plan(); if (s.g.day == d0) s.endDay();
+        }
+        check(met, "a long meeting stops the evening at the table");
+        if (met) {
+            int d0 = s.g.day;
+            bool pitch = false;
+            for (auto& d : s.g.decisions) if (d.kind == DK_SCENE && d.opts.size() == 5) pitch = true;
+            a.cfg.scenes = true;
+            shot(pitch ? "09-scene-pitch" : "09-scene-agent");
+            click("decision:2");
+            auto it = s.g.reports.find(d0);
+            bool played = false;
+            if (it != s.g.reports.end()) for (auto& l : it->second) if (l.find("You told him his work is read in Moscow") != std::string::npos || l.find("You told her her work") != std::string::npos || l.find("You made the approach on") != std::string::npos) played = true;
+            check(s.g.day == d0 + 1 && played, "the evening is played out as chosen");
+            a.cfg.scenes = false;
+        }
+        s.askScenes = false;
+        s.load(before);
+    }
     // ---- a decision in the street: a watched officer goes about his business until something is seen on the way to an act
     {
         std::vector<uint8_t> before = s.save();

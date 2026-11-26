@@ -592,3 +592,24 @@ std::string Sim::archiveLine() const {
            + std::to_string(g.difficulty) + "\t" + (g.ironman ? "1" : "0") + "\t" + std::to_string(g.seed) + "\t" + fstr("%d-%02d", d.y, d.m) + "\t"
            + endingKey() + "\t" + clean(posts) + "\t" + std::to_string(recruited) + "\t" + cites + "\t" + std::to_string((int)g.awards.size());
 }
+
+// ============================================================================ your own pattern
+Sim::Pattern Sim::myPattern(int days) const {
+    Pattern p;
+    std::set<long long> seen;                     // one act per block, however many checks it took
+    for (auto& l : g.sdrLog) {
+        if (g.day - l.day > days || l.district < 0 || l.district >= 8) continue;
+        if (!seen.insert((long long)l.day * 4 + l.block).second) continue;
+        int dw = dateOf(l.day).dow;
+        p.grid[dw][l.block]++; p.dist[l.district]++; p.n++;
+    }
+    for (int d = 0; d < 7; d++) for (int b = 0; b < 3; b++) if (p.grid[d][b] > p.slotN) { p.slotN = p.grid[d][b]; p.slotDow = d; p.slotB = b; }
+    for (int i = 0; i < 8; i++) if (p.dist[i] > p.topDistN) { p.topDistN = p.dist[i]; p.topDist = i; }
+    return p;
+}
+std::string Sim::patternWord(const Pattern& p) const {
+    if (p.n < 3) return "too few acts to say";
+    float slot = p.slotN / (float)p.n, dist = p.topDistN / (float)p.n;
+    float k = std::max(slot * 1.4f, dist);
+    return k < 0.35f ? "varied - hard to predict" : k < 0.5f ? "some habits showing" : k < 0.7f ? "predictable" : "a timetable";
+}

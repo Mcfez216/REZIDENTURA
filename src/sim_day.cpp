@@ -655,6 +655,13 @@ Sim::Ap Sim::approach(const Order& o, int b, int district, Site* st) {
     if (cov) {
         float x = r().f() * 100;
         if (x < det) signs = 2; else if (x < det + (100 - det) * 0.35f) signs = 1;
+        // what the team saw goes into the adversary's file on your habits; a team that knows it was blown is replaced by a better one
+        if (me() && !home) {
+            g.habit[dateOf(g.day).dow][b] += 1;
+            g.habitD[district] += 1;
+            if (signs == 2) g.advAlert = std::min(6.f, g.advAlert + 1);
+        }
+        if (!me() && signs == 2) O->waryUntil = std::max(O->waryUntil, g.day + 12 + r().n(8));   // an officer who has seen them lies low for a while
         if (A->heat < 60) heat(longSdr ? 1.2f : 0.4f);   // a diplomat seen dry-cleaning himself is noted as an intelligence officer
     } else {
         float fa = clampf((cs ? 3 : 13) - A->tradecraft * 0.08f + fat * 0.05f, 1, 25);

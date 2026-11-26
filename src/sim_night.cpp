@@ -88,6 +88,24 @@ void Sim::officersDay() {
             if (alarm && o.policy < 2) { m.collect = false; m.longMeet = false; }       // talk only: nothing incriminating changes hands
             if (p.instrTempo >= 0) { m.tempo = p.instrTempo; p.instrTempo = -1; }
             else if (alarm && p.tempo > 0 && o.policy < 2) { m.tempo = 0; say("    (On his own judgement he is putting " + p.label() + " on ice. Instruct him otherwise if you disagree.)"); }
+            if (g.day <= o.waryUntil && o.policy < 2 && !alarm) {
+                m.brush = true; m.longMeet = false; m.train = false;
+                say("    (He is lying low after seeing surveillance: a brush pass only, nothing said.)");
+            }
+            // a worn meeting place is changed at this meeting, for one he has not used too often
+            if (!m.brush && s->exposure > 50) {
+                Site* fresh = nullptr;
+                for (auto& x : g.sites)
+                    if (x.type == ST_MEET && !x.retired && !x.flat && x.casing >= 1 && x.exposure < 30 && std::find(p.meetSites.begin(), p.meetSites.end(), x.id) == p.meetSites.end()
+                        && (!fresh || x.exposure < fresh->exposure)) fresh = &x;
+                if (fresh) {
+                    m.setMeetSites = true;
+                    m.meetSites = p.meetSites;
+                    std::replace(m.meetSites.begin(), m.meetSites.end(), s->id, fresh->id);
+                    witness(fresh->witting, o.id);
+                    say("    (" + shortSite(s) + " is worn: he is moving " + p.label() + " to " + shortSite(fresh) + ".)");
+                }
+            }
             if (p.instrReq > -2) { m.reqId = p.instrReq; p.instrReq = -2; }
             else { Requirement* cur = req(p.reqId); if (!cur || cur->closed) for (auto& q : g.reqs) if (!q.closed && q.kind == RK_COLLECT && q.sector == p.sector) { m.reqId = q.id; break; } }
             meetClan(m, 2);
@@ -100,6 +118,12 @@ void Sim::officersDay() {
         if (!acted && !o.gone) for (auto& p : g.persons) {
             if (p.stage != AGENT || p.handler != o.id || p.fetchDay < 0 || p.fetchDay > g.day || !site(p.dropSite)) continue;
             header();
+            if (g.day <= o.waryUntil && o.policy < 2 && pct(70)) {
+                p.fetchDay = g.day + 3;
+                say("    He is lying low, and has put off emptying " + p.label() + "'s drop for a few days.");
+                acted = true;
+                break;
+            }
             p.fetchDay = -1;
             Site* sg = site(p.signalSite);
             if (sg && sg->mark == 2) {
@@ -115,8 +139,8 @@ void Sim::officersDay() {
             break;
         }
         if (g.phase != PH_PLAY) break;
-        // 3. work on one of his developmental contacts
-        if (!acted && !o.gone && g.day - o.lastAct >= 2) {
+        // 3. work on one of his developmental contacts (not while he is lying low)
+        if (!acted && !o.gone && g.day - o.lastAct >= 2 && g.day > o.waryUntil) {
             Person* best = nullptr;
             for (auto& p : g.persons) {
                 if (!p.live() || p.stage == AGENT || p.handler != o.id) continue;
@@ -153,7 +177,7 @@ void Sim::officersDay() {
         }
         if (g.phase != PH_PLAY) break;
         // 4. look for new people
-        if (!acted && !o.gone && o.assign == AS_SPOT && (g.day % 7) == (o.id % 7) && pct(24 + o.nose * 0.2f)) {
+        if (!acted && !o.gone && g.day > o.waryUntil && o.assign == AS_SPOT && (g.day % 7) == (o.id % 7) && pct(24 + o.nose * 0.2f)) {
             header();
             spot(o.sector, "by " + o.title() + " at a function", o.id);
             money(-std::min(g.funds, P(3)), "Function expenses, " + o.title());
@@ -218,6 +242,10 @@ void Sim::night() {
             }
         }
     }
+    // --- the adversary's picture of your habits fades if it is not refreshed (about two months to half), and so does its alarm
+    for (auto& row : g.habit) for (float& x : row) x *= 0.985f;
+    for (float& x : g.habitD) x *= 0.985f;
+    g.advAlert *= 0.97f;
     // --- you
     homeNight();
     g.fatigue = std::max(0.f, g.fatigue - (training() ? 10 : g.wifeHere ? 10 + (g.home - 50) / 12.5f : 9));     // a man sleeps better in a quiet house
@@ -563,14 +591,27 @@ void Sim::grade(Roll& x) {
 
 // ============================================================================ DAWN
 /** Is this officer followed today? Depends on how interested the adversary is in him and how stretched they are. */
+/**
+ * How much more likely the adversary is to have a team out for you in this block today, from what it has learned
+ * of your habits: nothing at first, up to +60% for a weekday and hour you use for most of your acts.
+ */
+float Sim::habitLift(int b) const {
+    float total = 0;
+    for (auto& row : g.habit) for (float x : row) total += x;
+    if (total < 2) return 0;
+    float share = g.habit[dateOf(g.day).dow][b] / total;
+    float conf = std::min(1.f, total / 6.f);
+    return clampf((share * 21 - 1) * 0.25f, 0, 0.6f) * conf;
+}
+
 void Sim::coverage(Actor& a, bool isYou) {
-    (void)isYou;
     bool prev = false;
     for (int b = 0; b < 3; b++) {
         float p = clampf(0.04f + a.heat / 100.f * 0.72f, 0, 0.85f) * g.a4 * (b == 0 ? 0.7f : 1.f) * (dayOff(g.day) ? 0.8f : 1.f);
+        if (isYou) p = std::min(0.92f, p * (1 + habitLift(b)));        // they put the team out when they expect you to move
         bool c = (b > 0 && r().f() < 0.55f) ? prev : r().f() < p;
         a.covered[b] = c; prev = c;
-        a.teamQ[b] = (int)clampf(40 + a.heat * 0.4f + rnd(0, 15), 30, 90);
+        a.teamQ[b] = (int)clampf(40 + a.heat * 0.4f + rnd(0, 15) + (isYou ? std::min(20.f, g.advAlert * 4) : 0), 30, 95);
     }
 }
 
@@ -587,7 +628,12 @@ void Sim::dawn() {
     weather(false);
     // --- hidden surveillance picture for today
     g.a4 = clampf(g.a4 + r().gauss() * 0.12f + (g.a4Base - g.a4) * 0.2f, 0.3f, 2.4f);
-    for (int i = 0; i < 8; i++) g.hot[i] = r().f() < (T().east[i] && g.wallDown ? 0.12f : T().density[i] * g.distMod[i]) * g.a4;
+    float dTotal = 0;
+    for (float x : g.habitD) dTotal += x;
+    for (int i = 0; i < 8; i++) {
+        float lift = dTotal >= 3 ? clampf((g.habitD[i] / dTotal * 8 - 1) * 0.08f, 0, 0.3f) * std::min(1.f, dTotal / 8) : 0;   // a team waiting where you usually go
+        g.hot[i] = r().f() < (T().east[i] && g.wallDown ? 0.12f : T().density[i] * g.distMod[i] * g.a4 + lift);
+    }
     coverage(g.you, true);
     for (auto& o : g.officers) coverage(o.a, false);
     // --- things that arrive this morning
@@ -665,10 +711,25 @@ void Sim::dawn() {
                          : "You are a priority target. KR advises that you stand down from all operational acts.";
         sb += "\nLINE KR weekly assessment of your position:\n  " + kr + "\n";
         g.krLog.push_back(pad(fmtShort(g.day), 11) + kr);
+        // what Line KR can see as well as you can: your own log. A routine the station can read, the other side can read too.
+        Pattern pt = myPattern(60);
+        if (pt.n >= 4 && pt.slotN * 100 >= pt.n * 40) {
+            std::string blk = BLOCK_LABEL[pt.slotB];
+            for (auto& ch : blk) ch = (char)tolower((unsigned char)ch);
+            std::string t = fstr("%d of your last %d operational acts were on ", pt.slotN, pt.n) + DOW[pt.slotDow] + " " + blk + "s. A routine the adversary can learn is one it will use.";
+            sb += "  " + t + "\n";
+            g.krLog.push_back(pad("", 11) + t);
+        }
+        if (pt.n >= 5 && pt.topDistN * 100 >= pt.n * 50) {
+            std::string t = fstr("%d of them in ", pt.topDistN) + std::string(T().district[pt.topDist]) + ". Teams wait where officers go.";
+            sb += "  " + t + "\n";
+        }
+        if (g.advAlert > 2.5f && pct(65)) sb += "  Zenit suggests new call-signs on the net: the adversary may have put fresh teams on the station.\n";
         // and, if you have officers, a line on each of them
         for (auto& o : g.officers) if (o.role == ROLE_SUB && !o.gone) {
             float e = o.a.heat + r().gauss() * 11;
             sb += "  " + o.title() + ": " + (e < 22 ? "not noticed." : e < 45 ? "periodic coverage." : e < 68 ? "regular coverage." : "priority target - stand him down.") + "\n";
+            if (e >= 68) o.waryUntil = std::max(o.waryUntil, g.day + 14);        // he reads the same assessment, and lies low
         }
     }
     sb += "\nWEATHER: " + weatherLine() + "\n  Forecast for tomorrow: " + g.forecast + ".\n";

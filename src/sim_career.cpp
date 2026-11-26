@@ -21,7 +21,7 @@ bool Sim::load(const std::vector<uint8_t>& data) {
     a.writing = false; a.buf = data; a.pos = 4;
     GameState t;
     a & t;
-    if (!a.ok || a.ver < 8 || a.ver > 13 || t.theatre < 0 || t.theatre >= (int)THEATRES.size()) return false;
+    if (!a.ok || a.ver < 8 || a.ver > 14 || t.theatre < 0 || t.theatre >= (int)THEATRES.size()) return false;
     g = t;
     if (g.patronName.empty()) g.patronName = RU_LAST[(size_t)(g.seed % RU_LAST.size())];     // a save from before version 1.2
     if (a.ver < 9) g.planYear = dateOf(g.day).y;                                             // no plan until next January
@@ -272,6 +272,10 @@ void Sim::startPosting(int theatre, bool first) {
     // --- a clean desk
     g.persons.clear(); g.sites.clear(); g.rolls.clear(); g.reqs.clear(); g.cables.clear(); g.outQ.clear(); g.pending.clear();
     g.officers.clear(); g.decisions.clear(); g.plan.clear(); g.reports.clear(); g.csDays.clear(); g.ledger.clear(); g.sdrLog.clear();
+    // a new city, a new adversary: nobody here has learned your habits yet
+    for (auto& row : g.habit) for (float& x : row) x = 0;
+    for (float& x : g.habitD) x = 0;
+    g.advAlert = 0;
     g.zenit.clear(); g.krLog.clear(); g.usedReqTemplates.clear(); g.histDone.clear(); g.usedNames.clear();
     g.mSpotted = g.mMeetings = g.mAborts = g.mRolls = 0; g.mValue = 0;
     makePool(); g.krEst = -1;

@@ -37,6 +37,10 @@ extern const char* W_STAND[5];
 
 class Sim {
 public:
+    /** Your own operational acts, as your surveillance log records them: when and where. Nothing hidden. */
+    struct Pattern { int grid[7][3] = {}; int dist[8] = {}; int n = 0, slotDow = -1, slotB = -1, slotN = 0, topDist = -1, topDistN = 0; };
+    Pattern myPattern(int days) const;
+    std::string patternWord(const Pattern& p) const;        // how predictable it looks: "varied" ... "a timetable"
     // ---- birthdays: everybody has one, drawn from the world number, and Centre's files note the round ones
     int birthday(const Person& p, int year) const;          // the day (game day number) of his birthday in that year
     int birthYear(const Person& p) const { return dateOf(p.firstDay).y - p.age; }
@@ -354,6 +358,7 @@ private:
     void grade(Roll& x);
     void dawn();
     void coverage(Actor& a, bool isYou);
+    float habitLift(int b) const;
     void arrive(const Pending& x);
     void monthly();
     void requirements();

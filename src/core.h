@@ -464,9 +464,10 @@ struct Officer {
     int temper = 0;                          // a Rezident's way of running his station (TEMPER_LABEL)
     int assign = AS_SUPPORT, sector = 0, policy = 1;
     int lastAct = -99;
+    int waryUntil = -1;                      // he saw surveillance, or Line KR named him: lying low until then (version 14)
     std::vector<std::string> file;
     std::string title() const { return std::string(RANK_ABBR[rank]) + " " + name; }
-    template <class A> void io(A& ar) { ar & id & role & rank & name & a & nose & diligence & mole & moleDay & defectDay & cautious & gone & assign & sector & policy & lastAct & file; if (ar.ver >= 12) ar & temper; }
+    template <class A> void io(A& ar) { ar & id & role & rank & name & a & nose & diligence & mole & moleDay & defectDay & cautious & gone & assign & sector & policy & lastAct & file; if (ar.ver >= 12) ar & temper; if (ar.ver >= 14) ar & waryUntil; }
 };
 
 struct Decision {
@@ -524,7 +525,7 @@ struct PostRec {
 };
 
 struct GameState {
-    uint32_t version = 13;
+    uint32_t version = 14;
     std::string notes;                       // the player's notebook
     int background = 0;                      // where the officer came from (BACKGROUND_LABEL)
     int startTheatre = 0;                    // where the career was begun
@@ -589,6 +590,9 @@ struct GameState {
     int standDownUntil = -1;                 // Line KR has stood the station down: no operational acts
     std::string busyWhy;
     std::map<int, int> evLast;               // event -> the day it last happened
+    // HIDDEN - what the adversary's analysts have learned of your habits from what their teams saw (version 14):
+    // weight of your operational acts by weekday and block, and by district; and how hard they are pushing back
+    float habit[7][3] = {}, habitD[8] = {}, advAlert = 0;
     float distMod[8] = {1, 1, 1, 1, 1, 1, 1, 1};   // HIDDEN - how hard the watchers are working each district, as the months go by
     int lastCarDay = -99;
     uint64_t seed = 0;
@@ -663,7 +667,7 @@ struct GameState {
     template <class A> void io(A& a) {
         a & version;
         a.ver = version;
-        if (!a.writing) version = 13;
+        if (!a.writing) version = 14;
         a & difficulty & nextTheatre & wallDown & bugs & totExfil & tut & tutTries & tutMarks & tutMax & tutA & tutB
           & tutMeet & tutDrop & tutSignal & tutRoll & tutText & tutLog & courseReport & pool & watchers & replateDay & months & krEst
           & wx & wxNext & temp & tempNext & sunset & sunrise & forecast & game & gameNext & gameRounds & gameFound & gameDoubt & gameSuspect & gameName & gameLog
@@ -684,5 +688,6 @@ struct GameState {
         if (a.ver >= 10) a & lastPad & padded & padCaught;
         if (a.ver >= 11) a & notes;
         if (a.ver >= 12) a & background & startTheatre & ironman & archived;
+        if (a.ver >= 14) a & habit & habitD & advAlert;
     }
 };

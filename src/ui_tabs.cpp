@@ -2121,7 +2121,7 @@ void App::tabCareer() {
  */
 void App::tabBoard() {
     GameState& g = sim.g;
-    struct Card { int kind, id; ImVec2 c; float w, h; std::string name, sub; ImU32 flag; std::string flagTxt; };
+    struct Card { int kind, id; ImVec2 c; float w, h; std::string name, sub; ImU32 flag; std::string flagTxt, more; };
     struct Link { int a, b, kind; };      // kind 0: knows of (red string), 1: his communications plan (black thread), 2: runs him (heavy)
     enum { K_OFF, K_AGENT, K_CONTACT, K_SITE };
     std::vector<Card> cards;
@@ -2136,7 +2136,7 @@ void App::tabBoard() {
         if (o.gone) continue;
         int n = 0;
         for (auto& p : g.persons) if (p.live() && (p.handler == o.id || std::find(p.witting.begin(), p.witting.end(), o.id) != p.witting.end())) n++;
-        Card c{K_OFF, o.id, {}, 0, 0, o.title(), std::string(OROLE[std::max(0, std::min(4, o.role))]) + fstr("  -  knows %d of yours", n), 0, ""};
+        Card c{K_OFF, o.id, {}, 0, 0, o.title(), n ? fstr("knows %d of yours", n) : std::string("knows none of yours"), 0, "", OROLE[std::max(0, std::min(4, o.role))]};
         if (n >= 3) { c.flag = rgb(0xD08A2A); c.flagTxt = "knows a great deal"; }
         for (auto& f : o.file) if (has(f, "stake-out was waiting")) { c.flag = rgb(0xC0392B); c.flagTxt = "a marked card was answered"; }
         cards.push_back(c);
@@ -2144,7 +2144,7 @@ void App::tabBoard() {
     for (int pass = 0; pass < 2; pass++)
         for (auto& p : g.persons) {
             if (!p.live() || (pass == 0) != (p.stage == AGENT)) continue;
-            Card c{pass == 0 ? K_AGENT : K_CONTACT, p.id, {}, 0, 0, p.label(), "", 0, ""};
+            Card c{pass == 0 ? K_AGENT : K_CONTACT, p.id, {}, 0, 0, p.label(), "", 0, "", p.label() == p.name ? std::string("") : p.name};
             c.sub = pass == 0 ? (p.handler ? "run by " + sim.handlerName(p) : std::string("run by you")) + std::string("  -  ") + SECTOR_SHORT[p.sector]
                               : std::string(STAGE_LABEL[p.stage]) + "  -  " + word(p.rapport, W_RAPPORT, 5);
             int queried = 0;
@@ -2164,7 +2164,7 @@ void App::tabBoard() {
         bool used = !s.witting.empty();
         for (auto& p : g.persons) if (p.live() && p.stage == AGENT && inPlan(p, s.id)) used = true;
         if (!used) continue;
-        Card c{K_SITE, s.id, {}, 0, 0, sim.shortSite(&s), std::string(s.flat ? "Safe flat" : SITETYPE_LABEL[s.type]) + fstr("  -  used %d", s.uses), 0, ""};
+        Card c{K_SITE, s.id, {}, 0, 0, sim.shortSite(&s), std::string(s.flat ? "Safe flat" : SITETYPE_LABEL[s.type]) + fstr("  -  used %d", s.uses), 0, "", s.name};
         if (s.exposure > 55) { c.flag = rgb(0xD08A2A); c.flagTxt = "over-used"; }
         cards.push_back(c);
     }
@@ -2281,11 +2281,12 @@ void App::tabBoard() {
         float fs = nf->FontSize * 0.95f;
         ImVec2 ts = nf->CalcTextSizeA(fs, FLT_MAX, 0, nm.c_str());
         dl->AddText(nf, fs, ImVec2(c.c.x - ts.x / 2, la.y + 2 * S), rgb(c.kind == K_AGENT ? C_RED : C_INK), nm.c_str());
-        std::string sub = clip(c.sub, 30);
-        float ss = F.tiny->FontSize;
-        ImVec2 ts2 = F.tiny->CalcTextSizeA(ss, FLT_MAX, 0, sub.c_str());
-        if (ts2.x > lb.x - la.x - 4 * S) { ss *= (lb.x - la.x - 4 * S) / ts2.x; ts2.x = lb.x - la.x - 4 * S; }
-        dl->AddText(F.tiny, ss, ImVec2(c.c.x - ts2.x / 2, la.y + fs + 4 * S), rgb(C_INK_FADED), sub.c_str());
+        // the second line, as large as the slip allows (a long one is shortened rather than shrunk to nothing)
+        std::string sub = c.sub;
+        float ss = F.uiSmall->FontSize * 0.82f, room = lb.x - la.x - 6 * S;
+        while (sub.size() > 8 && F.uiSmall->CalcTextSizeA(ss, FLT_MAX, 0, sub.c_str()).x > room) sub = clip(sub, ulen(sub) - 2);
+        ImVec2 ts2 = F.uiSmall->CalcTextSizeA(ss, FLT_MAX, 0, sub.c_str());
+        dl->AddText(F.uiSmall, ss, ImVec2(c.c.x - ts2.x / 2, la.y + fs + 3 * S), rgb(C_INK_FADED), sub.c_str());
         if (c.flag) {                     // a coloured flag pinned to the corner: something on the file wants looking at
             ImVec2 f0 = tl + ImVec2(c.w - 6 * S, -2 * S);
             dl->AddTriangleFilled(f0, f0 + ImVec2(16 * S, 6 * S), f0 + ImVec2(0, 12 * S), c.flag);
@@ -2308,7 +2309,7 @@ void App::tabBoard() {
         if (ImGui::IsItemHovered() && cfg.tooltips) {
             int nl = 0;
             for (auto& l : links) if (l.a == (int)i || l.b == (int)i) nl++;
-            std::string tip = c.name + "\n" + c.sub + (c.flagTxt.empty() ? "" : "\n\n! " + c.flagTxt) + fstr("\n\n%d string%s on the board.", nl, nl == 1 ? "" : "s");
+            std::string tip = c.name + (c.more.empty() ? "" : ", " + c.more) + "\n" + c.sub + (c.flagTxt.empty() ? "" : "\n\n! " + c.flagTxt) + fstr("\n\n%d string%s on the board.", nl, nl == 1 ? "" : "s");
             ImGui::SetTooltip("%s", tip.c_str());
         }
     }

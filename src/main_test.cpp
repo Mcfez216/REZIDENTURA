@@ -316,9 +316,11 @@ int main(int argc, char** argv) {
     click("OK##note");
     // ---- let the test player work for five months, then look at every screen
     play(150);
+    a.cfg.toasts = true;
     a.showMoment("ЗАВЕРБОВАН", "RECRUITED", 0xB3171B);
     frames(8); shot("09-moment");
     frames(200);
+    a.cfg.toasts = false;
     int shotNo = 10;
     for (const char* t : tabs) {
         if (s.g.phase != PH_PLAY) break;

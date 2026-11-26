@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
     }
     int reached[N_THEATRE] = {}, n91 = 0, saveFail = 0;
     double score[N_THEATRE] = {}, value[N_THEATRE] = {}, recruited[N_THEATRE] = {}, arrested[N_THEATRE] = {};
-    long streetAsked = 0, opsW = 0, opsL = 0;
+    long streetAsked = 0, opsW = 0, opsL = 0, scenes = 0;
     int how[N_THEATRE][4] = {}, cnt[N_THEATRE] = {}, moleCaught = 0, moles = 0, cause[N_THEATRE][8] = {}, exfil = 0, courses = 0, coursePass = 0;
     double days[N_THEATRE] = {};
     std::map<std::string, int> endings;
@@ -25,13 +25,14 @@ int main(int argc, char** argv) {
         Sim s;
         s.newCareer(seed, "Testov", 1, course);
         s.askInStreet = seed % 2 == 0;
+        s.askScenes = seed % 3 == 0;            // a third play their meetings as scenes
         s.g.deputy = false;                      // the test player does its own routine           // half the careers decide in the street, the other half leave it to the abort policy
         Bot bot(s, careful);
         int guard = 0, checked = 0;
         while (s.g.phase != PH_OVER && guard++ < 12000) {
             if (s.g.phase == PH_INTERLUDE) { opsW += s.g.opsWon; opsL += s.g.opsLost; if (immortal) { s.g.png = 0; s.g.recalls = 0; s.g.poorPostings = 0; } s.chooseInterlude((int)(seed % 3)); continue; }
             int dPlan = s.g.day;
-            for (auto& d : s.g.decisions) if (d.kind == DK_STREET) streetAsked++;
+            for (auto& d : s.g.decisions) if (d.kind == DK_STREET) streetAsked++; else if (d.kind == DK_SCENE) scenes++;
             bot.plan();
             // save / load round trip: a loaded game must play on exactly as the original does
             if (guard % 700 == 350 && checked < 6) {
@@ -42,6 +43,7 @@ int main(int argc, char** argv) {
                 else {
                     Sim u; u.load(buf);
                     t.askInStreet = u.askInStreet = s.askInStreet;
+                    t.askScenes = u.askScenes = s.askScenes;
                     Bot b1(t, careful), b2(u, careful);
                     for (int k = 0; k < 25 && t.g.phase == PH_PLAY; k++) {
                         int d0 = t.g.day; b1.plan(); if (t.g.day == d0) t.endDay();
@@ -85,7 +87,7 @@ int main(int argc, char** argv) {
     for (auto& e : endings) printf("  ending: %-32s %d\n", e.first.c_str(), e.second);
     printf("  traitors in stations: %d, removed before the end of the tour: %d\n", moles, moleCaught);
     printf("  exfiltrated agents: %d   courses taken: %d, completed: %d\n", exfil, courses, coursePass);
-    printf("  decisions taken in the street: %ld   operations won %ld, lost %ld\n", streetAsked, opsW, opsL);
+    printf("  decisions taken in the street: %ld   meetings played as scenes: %ld   operations won %ld, lost %ld\n", streetAsked, scenes, opsW, opsL);
     printf("  save/load failures: %d\n", saveFail);
     return saveFail ? 1 : 0;
 }

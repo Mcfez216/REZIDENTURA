@@ -570,6 +570,12 @@ void Sim::decide(int decisionId, int option) {
         case DK_OP_NAME:
             opDecide(d, option);
             break;
+        case DK_SCENE: {
+            int b = std::max(0, std::min(2, d.ref));
+            g.sceneForce[b] = option;
+            endDay();                               // the evening is played again, from the morning, as you chose to play it
+            return;
+        }
         case DK_STREET: {
             int b = std::max(0, std::min(2, d.ref));
             int t = order(g.day, b).type;

@@ -477,7 +477,7 @@ struct Decision {
     template <class A> void io(A& a) { a & id & kind & ref & day & title & text & opts; }
 };
 enum { DK_APPROACH = 1, DK_RYAN, DK_ORPHANS, DK_POSTED, DK_GAME, DK_GAME_OFFER, DK_EVENT, DK_PLAN, DK_LEAVE, DK_WIFE, DK_WALKIN, DK_SUMMONS, DK_STREET,
-       DK_OP_OFFER, DK_OP_NAME };
+       DK_OP_OFFER, DK_OP_NAME, DK_SCENE };
 
 /** An operation: a piece of work with a name, a goal, a deadline, stages you can see, and a reckoning at the end (sim_ops.cpp). */
 enum { OP_RECRUIT = 1, OP_LEAK, OP_RESCUE, OP_FLASH };
@@ -607,6 +607,7 @@ struct GameState {
     bool deputy = false;                     // your deputy runs the routine (version 15)
     std::vector<Operation> ops;              // operations offered, running and finished this posting (version 16)
     int lastOpDay = -9999, opsWon = 0, opsLost = 0;
+    int sceneForce[3] = {-1, -1, -1};        // how you chose to handle today's meetings (the day is replayed with it)
     int deputyDay = -1;                      // the last day he planned      // what you decided in the street today, block by block (the day is replayed with it)
     float distMod[8] = {1, 1, 1, 1, 1, 1, 1, 1};   // HIDDEN - how hard the watchers are working each district, as the months go by
     int lastCarDay = -99;
@@ -705,6 +706,6 @@ struct GameState {
         if (a.ver >= 12) a & background & startTheatre & ironman & archived;
         if (a.ver >= 14) a & habit & habitD & advAlert & streetForce;
         if (a.ver >= 15) a & deputy & deputyDay;
-        if (a.ver >= 16) a & ops & lastOpDay & opsWon & opsLost;
+        if (a.ver >= 16) a & ops & lastOpDay & opsWon & opsLost & sceneForce;
     }
 };

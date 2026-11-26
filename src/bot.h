@@ -81,6 +81,12 @@ struct Bot {
     int choose(const Decision& d) {
         int n = (int)d.opts.size();
         switch (d.kind) {
+            case DK_SCENE: {                      // a pitch: the angle it had planned; an agent: calm him if he is frightened, else praise him
+                Order o = s.order(g.day, std::max(0, std::min(2, d.ref)));
+                if (n == 5) return o.pitch >= 0 && o.pitch < 4 ? o.pitch : 4;
+                if (d.text.find("frightened") != std::string::npos || d.text.find("followed") != std::string::npos || d.text.find("searched") != std::string::npos) return 0;
+                return careful ? (g.funds > s.P(60) ? 2 : 0) : 1;
+            }
             case DK_STREET: return careful ? (d.title.rfind("SURVEILLANCE", 0) == 0 ? 0 : 1) : n - 1;   // careful: walk on from a confirmed team
             case DK_ORPHANS: return (int)(g.seed % 3);
             case DK_OP_OFFER: return careful || g.seed % 3 ? 0 : 1;

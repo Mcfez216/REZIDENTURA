@@ -110,6 +110,13 @@ The check reports one of three things:
 
 Each order carries an abort policy: Strict (abort on any doubt), Normal (abort on confirmed), Press on regardless. An aborted meeting is not free - the agent waits for nothing and the fall-back comes into force - but it is always cheaper than the alternative.
 
+MEETINGS AS SCENES. A long meeting with one of your agents, and every recruitment approach, stops the evening at the table (Settings: "Play my own long meetings ... as scenes"). With an agent you see his relations, his commitment, what he has come to tell you and what he is working on, and you choose how to handle him tonight:
+  Reassure him ........ his nerves settle; he goes home calmer. For a frightened man.
+  Press him for more .. his tempo goes up a step - unless he is too frightened or too timid, and then he leaves angry.
+  Praise and a bonus .. a little of your own money; relations and commitment rise.
+  Test him ............ go back over his last report. You learn more of his reliability - and a plant, or a man inventing his material, may slip. He notices, and does not like it.
+At an approach you choose the basis on the night, with your file's estimates of the man in front of you - money, ideology, ego, coercion - or decide that tonight is not the night.
+
 DECISIONS IN THE STREET. When a meeting or a drop of your own meets surveillance - possible or confirmed - the day stops and the choice is yours, on the spot: walk on and make it an innocent errand; go to the meeting but let nothing change hands (no film, no money, no approach); or go through with all of it. You are told what you saw, who is waiting, what you are carrying and what hangs on it, and what your standing order would have done. Then the day plays out from that moment. (Settings: "Decide in the street yourself". Turned off, the abort policy decides, as before.)
 
 THEY LEARN YOUR HABITS. The other side's analysts keep a table of every act their teams have seen you make: the weekday, the time of day, the district. Once you have a habit, they have it too - teams are out on your usual evenings and waiting in your usual districts. A routine fades from their table in a couple of months if you break it. The Surveillance screen shows your own table for the last ninety days ("Your own pattern") with a word for how predictable it looks, and Line KR's Monday assessment remarks on it when it is obvious. Officers who keep spotting the teams on them get better teams put on them: Zenit sometimes hears the new call-signs.

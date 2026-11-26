@@ -48,6 +48,8 @@ public:
     void usualAgenda(Order& o, const Person& p, int day) const;
     /** When set, a meeting or a drop of yours that meets surveillance stops the day and asks you (DK_STREET). The screens set it from the settings. */
     bool askInStreet = false;
+    /** When set, your own meetings with agents, and recruitment approaches, are played as a scene (DK_SCENE). */
+    bool askScenes = false;
     /** Your own operational acts, as your surveillance log records them: when and where. Nothing hidden. */
     struct Pattern { int grid[7][3] = {}; int dist[8] = {}; int n = 0, slotDow = -1, slotB = -1, slotN = 0, topDist = -1, topDistN = 0; };
     Pattern myPattern(int days) const;
@@ -189,7 +191,8 @@ private:
     void opOffer(int kind);
     void opEnd(Operation& o, bool won, const std::string& why);
     void opDecide(const Decision& d, int option);
-    struct StreetHalt { int block; std::string title, text; std::vector<std::string> opts; };
+    struct StreetHalt { int block; std::string title, text; std::vector<std::string> opts; int kind = DK_STREET; };
+    void scene(Order& o, Person& p, int b);
     void endDayInner();
     std::string streetStakes(const Order& o, Site* st);
     void birthdayMeeting(const Order& o, Person& p);

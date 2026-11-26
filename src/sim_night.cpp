@@ -14,12 +14,12 @@ static bool has(const std::vector<int>& v, int x) { return std::find(v.begin(), 
 void Sim::endDay() {
     if (g.phase != PH_PLAY || !g.decisions.empty()) return;
     deputyPlan();
-    bool mayAsk = askInStreet && !training();
+    bool mayAsk = (askInStreet || askScenes) && !training();
     if (mayAsk) {
         mayAsk = false;
         for (int b = 0; b < 3; b++) {
             int t = order(g.day, b).type;
-            if (t == O_MEET_CLAN || t == O_LOAD_DROP || t == O_UNLOAD_DROP || t == O_LINE_N) mayAsk = true;
+            if ((askInStreet && (t == O_MEET_CLAN || t == O_LOAD_DROP || t == O_UNLOAD_DROP || t == O_LINE_N)) || (askScenes && t == O_MEET_CLAN)) mayAsk = true;
         }
     }
     if (!mayAsk) { endDayInner(); return; }
@@ -29,7 +29,7 @@ void Sim::endDay() {
     } catch (const StreetHalt& h) {
         g = std::move(morning);
         rep = nullptr; subj = nullptr; actAs(nullptr);
-        addDecision(DK_STREET, h.block, h.title, h.text, h.opts);
+        addDecision(h.kind, h.block, h.title, h.text, h.opts);
         attention = true;
     }
 }
@@ -77,6 +77,7 @@ void Sim::endDayInner() {
     if (g.phase == PH_PLAY && training()) tutorialNight();
     g.plan.erase(g.day);
     for (int& f : g.streetForce) f = -1;
+    for (int& f : g.sceneForce) f = -1;
     if (g.phase == PH_PLAY) { g.day++; dawn(); }
     if (g.phase == PH_PLAY && g.deputy) {          // he plans the new day before you see it, so that you can change what he did
         deputyPlan();

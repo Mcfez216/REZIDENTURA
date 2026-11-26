@@ -474,7 +474,7 @@ void App::overScreen() {
 // ============================================================================ the game screen
 void App::doEndDay(bool run) {
     if (!sim.g.decisions.empty()) { note = "A decision is waiting for you."; return; }
-    sim.askInStreet = cfg.streetChoices;
+    sim.askInStreet = cfg.streetChoices; sim.askScenes = cfg.scenes;
     if (cfg.confirmEndDay && !sureEndDay && sim.g.phase == PH_PLAY) {
         std::string undone;
         for (auto& t : sim.todo()) if (t.level == 2 && t.text.find("Agreed meeting") != 0 && t.text.find("detection route") == std::string::npos) undone += "  - " + t.text + "\n";
@@ -1346,6 +1346,16 @@ void App::popups() {
         if (g.decisions.empty()) ImGui::CloseCurrentPopup();
         else {
             Decision d = g.decisions[0];
+            if (d.kind == DK_SCENE) {              // the man across the table
+                Person* sp = sim.person(sim.order(g.day, std::max(0, std::min(2, d.ref))).person);
+                if (sp) {
+                    ImDrawList* pdl = ImGui::GetWindowDrawList();
+                    float pw = 150 * S;
+                    ImVec2 pp = ImGui::GetCursorScreenPos() + ImVec2((PW - pw) / 2, 8 * S);
+                    photo(pdl, facePhoto(*sp), pp, ImVec2(pw, pw * 4 / 3), 1.5f, S, true);
+                    ImGui::Dummy(ImVec2(PW, pw * 4 / 3 + 22 * S));
+                }
+            }
             if (d.kind == DK_STREET) {             // a photograph from the street: what you are looking at as you decide
                 ImDrawList* pdl = ImGui::GetWindowDrawList();
                 float pw = std::min(PW * 0.55f, 330 * S);
@@ -1387,11 +1397,11 @@ void App::popups() {
                 if (hit) {
                     int day0 = sim.g.day;
                     size_t cables0 = sim.g.cables.size();
-                    sim.askInStreet = cfg.streetChoices;
+                    sim.askInStreet = cfg.streetChoices; sim.askScenes = cfg.scenes;
                     sim.decide(d.id, (int)i);
                     autosave();
                     ImGui::CloseCurrentPopup();
-                    if (d.kind == DK_STREET && sim.g.day != day0 && sim.g.phase == PH_PLAY) {    // the day ran on to its end
+                    if ((d.kind == DK_STREET || d.kind == DK_SCENE) && sim.g.day != day0 && sim.g.phase == PH_PLAY) {    // the day ran on to its end
                         reportDay = sim.g.day - 1; selRow = 0;
                         pushToasts(day0, cables0);
                         if (cfg.jumpAfterDay) wantTab = T_REPORT;

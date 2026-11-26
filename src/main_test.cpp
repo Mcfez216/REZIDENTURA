@@ -208,6 +208,7 @@ int main(int argc, char** argv) {
     App::recordRects = true;
     a.cfg.toasts = false;                               // the notices after each day are tested on their own, below
     a.cfg.streetChoices = false;                        // and so are the decisions in the street
+    a.cfg.scenes = false;                               // and the meetings played as scenes
     Sim& s = a.sim;
 
     auto t0 = std::chrono::steady_clock::now();
@@ -366,6 +367,34 @@ int main(int argc, char** argv) {
                 while (!s.g.decisions.empty()) s.decide(s.g.decisions[0].id, 0);
             }
         }
+        s.load(before);
+    }
+    // ---- a meeting played as a scene: the evening stops at the table, and you choose how to handle him
+    {
+        std::vector<uint8_t> before = s.save();
+        s.askScenes = true;
+        Bot sb(s, true);
+        bool met = false;
+        for (int k = 0; k < 120 && s.g.phase == PH_PLAY && !met; k++) {
+            for (auto& d : s.g.decisions) if (d.kind == DK_SCENE) met = true;
+            if (met) break;
+            int d0 = s.g.day; sb.plan(); if (s.g.day == d0) s.endDay();
+        }
+        check(met, "a long meeting stops the evening at the table");
+        if (met) {
+            int d0 = s.g.day;
+            bool pitch = false;
+            for (auto& d : s.g.decisions) if (d.kind == DK_SCENE && d.opts.size() == 5) pitch = true;
+            a.cfg.scenes = true;
+            shot(pitch ? "09-scene-pitch" : "09-scene-agent");
+            click("decision:2");
+            auto it = s.g.reports.find(d0);
+            bool played = false;
+            if (it != s.g.reports.end()) for (auto& l : it->second) if (l.find("You told him his work is read in Moscow") != std::string::npos || l.find("You told her her work") != std::string::npos || l.find("You made the approach on") != std::string::npos) played = true;
+            check(s.g.day == d0 + 1 && played, "the evening is played out as chosen");
+            a.cfg.scenes = false;
+        }
+        s.askScenes = false;
         s.load(before);
     }
     // ---- a decision in the street: a watched officer goes about his business until something is seen on the way to an act

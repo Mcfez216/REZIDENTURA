@@ -92,6 +92,9 @@ REFINEMENTS SINCE 1.6
     on the checklist.
   - Stamps across the desk for the moments that matter: a recruitment, an agent brought out,
     a promotion, a requirement met, material of considerable value - and an arrest.
+  - MEETINGS AS SCENES: a long meeting with your agent, or an approach, stops at the table:
+    reassure him, press him, praise and pay him, or test his story; at a pitch, choose the
+    basis on the night with your estimates of him in front of you.
   - OPERATIONS: every few months Centre offers one - recruit a man before he leaves, find the
     leak in the station, rescue an agent before his arrest, or a flash collection task. Each
     has stages, a deadline and a reckoning, pinned above the brief on the Planner.

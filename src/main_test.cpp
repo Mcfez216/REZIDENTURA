@@ -656,18 +656,33 @@ int main(int argc, char** argv) {
             check(s.g.leaveFrom > s.g.day, "leave can be booked");
             shot("4x-private");
             int from = s.g.leaveFrom;
-            for (int k = 0; k < 40 && s.g.phase == PH_PLAY && s.g.day < from; k++) play(1);
+            // the days before leave pass quietly (routine only), so that no world can end the posting under the test
+            auto quiet = [&](int n) {
+                for (int k = 0; k < n && s.g.phase == PH_PLAY; k++) {
+                    while (!s.g.decisions.empty()) s.decide(s.g.decisions[0].id, 0);
+                    s.g.plan.erase(s.g.day);           // not even an agreed meeting: a trap at one could end the posting
+                    s.endDay();
+                }
+            };
+            for (int k = 0; k < 40 && s.g.phase == PH_PLAY && s.g.day < from; k++) {
+                bool leaveAsked = false;
+                for (auto& d : s.g.decisions) if (d.kind == DK_LEAVE) leaveAsked = true;
+                if (leaveAsked) break;
+                while (!s.g.decisions.empty()) s.decide(s.g.decisions[0].id, 0);
+                s.g.plan.erase(s.g.day);
+                s.endDay();
+            }
             bool asked = false;
             for (auto& d : s.g.decisions) if (d.kind == DK_LEAVE) asked = true;
             check(asked, "leave begins with a choice of how to spend it");
             if (onScreen("decision:1")) { shot("4x-leave"); click("decision:1"); }
-            play(3);
+            quiet(3);
             check(s.onLeave(s.g.day), "on leave the days pass without you");
             click("tab:Planner");
             shot("4x-leave-planner");
-            play(26);
+            quiet(26);
             check(s.onLeave(s.g.day) && s.g.fatigue < 5, "leave rests you");
-            play(4);
+            quiet(4);
             check(!s.onLeave(s.g.day), "and it ends");
             }
             check(s.load(snap), "the posting is put back as it was");

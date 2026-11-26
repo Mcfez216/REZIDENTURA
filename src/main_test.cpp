@@ -482,7 +482,7 @@ int main(int argc, char** argv) {
                 if (fl) { p.meetSites = {fl->id}; p.meetIdx = 0; if (s.isSet(p.nextMeet, 2)) s.g.plan[p.nextMeet][2].site = fl->id; }
                 click("tab:Planner");
                 click(fstr("plan:%d:2", r), true);
-                if (!s.order(s.g.day + r, 2).train) click("Give instruction (long meetings only)");
+                if (!onScreen("combo:##trainWhat")) click("Give instruction (long meetings only)");   // the usual agenda may already have ticked it
                 check(onScreen("combo:##trainWhat"), "the order form offers a choice of instruction");
                 shot("4x-order-instruction");
                 click("Cancel");
@@ -553,9 +553,13 @@ int main(int argc, char** argv) {
                 size_t rolls = s.g.rolls.size();
                 Order o; o.type = O_MEET_OVERT; o.person = id;
                 s.g.decisions.clear(); s.g.evLast[1000] = s.g.day;
-                q->rapport = 95;
-                s.setOrder(s.g.day, 1, o);
-                s.endDay();
+                // a lunch can still be cancelled by telephone, or lost to exhaustion: give it three days
+                for (int k = 0; k < 3 && s.g.rolls.size() == rolls && s.g.phase == PH_PLAY; k++) {
+                    if (!(q = s.person(id)) || !q->live()) break;
+                    q->rapport = 95; q->lastConfid = -9999; s.g.fatigue = 0; s.g.decisions.clear();
+                    s.setOrder(s.g.day, 1, o);
+                    s.endDay();
+                }
                 check(s.g.rolls.size() > rolls, "lunch with a confidential contact yields a report");
                 click("tab:Contacts");
                 if ((q = s.person(id))) click("person:" + q->name);

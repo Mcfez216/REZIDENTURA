@@ -5,7 +5,7 @@
 struct Citation { const char* title; const char* text; };
 enum {
     CI_FULL, CI_GENERAL, CI_BANNER, CI_CLEAN, CI_RECRUITER, CI_NETWORK, CI_NOBODY, CI_WASHINGTON, CI_BONN,
-    CI_HARD, CI_IRONMAN, CI_PNG, CI_TAKEN, CI_LATE, CI_ALLBACK, N_CITATION
+    CI_HARD, CI_IRONMAN, CI_PNG, CI_TAKEN, CI_LATE, CI_ALLBACK, CI_BROUGHT_OUT, N_CITATION
 };
 inline const Citation CITATIONS[N_CITATION] = {
     {"Full term", "Serve until August 1991."},
@@ -23,6 +23,7 @@ inline const Citation CITATIONS[N_CITATION] = {
     {"Taken in", "Recruit a man who was the adversary's all along."},
     {"Late start", "Reach 1991 in a career begun after 1968."},
     {"Every road", "Finish careers with all four backgrounds."},     // counted across careers, not within one
+    {"Nobody left behind", "Bring an agent out to the Soviet Union before the other side can take him."},
 };
 
 struct Ending { const char* key; const char* title; };

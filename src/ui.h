@@ -11,6 +11,9 @@
 #include "sim.h"
 #include <array>
 #include <functional>
+#include <set>
+
+extern const char* const ORDER_HINT[N_OTYPE];     // one line on each kind of order (ui.cpp)
 #include <map>
 
 /** What the player has chosen about the program itself (kept in settings.ini beside the saved games, not in a save). */
@@ -90,6 +93,7 @@ private:
     std::function<void()> confirmAction;
     bool openEditor = false, openNew = false, openSave = false, openLoad = false, openInstr = false;
     int edDay = 0, edBlock = 0;
+    std::set<long long> prefilled;           // agreed meetings whose agenda has been filled in this session
     Order ed;
     std::string edError;
     char saveBuf[40] = "posting";

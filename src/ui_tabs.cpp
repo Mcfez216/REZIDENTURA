@@ -283,11 +283,26 @@ void App::tabPlanner() {
                     ImGui::TableNextColumn();
                     Order o = sim.order(day, b);
                     bool set = sim.isSet(day, b);
-                    ImGui::PushStyleColor(ImGuiCol_Text, o.appointment ? rgb4(C_RED) : (set ? rgb4(C_INK) : rgb4(C_INK_FADED, 0.75f)));
-                    std::string label = sim.describe(o) + fstr("##p%d_%d", r, b);
+                    // what kind of work it is shows in the ink: street work in red pencil, detection routes in blue
+                    bool street = Sim::isOp(o.type) || o.type == O_READ_SIGNAL || o.type == O_PLACE_SIGNAL;
+                    bool hot = o.type == O_MEET_CLAN || o.type == O_LOAD_DROP || o.type == O_UNLOAD_DROP || o.type == O_LINE_N;
+                    bool bare = set && hot && !o.cs && (b == 0 || sim.order(day, b - 1).type != O_SDR);
+                    ImU32 ink = o.appointment ? rgb(C_RED) : !set ? rgb(C_INK_FADED, 0.75f) : street ? rgb(C_PENCIL_RED) : o.type == O_SDR ? rgb(C_PENCIL_BLUE) : rgb(C_INK);
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(ink));
+                    std::string label = std::string(bare ? "! " : "") + sim.describe(o) + fstr("##p%d_%d", r, b);
                     if (ImGui::Selectable(label.c_str(), selRow == r && selCol == b + 1, ImGuiSelectableFlags_AllowDoubleClick)) {
                         selRow = r; selCol = b + 1;
                         if (ImGui::IsMouseDoubleClicked(0)) beginEdit(day, b);
+                    }
+                    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal) && cfg.tooltips && set) {
+                        std::string tip = sim.describe(o) + "\n\n" + ORDER_HINT[o.type];
+                        if (bare) tip += "\n\n! No detection route in the block before: only the short check en route will show whether you are followed.";
+                        if (o.cs) tip += "\n\nA countersurveillance team covers this act.";
+                        ImGui::BeginTooltip();
+                        ImGui::PushTextWrapPos(420 * S);
+                        ImGui::TextUnformatted(tip.c_str());
+                        ImGui::PopTextWrapPos();
+                        ImGui::EndTooltip();
                     }
                     uiRec(fstr("plan:%d:%d", r, b));
                     ImGui::PopStyleColor();

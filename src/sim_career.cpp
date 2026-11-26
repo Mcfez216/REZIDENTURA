@@ -284,7 +284,7 @@ void Sim::startPosting(int theatre, bool first) {
     g.lastHomeGift = g.lastChiefGift = -9999;
     if (g.game == 1 || g.game == 2) g.gameLog += fmtShort(g.day) + "  The game ended with your posting.\n";
     g.game = 0;
-    g.totSpotted = g.totRecruited = g.totRolls = g.totReqDone = g.totArrested = g.totAborts = 0; g.totValue = 0;
+    g.totSpotted = g.totRecruited = g.totRolls = g.totReqDone = g.totArrested = g.totAborts = g.totExfil = 0; g.totValue = 0;
     g.you.street = 8;
     g.you.heat = g.you.peakHeat = clampf(t.heat0 + g.blown * t.blownHeat, 0, 80);
     g.fatigue = 10; g.cover = 70; g.standRez = 50; g.paperwork = 2; g.overdueDays = 0;
@@ -431,6 +431,7 @@ std::string Sim::summary() {
            + fstr("  Contacts spotted ............ %d\n  Recruitments ................ %d\n  Agents active at the end .... %d\n  Agents lost to arrest ....... %d\n"
                   "  Items of material graded .... %d\n  Total evaluated worth ....... %d\n  Requirements satisfied ...... %d\n  Operational acts aborted .... %d\n",
                   g.totSpotted, g.totRecruited, agents, g.totArrested, g.totRolls, (int)std::lround(g.totValue), g.totReqDone, g.totAborts)
+           + (g.totExfil > 0 ? fstr("  Agents brought out .......... %d\n", g.totExfil) : std::string(""))
            + "  Standing with the " + T().chief + ": " + word(g.standRez, W_STAND, 5) + "\n  Standing with Centre: " + word(g.standCentre, W_STAND, 5) + "\n";
 }
 
@@ -442,7 +443,7 @@ void Sim::endPosting(int how, const std::string& title, const std::string& text)
     rec.theatre = g.theatre; rec.startDay = g.postStart; rec.endDay = std::min(g.day, g.postEnd); rec.how = how;
     rec.cause = how == END_PNG ? pngCause : 0;
     rec.spotted = g.totSpotted; rec.recruited = g.totRecruited; rec.arrested = g.totArrested; rec.rolls = g.totRolls;
-    rec.reqDone = g.totReqDone; rec.aborts = g.totAborts; rec.value = g.totValue;
+    rec.reqDone = g.totReqDone; rec.aborts = g.totAborts; rec.value = g.totValue; rec.exfil = g.totExfil;
     for (auto& p : g.persons) {
         if (p.codename.empty()) continue;
         if (p.stage == AGENT) rec.agentsAtEnd++;
@@ -452,7 +453,7 @@ void Sim::endPosting(int how, const std::string& title, const std::string& text)
     for (auto& o : g.officers) if (o.mole) rec.agents.push_back("  (" + o.title() + " of the rezidentura worked for the adversary from " + fmtShort(o.moleDay) + (o.gone ? "; he did not finish the tour.)" : "; he was never caught.)"));
     // what Centre weighs: product first, then requirements met, then the network you leave behind, less the people you lost
     float score = 30 * std::min(1.5f, g.totValue / t.valuePar) + g.totReqDone * 2 + std::min(g.totRecruited, 8) * 1.f + std::min(rec.agentsAtEnd, 6) * 2
-                  - g.totArrested * 5 / (1 + 0.5f * t.role) + (g.standCentre - 50) * 0.25f;
+                  - g.totArrested * 5 / (1 + 0.5f * t.role) + std::min(g.totExfil, 3) * 2.f + (g.standCentre - 50) * 0.25f;   // a man brought out is a man not lost
     if (!t.training) score += clampf((g.patron - 30) * 0.1f, -3, 6);          // somebody at Centre reads the file kindly, or does not
     if (how == END_PNG) score -= 20;
     if (how == END_RECALLED) score -= 35;

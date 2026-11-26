@@ -475,7 +475,7 @@ void App::doEndDay(bool run) {
     if (!sim.g.decisions.empty()) { note = "A decision is waiting for you."; return; }
     if (cfg.confirmEndDay && !sureEndDay && sim.g.phase == PH_PLAY) {
         std::string undone;
-        for (auto& t : sim.todo()) if (t.level == 2 && t.text.find("Agreed meeting") != 0) undone += "  - " + t.text + "\n";
+        for (auto& t : sim.todo()) if (t.level == 2 && t.text.find("Agreed meeting") != 0 && t.text.find("detection route") == std::string::npos) undone += "  - " + t.text + "\n";
         if (!undone.empty()) {
             confirmText = "End the day with this still undone?\n\n" + undone;
             confirmAction = [this, run]() { sureEndDay = true; doEndDay(run); sureEndDay = false; };
@@ -843,9 +843,30 @@ void App::nav(ImVec2 a, ImVec2 b) {
 }
 
 // ============================================================================ the order form
+/** What an experienced officer puts on the agenda of an ordinary meeting with his agent: what he is owed,
+    film to keep him working, a camera if he has none, and instruction in whatever he is weakest at. */
+static void usualAgenda(Sim& sim, Order& o, const Person& p) {
+    const GameState& g = sim.g;
+    o.collect = true;
+    if (!o.brush) o.longMeet = true;
+    o.pay = std::max(0, std::min(p.owed, g.funds));
+    o.film = p.camera && p.film < 2 ? std::min(2 - p.film, g.film) : 0;
+    o.camera = !p.camera && g.cameras > 0;
+    const float lv[] = {p.craft, p.skPhoto, p.skElicit, p.skSpot, p.skComms};
+    int weak = 0;
+    for (int i = 1; i < 5; i++) if (lv[i] < lv[weak]) weak = i;
+    o.train = o.longMeet && lv[weak] < 60;
+    o.trainWhat = weak;
+}
+
 void App::beginEdit(int day, int block) {
     edDay = day; edBlock = block;
     ed = sim.order(day, block);
+    // an agreed meeting opened for the first time: fill in the usual agenda, which the player can change
+    if (Person* p = sim.person(ed.person))
+        if (ed.appointment && ed.type == O_MEET_CLAN && p->stage == AGENT && ed.pay == 0 && ed.film == 0 && !ed.camera && !ed.train && !ed.brush
+            && prefilled.insert(((long long)day * 4 + block) * 100000 + p->id).second)
+            usualAgenda(sim, ed, *p);
     edError.clear();
     openEditor = true;
 }
@@ -860,7 +881,7 @@ std::string App::place(Order o, int day, int block) {
     return "";
 }
 
-static const char* HINT[N_OTYPE] = {
+const char* const ORDER_HINT[N_OTYPE] = {
     "Your cover work. About five blocks a week keeps it credible; if the watchers are on you, they see a diplomat doing his job.",
     "Write up contact reports and accounts. Clears up to 4.5 hours of outstanding paperwork.",
     "Recovers fatigue. A tired officer misses surveillance.",
@@ -897,7 +918,7 @@ void App::orderEditor() {
     ImGui::PushTextWrapPos(LW + W + 20 * S);
     ImGui::PushStyleColor(ImGuiCol_Text, rgb4(C_INK_FADED));
     ImGui::PushFont(F.uiSmall);
-    ImGui::TextUnformatted(HINT[o.type]);
+    ImGui::TextUnformatted(ORDER_HINT[o.type]);
     ImGui::PopFont();
     ImGui::PopStyleColor();
     ImGui::PopTextWrapPos();
@@ -1037,6 +1058,10 @@ void App::orderEditor() {
     bool pitching = meet && !agent && o.pitch >= 0;
     if (meet || load || overt) {
         ImGui::SeparatorText("Agenda");
+        if (meet && agent && p) {
+            if (uiBtn("Fill in the usual agenda")) usualAgenda(sim, o, *p);
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", gx(p, "Pay what he is owed, bring his film up to two cassettes, a camera if he has none, and instruction in what he is weakest at.").c_str());
+        }
         if (meet && agent) uiCheck("Brush pass: twelve seconds in a crowd - packages only, no talk", &o.brush);
         if (!(meet && agent)) o.brush = false;
         if (o.brush) { o.longMeet = false; o.train = false; o.exfil = false; o.bug = false; o.pads = 0; o.docs = false; o.standing = false; }

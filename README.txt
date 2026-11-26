@@ -73,6 +73,18 @@ WHAT YOU MANAGE
   - The summons to Moscow.
   - The real calendar of 1968-1991 in the background.
 
+REFINEMENTS SINCE 1.6
+  - Exfiltrations now count: each agent brought out is entered on the posting record and
+    in Centre's evaluation of the tour, and the first earns a new citation, "Nobody left behind".
+    (Before, the count was kept but never used.)
+  - The planner's inks: street work in red pencil, detection routes in blue, and a "!" on any
+    meeting or drop that has no detection route before it. Hover an order for what it does.
+  - Agreed meetings open with the usual agenda filled in (pay owed, film, camera, instruction),
+    and a button puts it back.
+  - The checklist also notices: acts with no detection route before them, agents with no film
+    or no camera, cables stuck in the cipher queue, and the next step with a developing
+    contact (trace him; then propose him to Centre).
+
 NEW IN 1.6
   - A new look: the desk is now dark, with every screen in a brass-framed panel with its
     own title bar. Paper is kept for what really is paper - files, cables, reports, orders.

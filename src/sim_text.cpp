@@ -412,6 +412,28 @@ std::vector<Sim::Todo> Sim::todo() {
         }
         if (p.verify == 3 && p.verifyResult != "CONSISTENT" && p.play == 0) add(1, TD_PEOPLE, gx(&p, p.codename + " failed Centre's verification. Decide what is to be done with him."));
     }
+    // your own agents' equipment, as your file has it
+    for (auto& p : g.persons) {
+        if (p.stage != AGENT || p.handler != 0 || p.tempo <= 0) continue;
+        if (!p.camera) add(0, TD_PEOPLE, gx(&p, p.codename + " has no camera: everything he gives you is oral. Issue one at a meeting or through his drop."));
+        else if (p.film == 0) add(1, TD_PEOPLE, gx(&p, p.codename + " has no fresh cassettes left: he cannot photograph. Give him film at his next meeting, or load his drop."));
+    }
+    // incriminating acts in the next three days with nothing to show you whether you are followed
+    if (!training())
+        for (int dd = g.day; dd <= g.day + 2; dd++)
+            for (int b = 0; b < 3; b++) {
+                Order o = order(dd, b);
+                if (!isSet(dd, b) || o.cs) continue;
+                bool hot = o.type == O_MEET_CLAN || o.type == O_LOAD_DROP || o.type == O_UNLOAD_DROP || o.type == O_LINE_N;
+                if (!hot || (b > 0 && order(dd, b - 1).type == O_SDR)) continue;
+                std::string when = (dd == g.day ? std::string("today") : fmtDay(dd)) + ", " + BLOCK_LABEL[b];
+                for (auto& c : when) c = (char)tolower((unsigned char)c);
+                add(dd == g.day ? 2 : 1, TD_PLAN, describe(o) + " (" + when + "): " + (b == 0 ? "a morning act has no detection route before it. Only the short check en route will tell you whether you are followed."
+                                                                                     : "no detection route in the block before it. Only the short check en route will tell you whether you are followed."));
+            }
+    // the cipher clerk's queue
+    if (!g.outQ.empty() && g.day - g.outQ.front().queued >= 2)
+        add(1, TD_CENTRE, fstr("%d cable%s waiting in the cipher queue since %s: the day's allotment of groups is not enough. Draft fewer, or shorter.", (int)g.outQ.size(), g.outQ.size() == 1 ? " has been" : "s have been", fmtShort(g.outQ.front().queued).c_str()));
     // what you have left lying in a drop
     for (auto& s : g.sites)
         if (!s.retired && s.type == ST_DROP && s.forAgent >= 0 && s.loadedDay >= 0 && g.day - s.loadedDay > 9)
@@ -421,6 +443,13 @@ std::vector<Sim::Todo> Sim::todo() {
         if (p.handler != 0 || !p.live() || p.stage == AGENT) continue;
         if (p.sanction == 2) add(1, TD_PEOPLE, gx(&p, "Centre has sanctioned the recruitment of " + p.name + ". The approach is yours to make."));
         if (p.kompState == 2) add(1, TD_PLAN, gx(&p, "The compromise operation against " + p.name + " is sanctioned: it is staged at your next dinner with him."));
+        // the next step in the ordinary run of a case, from what your own file says
+        if (p.stage == DEVELOPING && p.traceState == 0 && p.rapport >= 40) add(0, TD_PEOPLE, gx(&p, p.name + " is friendly now. Ask Centre for a trace on him before you go further."));
+        if (p.stage == DEVELOPING && p.traceState == 2 && !p.traceBad && p.sanction == 0 && p.rapport >= 40) {
+            float conf = 0;
+            for (int i = 0; i < A_INFL; i++) conf += p.estC[i];
+            if (conf / A_INFL >= 35) add(0, TD_PEOPLE, gx(&p, p.name + "'s trace is clean and your assessment of him is taking shape. If you mean to recruit him, propose it to Centre."));
+        }
         if (p.stage == DEVELOPING && p.lastContact >= 0 && g.day - p.lastContact > 30) add(0, TD_PEOPLE, gx(&p, p.name + fstr(" has not been seen for %d days. Acquaintance fades.", g.day - p.lastContact)));
     }
     // material
@@ -499,12 +528,13 @@ std::vector<int> Sim::careerCitations() const {
     std::vector<int> v;
     bool full = g.overTitle == "MOSCOW, AUGUST 1991";
     int recruited = 0;
-    bool banner = false, network = false, nobody = false, wash = false, bonn = false, png = false, taken = false, clean = true;
+    bool banner = false, network = false, nobody = false, wash = false, bonn = false, png = false, taken = false, clean = true, out = false;
     for (auto& r : g.record) {
         if (THEATRES[r.theatre].training) continue;
         recruited += r.recruited;
         if (r.award.find("Red Banner") != std::string::npos) banner = true;
         if (r.agentsAtEnd >= 6) network = true;
+        if (r.exfil > 0) out = true;
         if (r.recruited >= 3 && r.arrested == 0) nobody = true;
         if (r.theatre == TH_WASHINGTON && r.how == END_TOUR) wash = true;
         if (r.theatre == TH_BONN) bonn = true;
@@ -525,6 +555,7 @@ std::vector<int> Sim::careerCitations() const {
     if (full && g.ironman) v.push_back(CI_IRONMAN);
     if (png) v.push_back(CI_PNG);
     if (taken) v.push_back(CI_TAKEN);
+    if (out || g.totExfil > 0) v.push_back(CI_BROUGHT_OUT);
     if (full && THEATRES[g.startTheatre].slot >= 1) v.push_back(CI_LATE);
     return v;
 }

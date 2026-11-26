@@ -9,20 +9,20 @@
 
 int main(int argc, char** argv) {
     int n = argc > 1 ? atoi(argv[1]) : 20;
-    bool careful = true, immortal = false;
+    bool careful = true, immortal = false, course = false;
     uint64_t first = 1;
     for (int i = 2; i < argc; i++) {
         std::string a = argv[i];
-        if (a == "reckless") careful = false; else if (a == "careful") careful = true; else if (a == "immortal") immortal = true; else first = (uint64_t)atoll(argv[i]);
+        if (a == "reckless") careful = false; else if (a == "careful") careful = true; else if (a == "immortal") immortal = true; else if (a == "course") course = true; else first = (uint64_t)atoll(argv[i]);
     }
-    int reached[4] = {}, n91 = 0, saveFail = 0;
-    double score[4] = {}, value[4] = {}, recruited[4] = {}, arrested[4] = {};
-    int how[4][4] = {}, cnt[4] = {}, moleCaught = 0, moles = 0, cause[4][8] = {};
-    double days[4] = {};
+    int reached[N_THEATRE] = {}, n91 = 0, saveFail = 0;
+    double score[N_THEATRE] = {}, value[N_THEATRE] = {}, recruited[N_THEATRE] = {}, arrested[N_THEATRE] = {};
+    int how[N_THEATRE][4] = {}, cnt[N_THEATRE] = {}, moleCaught = 0, moles = 0, cause[N_THEATRE][8] = {}, exfil = 0, courses = 0, coursePass = 0;
+    double days[N_THEATRE] = {};
     std::map<std::string, int> endings;
     for (uint64_t seed = first; seed < first + (uint64_t)n; seed++) {
         Sim s;
-        s.newCareer(seed, "Testov");
+        s.newCareer(seed, "Testov", 1, course);
         Bot bot(s, careful);
         int guard = 0, checked = 0;
         while (s.g.phase != PH_OVER && guard++ < 12000) {
@@ -63,15 +63,18 @@ int main(int argc, char** argv) {
             for (auto& a : rcd.agents) if (a.find("worked for the adversary") != std::string::npos) { moles++; if (a.find("did not finish") != std::string::npos) moleCaught++; }
         }
         endings[s.g.overTitle]++;
+        for (auto& rc : s.g.record) exfil += rc.exfil;
+        if (!s.g.courseReport.empty()) { courses++; if (s.g.courseReport.find("not completed") == std::string::npos) coursePass++; }
         if (s.g.overTitle.find("1991") != std::string::npos) n91++;
         if (n <= 12) { printf("seed %llu: %s, %s |", (unsigned long long)seed, s.g.overTitle.c_str(), RANK[s.g.rank]); static const char* H[] = {"tour", "PNG", "expelled", "RECALLED"}; for (auto& rc : s.g.record) printf(" %s %s %.0f (%dd, arr %d) |", THEATRES[rc.theatre].city, H[rc.how], rc.score, rc.endDay - rc.startDay, rc.arrested); printf("\n"); }
     }
     printf("\n%d careers (%s%s)\n", n, careful ? "careful" : "reckless", immortal ? ", immortal" : "");
-    for (int t = 0; t < 4; t++) if (cnt[t])
+    for (int t = 0; t < N_THEATRE; t++) if (cnt[t])
         printf("  %-11s played %3d  days %5.0f  score %5.1f  worth %6.0f  recruited %4.1f  arrested %4.1f  | tour %d  PNG %d (dangle %d, turned %d, agent watched %d, drop staked %d)  expelled %d  recalled %d\n", THEATRES[t].city, cnt[t], days[t] / cnt[t], score[t] / cnt[t], value[t] / cnt[t],
                recruited[t] / cnt[t], arrested[t] / cnt[t], how[t][0], how[t][1], cause[t][1], cause[t][2], cause[t][3], cause[t][4], how[t][2], how[t][3]);
     for (auto& e : endings) printf("  ending: %-32s %d\n", e.first.c_str(), e.second);
     printf("  traitors in stations: %d, removed before the end of the tour: %d\n", moles, moleCaught);
+    printf("  exfiltrated agents: %d   courses taken: %d, completed: %d\n", exfil, courses, coursePass);
     printf("  save/load failures: %d\n", saveFail);
     return saveFail ? 1 : 0;
 }

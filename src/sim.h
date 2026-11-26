@@ -5,6 +5,13 @@
 //   sim_day.cpp     orders and everything that happens in the street
 //   sim_night.cpp   night, dawn, Centre's answers, the other officers, history
 //   sim_career.cpp  starting a posting, ending it, the years at Centre, the end of the career
+//   sim_spy.cpp     officers of foreign services, exfiltration, listening devices
+//   sim_tutorial.cpp the training course
+//   sim_life.cpp    the watchers' cars, getting about, agents' own lives, the monthly returns
+//   sim_world.cpp   weather and light, holidays, safe flats, Centre's verification, the operational game
+//   sim_events.cpp  the events deck, the changing city, agents' skills
+//   sim_trade.cpp   chicken feed and playback, confidential contacts, walk-in letters, escape plans, the summons
+//   sim_office.cpp  the year's plan and attestation, home and leave, your own money, your patron, compromise operations
 //   sim_text.cpp    the texts the screens show (dossier, stores, station, accounts ...)
 //
 // The screens never change the game except through the public functions of this class.
@@ -20,6 +27,8 @@ std::string pad(const std::string& s, int n);
 std::string pad(const std::string& s, int n, char fill);
 std::string clip(const std::string& s, int n);
 std::string fstr(const char* fmt, ...);
+bool strikeToday(const GameState& g);                       // a transport strike today (sim_events.cpp)
+bool meetsAllowed(const GameState& g);                      // stood down, but agents' agreed meetings are kept
 
 extern const char* W_RAPPORT[5];
 extern const char* W_COMMIT[5];
@@ -35,12 +44,27 @@ public:
     static const int FRAMES = 50;                           // exposures on one Minox cassette
 
     // ---- starting, saving, loading
-    void newCareer(uint64_t seed, const std::string& officer);
+    void newCareer(uint64_t seed, const std::string& officer, int difficulty = 1, bool withTraining = false);
+    /** A career begun anywhere: at the course (TH_MOSCOW) or at any posting, with a background, difficulty and ironman rule. */
+    struct CareerOpts { int start = TH_MOSCOW; int background = 0; int difficulty = 1; bool ironman = false; };
+    void newCareer(uint64_t seed, const std::string& officer, const CareerOpts& o);
+    static int startRank(int theatre);
+    const Officer* rezident() const;
+    // the service records (records.h): how this career ended, what it earned, and the line kept for it
+    std::string endingKey() const;
+    std::vector<int> careerCitations() const;
+    std::string archiveLine() const;
+    void skipTraining();
     std::vector<uint8_t> save();
     bool load(const std::vector<uint8_t>& data);
 
     // ---- lookups
     const Theatre& T() const { return THEATRES[g.theatre]; }
+    bool training() const { return T().training; }
+    /** How hard the world pushes back: 0.75 forgiving, 1 standard, 1.25 unforgiving. */
+    float hard() const { return g.difficulty == 0 ? 0.75f : (g.difficulty == 2 ? 1.25f : 1.f); }
+    /** A district on our own side of a frontier, where the adversary cannot follow anybody. */
+    bool eastSide(int district) const { return T().east[district] && !g.wallDown; }
     Person* person(int id);
     Site* site(int id);
     Roll* roll(int id);
@@ -78,7 +102,40 @@ public:
     std::string setHandler(Person& p, int officerId);
     std::string radioMsg(Person& p, int tempo, int reqId, bool callout);
     std::string instruct(Person& p, int tempo, int reqId);
+    std::string requestExfil(Person& p);
+    std::string requestBug();
     std::string denounce(Officer& o);
+    void strikeWatcher(int id, bool struck);
+    std::string rentFlat(int district);
+    int flatCost(int district) const;
+    std::string requestVerify(Person& p);
+    bool dayOff(int day) const;
+    std::string holiday(int day) const;
+    std::string weatherLine() const;
+    // ---- the officer's own affairs (sim_office.cpp)
+    std::string bookLeave(int startDay);
+    std::string cancelLeave();
+    bool onLeave(int day) const;
+    std::string setWifeSignal(int siteId);
+    std::string buyHomeGift();
+    std::string buyGoods();
+    std::string giftChief();
+    std::string setSkim(int tenths);
+    std::string buyAsset(int k);
+    std::string prepareCompromise(Person& p, int kind);
+    int kompCost(int kind) const;
+    std::string privateText();
+    // ---- the trade (sim_trade.cpp)
+    std::string proposePlayback(Person& p);
+    std::string registerContact(Person& p);
+    std::string padReport();
+    // ---- conveniences for the player (sim_text.cpp)
+    enum { TD_PLAN, TD_PEOPLE, TD_SITES, TD_MAT, TD_CENTRE, TD_STATION, TD_ACC, TD_HOME };
+    struct Todo { int level; int tab; std::string text; };       // level: 2 urgent, 1 soon, 0 worth knowing; tab: which screen deals with it
+    std::vector<Todo> todo();
+    std::string renameAgent(Person& p, const std::string& name);
+    std::string personalFile();
+    std::string planText();
     void retireSite(Site& s) { s.retired = true; }
     void decide(int decisionId, int option);
     void chooseInterlude(int option);
@@ -92,7 +149,10 @@ public:
     std::string status2();
     std::string diary(int day);
     std::string siteNotes(const Site& s);
-    std::string dossier(const Person& p);
+    std::string dossier(const Person& p, bool withHead = true);
+    std::string siteReport(const Site& s);
+    std::string districtText(int d);
+    std::string serviceNote(const Person& p);
     std::string officerFile(const Officer& o);
     std::string storesText();
     std::string stationText();
@@ -138,7 +198,89 @@ private:
     void witness(std::vector<int>& list, int officerId);
     void heat(float d);
 
+    // --- foreign services, exfiltration, devices (sim_spy.cpp)
+    Person makeSpy(float dangleChance);
+    void ciReport(Person& src);
+    void krTip();
+    void exfiltrate(Person& p);
+    void bugNight(Person& p, bool work);
+    void arrest(Person& p, const std::string& how);
+
+    // --- the watchers' cars, getting about, agents' lives, the monthly returns (sim_life.cpp)
+    void makePool();
+    std::string makePlate();
+    void makeCar(Car& c);
+    float recognise(int b);
+    std::string noteVehicle(int b, int district, int signs, bool cov);
+    void replate();
+    void krVehicles();
+    void lifeEvent(Person& p);
+    void leaveForPost(Person& p);
+    void postingDecision(Person& p);
+    void monthRecord();
+
+    // --- the weather, flats, verification, the operational game (sim_world.cpp)
+    void weather(bool first);
+    int sunTime(int day, bool set) const;
+    void flatMeeting(Site& s, Person& p, bool observed, bool longMeet);
+    void docSession(const Order& o, Person& p, Site& s);
+    void verifyRoll(Person& p, Roll& x);
+    void gameStart();
+    void gameSanction();
+    void gameRound();
+    void gameDecide(int kind, int option);
+    void embassyReception(int b);
+
+    // --- events, the changing city, agents' skills (sim_events.cpp)
+    void events();
+    void eventDecide(int ref, int option);
+    void cityChanges();
+    void referral(Person& p);
+    void referralArrives(int agentId);
+    void trainAgent(Person& p, int what, bool flat);
+    void initSkills(Person& p, bool officer);
+
+    // --- the plan, home and leave, the purse and the patron, compromise operations (sim_office.cpp)
+    void planDawn(const Date& d);
+    void planDecide(int option);
+    void attestation(bool endOfTour);
+    void homeNight();
+    void officeMonthly();
+    void officeHistory(const Date& d);
+    void wifeDecide(int option);
+    void leaveDawn();
+    void leaveDecide(int option);
+    int payAgent(Person& p, int amt);
+    void skimExposed(const std::string& how);
+    void patronFalls(const std::string& how);
+    void stageCompromise(Person& p);
+    void kompSanction(Person& p);
+    void dirtDecide(int option);
+    // --- chicken feed, confidential contacts, the letter through the door, escape plans, the summons (sim_trade.cpp)
+    void playSanction(Person& p);
+    void playbackMeet(Person& p, Site& s);
+    void confidRegistered(Person& p);
+    void confidTalk(Person& p);
+    void walkInLetter();
+    void letterTakenUp(bool genuine, int svc);
+    void walkInDecide(int ref, int option);
+    void letterAnswer(int ref);
+    void rehearseEscape(Person& p);
+    void escapeSignal(Person& p);
+    void escapeSeen(Site& s);
+    void escapePickup(Person& p);
+    void summons();
+    void summonsDecide(int option);
+
+    // --- the training course (sim_tutorial.cpp)
+    void tutorialSetup();
+    void tutorialDawn();
+    void tutorialNight();
+    void tutorialIssue();
+    void endTraining(bool completed);
+
     // --- generators (sim_career.cpp)
+    int pickNext(float score, std::string& why);
     std::string personName(bool maleOnly, bool& female);
     Person makePerson(int sector, float dangleChance);
     void makeDangle(Person& p);
@@ -161,6 +303,7 @@ private:
     void meetOvert(const Order& o, int b);
     void meetClan(const Order& o, int b);
     void agentAgenda(const Order& o, Person& p, Site& s);
+    void brushAgenda(const Order& o, Person& p);
     void contactAgenda(const Order& o, Person& p, Site& s);
     void commsPlan(const Order& o, Person& p);
     void pitch(const Order& o, Person& p, Site& s);

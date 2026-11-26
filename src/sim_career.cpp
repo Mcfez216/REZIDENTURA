@@ -5,7 +5,7 @@
 static std::string upper(std::string s) { for (auto& c : s) c = (char)toupper((unsigned char)c); return s; }
 
 // ============================================================================ saving and loading
-static const char MAGIC[4] = {'R', 'E', 'Z', '3'};
+static const char MAGIC[4] = {'R', 'E', 'Z', '8'};
 
 std::vector<uint8_t> Sim::save() {
     Ar a;
@@ -21,8 +21,10 @@ bool Sim::load(const std::vector<uint8_t>& data) {
     a.writing = false; a.buf = data; a.pos = 4;
     GameState t;
     a & t;
-    if (!a.ok || t.theatre < 0 || t.theatre >= (int)THEATRES.size()) return false;
+    if (!a.ok || a.ver < 8 || a.ver > 12 || t.theatre < 0 || t.theatre >= (int)THEATRES.size()) return false;
     g = t;
+    if (g.patronName.empty()) g.patronName = RU_LAST[(size_t)(g.seed % RU_LAST.size())];     // a save from before version 1.2
+    if (a.ver < 9) g.planYear = dateOf(g.day).y;                                             // no plan until next January
     rep = nullptr; subj = nullptr; attention = false;
     actAs(nullptr);
     attempted.clear(); gradeLines.clear();
@@ -74,6 +76,7 @@ Person Sim::makePerson(int sector, float dangleChance) {
     for (int i = 0; i < N_ATTR; i++) { p.estV[i] = 50; p.estC[i] = 0; }
     p.estV[A_ACCESS] = (j.lo + j.hi) / 2.f; p.estC[A_ACCESS] = 20;
     p.estV[A_INFL] = (float)j.infl; p.estC[A_INFL] = 25;
+    initSkills(p, false);
     return p;
 }
 
@@ -172,9 +175,22 @@ std::string Sim::officerName() {
 }
 
 // ============================================================================ a new career, a new posting
-void Sim::newCareer(uint64_t seed, const std::string& officerName_) {
+void Sim::newCareer(uint64_t seed, const std::string& officerName_, int difficulty, bool withTraining) {
+    CareerOpts o;
+    o.start = withTraining ? TH_MOSCOW : TH_LONDON;
+    o.difficulty = difficulty;
+    newCareer(seed, officerName_, o);
+}
+int Sim::startRank(int theatre) { return std::max(0, std::min(3, THEATRES[theatre].slot)); }
+const Officer* Sim::rezident() const {
+    for (auto& o : g.officers) if (o.role == ROLE_REZIDENT && !o.gone) return &o;
+    return nullptr;
+}
+void Sim::newCareer(uint64_t seed, const std::string& officerName_, const CareerOpts& opt) {
+    int difficulty = opt.difficulty;
     g = GameState();
     g.seed = seed;
+    g.difficulty = std::max(0, std::min(2, difficulty));
     g.rng.s = seed * 0x9E3779B97F4A7C15ull + 12345;
     std::string n = officerName_;
     while (!n.empty() && n.back() == ' ') n.pop_back();
@@ -182,7 +198,66 @@ void Sim::newCareer(uint64_t seed, const std::string& officerName_) {
     if (!n.empty()) g.officer = n;
     rep = nullptr; subj = nullptr;
     actAs(nullptr);
-    startPosting(0, true);
+    g.patronName = RU_LAST[r().n((int)RU_LAST.size())];
+    int start = std::max(0, std::min((int)TH_BERLIN2, opt.start));
+    g.background = std::max(0, std::min(3, opt.background));
+    g.ironman = opt.ironman;
+    g.startTheatre = start;
+    switch (g.background) {
+        case 1: g.you.tradecraft += 14; g.assessment -= 6; g.langs[0] -= 12; break;           // counter-intelligence
+        case 2: g.langs[0] = 82; g.langs[1] = 55; g.assessment += 6; g.you.tradecraft -= 8; break;   // the Institute of Languages
+        case 3: g.patron = 75; g.you.tradecraft -= 8; g.assessment -= 4; break;              // well connected
+        default: break;
+    }
+    // begun later, the officer has the years behind him that a full career would have given him
+    int slot = THEATRES[start].slot;
+    if (slot >= 1) {
+        g.rank = startRank(start);
+        g.you.tradecraft += 7.f * slot; g.assessment += 7.f * slot;
+        int l = THEATRES[start].lang;
+        g.langs[l] = std::max(g.langs[l], 55.f + 6 * slot);
+    }
+    startPosting(start, true);
+    if (g.background == 3) g.standCentre = clampf(g.standCentre + 8, 0, 100);
+}
+
+/**
+ * Where Centre sends you next. The career has four slots; the city that fills the next one depends on
+ * how the last tour went, and on whether the Western services now know your face.
+ */
+int Sim::pickNext(float score, std::string& why) {
+    int slot = T().slot;
+    bool known = g.blown > 0;
+    if (slot <= 0) {
+        if (score >= 45 && g.recalls == 0) {
+            why = "Centre was satisfied with London. The Third Department asks for you in Vienna, where the force-reduction talks will bring every NATO capital's clerks to one city.";
+            return TH_VIENNA;
+        }
+        why = "Centre was not satisfied with London. Your file goes to the Seventeenth Department, which needs officers in New Delhi: lightly watched, full of volunteers, and a long way from anywhere that matters to Yasenevo.";
+        return TH_DELHI;
+    }
+    if (slot == 1) {
+        if (known) {
+            why = "The Americans do not grant visas to officers whose photographs are in their files. Washington is closed to you. The Fourth Department takes you for Berlin, where nobody needs a visa to work against the West.";
+            return TH_BERLIN1;
+        }
+        if (score >= 50) {
+            why = "Your tour has been noticed in the First Department. The main adversary's capital is the post every officer of your generation wants.";
+            return TH_WASHINGTON;
+        }
+        why = "The First Department has stronger candidates for Washington. The Fourth Department - the two Germanies - takes you for the Representation in Berlin-Karlshorst.";
+        return TH_BERLIN1;
+    }
+    if (known) {
+        why = "The Federal Republic will not accredit an officer whose face is in the Western files. You return to Berlin-Karlshorst, as head of a line.";
+        return TH_BERLIN2;
+    }
+    if (score >= 55 && g.rank >= 3) {
+        why = "The Fourth Department proposes you as Rezident in Bonn. The Chairman has signed the order.";
+        return TH_BONN;
+    }
+    why = "The post of Rezident in Bonn has gone to another colonel. You are posted to the Representation in Berlin-Karlshorst, as head of a line.";
+    return TH_BERLIN2;
 }
 
 void Sim::startPosting(int theatre, bool first) {
@@ -199,6 +274,16 @@ void Sim::startPosting(int theatre, bool first) {
     g.officers.clear(); g.decisions.clear(); g.plan.clear(); g.reports.clear(); g.csDays.clear(); g.ledger.clear(); g.sdrLog.clear();
     g.zenit.clear(); g.krLog.clear(); g.usedReqTemplates.clear(); g.histDone.clear(); g.usedNames.clear();
     g.mSpotted = g.mMeetings = g.mAborts = g.mRolls = 0; g.mValue = 0;
+    makePool(); g.krEst = -1;
+    weather(true);
+    g.busyUntil = -1; g.standDownUntil = -1; g.busyWhy.clear(); g.evLast.clear(); g.lastCarDay = -99;
+    for (float& m : g.distMod) m = 1;
+    g.planLevel = -1; g.planYear = 0; g.leaveFrom = g.leaveTo = -1; g.leaveYear = 0;
+    g.wifeHere = true; g.wifeSignal = -1; g.home = clampf(g.home + 10, 45, 80);
+    g.skimmed = 0; g.patronSaved = false; g.gru = 50; g.dirt *= 0.4f;
+    g.lastHomeGift = g.lastChiefGift = -9999;
+    if (g.game == 1 || g.game == 2) g.gameLog += fmtShort(g.day) + "  The game ended with your posting.\n";
+    g.game = 0;
     g.totSpotted = g.totRecruited = g.totRolls = g.totReqDone = g.totArrested = g.totAborts = 0; g.totValue = 0;
     g.you.street = 8;
     g.you.heat = g.you.peakHeat = clampf(t.heat0 + g.blown * t.blownHeat, 0, 80);
@@ -211,6 +296,7 @@ void Sim::startPosting(int theatre, bool first) {
     g.secBonusUntil = -1; g.ryanPolicy = -1; g.krPending = false; g.warnedLow = false;
     g.a4Base = t.a4Base; g.a4 = t.a4Base;
     g.lastReqIssue = g.day; g.lastFundsReq = -9999; g.lastLineN = g.day - 60; g.lastApproach = g.day;
+    if (t.training) { g.ledger.clear(); tutorialSetup(); return; }
 
     // --- the station
     auto addOfficer = [&](int role, int rank) -> Officer& {
@@ -221,7 +307,13 @@ void Sim::startPosting(int theatre, bool first) {
         g.officers.push_back(o);
         return g.officers.back();
     };
-    if (t.role < 3) addOfficer(ROLE_REZIDENT, 3);
+    if (t.role < 3) {
+        // his temperament follows from the world and the city, not from the dice, so the same world number gives the same man
+        Officer& rz = addOfficer(ROLE_REZIDENT, 3);
+        uint64_t h = (g.seed + 1) * 0x9E3779B97F4A7C15ull ^ (uint64_t)(theatre + 7) * 0xC2B2AE3D27D4EB4Full;
+        h ^= h >> 29; h *= 0xBF58476D1CE4E5B9ull; h ^= h >> 32;
+        rz.temper = (int)(h % 5);
+    }
     addOfficer(ROLE_KR, 2);
     addOfficer(ROLE_TECH, 1);
     for (int i = 0; i < t.colleagues; i++) addOfficer(ROLE_COLLEAGUE, r().n(3));
@@ -234,7 +326,7 @@ void Sim::startPosting(int theatre, bool first) {
     }
     // --- treachery. Most stations are clean. You do not know whether this one is.
     static const float MOLE[] = {22, 30, 40, 35};
-    if (pct(MOLE[theatre % 4])) {
+    if (pct(MOLE[std::max(0, t.slot) % 4])) {
         std::vector<int> cand;
         for (size_t i = 0; i < g.officers.size(); i++) if (g.officers[i].role == ROLE_COLLEAGUE || g.officers[i].role == ROLE_SUB) cand.push_back((int)i);
         if (!cand.empty()) {
@@ -312,7 +404,7 @@ void Sim::startPosting(int theatre, bool first) {
     std::string rolePara =
         t.role == 0 ? "I expect: contact reports written up without delay, new contacts every month, and no heroics."
         : t.role == 1 ? "You are a senior officer now, and I attach " + names + " to you. He is in his first tour. Give him work (Station screen), watch what he does with it, and remember that his mistakes are entered against your name as well as his."
-        : t.role == 2 ? "You head the line. Under you: " + names + ". You decide who spots, who handles which case, and who watches whose back (Station screen; Contacts & Agents for the cases). You will run fewer agents yourself than you would like. That is what the post means."
+        : t.role == 2 ? "You head the line. Under you: " + names + ". You decide who spots, who handles which case, and who watches whose back (Station screen; Contacts for the cases). You will run fewer agents yourself than you would like. That is what the post means."
         : "You are appointed Rezident. Your operational officers: " + names + ". You answer to this department for everything they do and everything they fail to do. Nobody will approve your operations for you, and nobody will share the blame.";
     subj = &a;
     cable(t.role == 3 ? "Centre" : "Rezident", "Arrival - your duties",
@@ -344,6 +436,8 @@ std::string Sim::summary() {
 
 void Sim::endPosting(int how, const std::string& title, const std::string& text) {
     const Theatre& t = T();
+    if (!t.training && how == END_TOUR) attestation(true);
+    g.planLevel = -1;
     PostRec rec;
     rec.theatre = g.theatre; rec.startDay = g.postStart; rec.endDay = std::min(g.day, g.postEnd); rec.how = how;
     rec.cause = how == END_PNG ? pngCause : 0;
@@ -359,23 +453,25 @@ void Sim::endPosting(int how, const std::string& title, const std::string& text)
     // what Centre weighs: product first, then requirements met, then the network you leave behind, less the people you lost
     float score = 30 * std::min(1.5f, g.totValue / t.valuePar) + g.totReqDone * 2 + std::min(g.totRecruited, 8) * 1.f + std::min(rec.agentsAtEnd, 6) * 2
                   - g.totArrested * 5 / (1 + 0.5f * t.role) + (g.standCentre - 50) * 0.25f;
+    if (!t.training) score += clampf((g.patron - 30) * 0.1f, -3, 6);          // somebody at Centre reads the file kindly, or does not
     if (how == END_PNG) score -= 20;
     if (how == END_RECALLED) score -= 35;
-    if (g.theatre == 2 && g.ryanPolicy == 0) score += 4;
+    if (g.ryanPolicy == 0) score += 4;
     score = clampf(score, 0, 100);
     rec.score = score;
     rec.verdict = score >= 72 ? "Outstanding" : score >= 50 ? "Good" : score >= 30 ? "Satisfactory" : "Unsatisfactory";
     std::string notes;
     int before = g.rank;
-    if (score >= 50 && g.rank < std::min(3, g.theatre + 1)) g.rank++;
-    else if (score >= 30 && g.rank < g.theatre) g.rank++;
-    if (g.theatre == 3 && score >= 72 && g.rank == 3) g.rank = 4;
+    if (score >= 50 && g.rank < std::min(3, t.slot + 1)) g.rank++;
+    else if (score >= 30 && g.rank < t.slot) g.rank++;
+    if (t.slot == 3 && t.role == 3 && score >= 72 && g.rank == 3) g.rank = 4;
     if (g.rank > before) notes += std::string("Promoted to ") + RANK[g.rank] + ".\n";
     if (score >= 72) rec.award = "Order of the Red Banner";
     else if (score >= 58) rec.award = "Order of the Red Star";
     if (!rec.award.empty()) { g.awards.push_back(fstr("%d  ", dateOf(g.day).y) + rec.award + " (" + t.city + ")"); notes += "Awarded the " + rec.award + ".\n"; }
-    if (g.theatre == 2 && g.ryanPolicy == 0) notes += "A note on file records that the Washington line's RYAN returns of 1981-84 were later judged the more accurate.\n";
+    if (g.ryanPolicy == 0) notes += "A note on file records that your line's RYAN returns of 1981-84 were later judged the more accurate.\n";
     rec.rankAtEnd = g.rank;
+    if (!t.training) g.patron = clampf(g.patron + (score >= 58 ? 8.f : score < 30 ? -10.f : 0.f), 0, 100);
     if (score < 25) g.poorPostings++; else g.poorPostings = 0;
     if (how == END_PNG) { g.png++; g.blown++; }
     if (how == END_EXPELLED) g.blown++;
@@ -389,7 +485,7 @@ void Sim::endPosting(int how, const std::string& title, const std::string& text)
     std::string eval = text + "\n\n------------------------------------------------------------\nCENTRE'S EVALUATION OF YOUR TOUR IN " + upper(t.city) + "\n\n"
                        + record + "\n  Verdict: " + rec.verdict + ".\n" + (notes.empty() ? "" : "  " + subst(notes, "\n", "\n  ")) + "\n"
                        "The files have been opened. What each of your agents really was is entered on the Career screen.\n";
-    bool last = g.theatre + 1 >= (int)THEATRES.size();
+    bool last = t.slot >= 3;
     if (!last && g.png >= 3)
         finishCareer("TRANSFERRED TO THE RESERVE", eval + "\nThree governments have now expelled you by name. No country will accredit you and no cover will hold. You are transferred to the active reserve and given a post in a ministry's foreign-relations department, where you will read what other men bring home.");
     else if (!last && (g.recalls >= 2 || g.poorPostings >= 2))
@@ -407,10 +503,12 @@ void Sim::endPosting(int how, const std::string& title, const std::string& text)
             "The First Chief Directorate sat out those three days at Yasenevo and issued no orders. In October it was detached from the Committee. In December the state you had served ceased to exist; "
             "your agents, those who were left, went on servicing their dead drops for a country that was no longer there.\n\n" + fate);
     } else {
-        const Theatre& nx = THEATRES[g.theatre + 1];
+        std::string why;
+        g.nextTheatre = pickNext(score, why);
+        const Theatre& nx = THEATRES[g.nextTheatre];
         g.phase = PH_INTERLUDE;
         g.interludeTitle = title;
-        g.interludeText = eval + "\n------------------------------------------------------------\n" + nx.tour + "\n\n"
+        g.interludeText = eval + "\n------------------------------------------------------------\n" + why + "\n\n" + nx.tour + "\n\n"
                           "Next posting: " + nx.city + ", from " + fmtDay(dayOf(nx.sy, nx.sm, nx.sd)) + ", as " + nx.cover + "."
                           + (g.blown > 0 && nx.blownHeat > 0 ? "\n\nYou are known to the Western services by name and photograph. Expect attention from your first day." : "")
                           + "\n\nBefore you leave, the personnel directorate allows you one course:";
@@ -423,18 +521,33 @@ void Sim::endPosting(int how, const std::string& title, const std::string& text)
 void Sim::finishCareer(const std::string& title, const std::string& text) {
     g.phase = PH_OVER;
     g.overTitle = title;
-    g.overText = text + "\n\n" + careerText();
+    std::string own;
+    if (title != "DEFECTOR" && title != "LEFORTOVO") {
+        std::vector<std::string> v;
+        if (g.assets & 1) v.push_back("a Zhiguli in a garage");
+        if (g.assets & 2) v.push_back("three rooms in a cooperative block");
+        if (g.assets & 4) v.push_back("a dacha with an apple tree");
+        if (!v.empty()) {
+            own = "\n\nWhat the years abroad left you: ";
+            for (size_t i = 0; i < v.size(); i++) own += (i == 0 ? "" : i + 1 == v.size() ? " and " : ", ") + v[i];
+            own += std::string(". ") + (g.wifeHere && g.home >= 40 ? "Your wife is content with it." : g.wifeHere ? "Your wife says it was not worth it." : "You live there alone.");
+        } else own = std::string("\n\nYou came home with what you left with") + (g.wifeHere ? "." : ", and to an empty flat.");
+    }
+    g.overText = text + own + "\n\n" + careerText();
     attention = true;
 }
 
 void Sim::chooseInterlude(int option) {
     if (g.phase != PH_INTERLUDE) return;
-    const Theatre& nx = THEATRES[g.theatre + 1];
+    int next = g.nextTheatre >= 0 ? g.nextTheatre : TH_LONDON;
+    const Theatre& nx = THEATRES[next];
+    bool fromCourse = T().training;
     if (option == 0) g.you.tradecraft = std::min(92.f, g.you.tradecraft + 8);
     else if (option == 1) g.assessment = std::min(92.f, g.assessment + 8);
     else g.langs[nx.lang] = std::min(95.f, g.langs[nx.lang] + 18);
     if (g.langs[nx.lang] < 35) g.langs[nx.lang] = 35;      // nobody is posted without the working minimum
-    startPosting(g.theatre + 1, false);
+    g.nextTheatre = -1;
+    startPosting(next, fromCourse);
 }
 
 // ============================================================================ decisions
@@ -447,15 +560,55 @@ void Sim::decide(int decisionId, int option) {
     subj = nullptr;
     switch (d.kind) {
         case DK_APPROACH:
+            if (d.ref == 1) { dirtDecide(option); break; }
             if (option == 0) {
                 g.standRez = clampf(g.standRez + 3, 0, 100); g.paperwork += 4;
                 g.you.heat = std::max(8.f, g.you.heat - 2);
                 cable("Line KR", "Your report of an approach", "Your report is noted. You acted correctly. You will avoid the person concerned, vary your movements, and expect that for some weeks your own movements will be of interest to this Line as well as to the adversary.\n\nLINE KR");
+            } else if (option == 2) {
+                g.standRez = clampf(g.standRez + 2, 0, 100); g.paperwork += 5;
+                cable("Line KR", "Your report of an approach", "Your report is noted, and so is your proposal. It has gone to Centre with this Line's support. Until Centre answers you will not see him, "
+                      "and you will not discuss it with anybody, including your wife.\n\nLINE KR");
+                gameStart();
             } else if (pct(35)) pend(g.day + 30 + r().n(150), P_SECRET, 0, 3);
+            break;
+        case DK_WALKIN: walkInDecide(d.ref, option); break;
+        case DK_SUMMONS: summonsDecide(option); break;
+        case DK_PLAN: planDecide(option); break;
+        case DK_LEAVE: leaveDecide(option); break;
+        case DK_WIFE: wifeDecide(option); break;
+        case DK_GAME:
+        case DK_GAME_OFFER:
+            gameDecide(d.kind, option);
+            break;
+        case DK_EVENT:
+            eventDecide(d.ref, option);
             break;
         case DK_RYAN:
             g.ryanPolicy = option;
             break;
+        case DK_POSTED: {
+            Person* p = person(d.ref);
+            if (!p || p->stage != AGENT || p->postDay < 0) break;
+            if (option == 0) { p->postGo = 1; file(*p, "Told to accept the posting to " + p->postCity + "."); }
+            else if (option == 1) {
+                p->postGo = 1;
+                if (p->camera) p->tempo = 3;
+                p->stress = clampf(p->stress + 6, 0, 100);
+                file(*p, "Told to accept the posting, and to photograph all he can before he goes (tempo High).");
+            } else if (pct(25 + p->commitment * 0.55f)) {
+                file(*p, "Turned down the posting to " + p->postCity + " at our request.");
+                p->warn.push_back("turned the posting down, as you asked. His chief was surprised and asked him why.");
+                p->postDay = -1; p->postCity.clear();
+                p->suspicion += 6; p->rapport -= 2;
+            } else {
+                p->postGo = 1;
+                file(*p, "Asked to refuse the posting; would not.");
+                p->warn.push_back("says he cannot refuse: his wife wants it, and his career depends on it. He leaves on " + fmtDay(p->postDay) + ".");
+                p->rapport -= 4;
+            }
+            break;
+        }
         case DK_ORPHANS: {
             int n = option == 0 ? 3 : (option == 1 ? 1 : 0);
             static const int sec[] = {POLITICAL, MILITARY, SECURITY};

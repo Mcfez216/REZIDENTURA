@@ -17,14 +17,35 @@ void Sim::endDay() {
         alert("You are ill with exhaustion and stayed in your flat all day. Today's orders were not carried out.");
         g.fatigue -= 30;
     } else {
+        bool busy = g.day <= g.busyUntil, down = g.day <= g.standDownUntil;
+        if (busy) {
+            bool bed = g.busyWhy.find("bed") != std::string::npos;
+            say("Your day belonged to somebody else: " + g.busyWhy + ".");
+            if (bed) g.fatigue = std::max(0.f, g.fatigue - 14);
+            else if (!onLeave(g.day)) { g.fatigue = std::min(100.f, g.fatigue + 7); g.cover = std::min(100.f, g.cover + 1.5f); }
+        }
         for (int b = 0; b < 3 && g.phase == PH_PLAY; b++) {
             Order o = order(g.day, b);
+            if (busy) {
+                if (o.set && o.type != O_REST && o.type != O_COVER) say(upper(BLOCK_LABEL[b]) + " - not carried out: " + OTYPE_LABEL[o.type]);
+                continue;
+            }
+            if (down && isOp(o.type)) {
+                Person* ap = person(o.person);
+                bool kept = meetsAllowed(g) && o.type == O_MEET_CLAN && ap && ap->stage == AGENT && ap->nextMeet == g.day;
+                if (!kept) {
+                    say(upper(BLOCK_LABEL[b]) + " - " + OTYPE_LABEL[o.type] + ": not carried out. Line KR has stood the station down.");
+                    continue;
+                }
+            }
             say(upper(BLOCK_LABEL[b]) + " - " + OTYPE_LABEL[o.type]);
             resolve(o, b);
+            if (b == 2 && g.phase == PH_PLAY) embassyReception(b);
         }
     }
     if (g.phase == PH_PLAY) officersDay();
     if (g.phase == PH_PLAY) night();
+    if (g.phase == PH_PLAY && training()) tutorialNight();
     g.plan.erase(g.day);
     if (g.phase == PH_PLAY) { g.day++; dawn(); }
     // keep the save file from growing without limit
@@ -185,6 +206,7 @@ void Sim::night() {
     // --- sites
     for (auto& s : g.sites) {
         s.exposure = std::max(0.f, s.exposure - 0.4f);
+        if (s.flat) s.neighbours = std::max(0.f, s.neighbours - 0.22f);
         if (s.staked && g.day - s.stakedDay > 12) s.staked = false;   // the observation post is withdrawn; the site stays known
         bool load = !s.rolls.empty() || s.cash > 0 || s.film > 0 || s.camera;
         if (s.type == ST_DROP && load && !s.staked) {
@@ -197,15 +219,17 @@ void Sim::night() {
         }
     }
     // --- you
-    g.fatigue = std::max(0.f, g.fatigue - 10);
-    if (!weekend(g.day)) g.cover = std::max(0.f, g.cover - 1.6f);
+    homeNight();
+    g.fatigue = std::max(0.f, g.fatigue - (training() ? 10 : g.wifeHere ? 10 + (g.home - 50) / 12.5f : 9));     // a man sleeps better in a quiet house
+    if (!dayOff(g.day) && !onLeave(g.day)) g.cover = std::max(0.f, g.cover - 1.6f);
     for (int k = -1; k < (int)g.officers.size(); k++) {
         Actor& a = k < 0 ? g.you : g.officers[k].a;
         float floor = std::max(8.f, a.peakHeat * 0.3f);     // once carded you are never quite forgotten
         if (a.heat > floor) a.heat = std::max(floor, a.heat - 0.15f - 0.012f * (a.heat - floor));   // interest fades fastest when it is highest
     }
     if (g.cover < 20) g.you.heat += 0.6f; else if (g.cover < 40) g.you.heat += 0.3f;     // a "diplomat" who is never at his desk
-    if (g.paperwork > 8) g.overdueDays++; else g.overdueDays = 0;
+    if (onLeave(g.day)) {}                                    // nobody expects reports from a man on the Black Sea
+    else if (g.paperwork > 8) g.overdueDays++; else g.overdueDays = 0;
     if (g.overdueDays > 0 && g.overdueDays % 5 == 0) {
         g.standRez -= 3;
         alert(fstr("Your contact reports are %d hours in arrears, and it has been noticed.", (int)std::lround(g.paperwork)));
@@ -220,6 +244,13 @@ void Sim::night() {
             ? "The department is dissatisfied with the work of your rezidentura and with your direction of it. Unless the position improves in the coming months the question of your replacement will be raised.\n\nHEAD OF THE FOURTH DEPARTMENT"
             : "I am dissatisfied with your work, and I have said so to Centre. Results, reports on time, and no more incidents - or I shall ask for you to be replaced. This is the only warning you will have.\n\nREZIDENT");
     }
+    if (g.standRez < 6 && g.patron >= 60 && !g.patronSaved && !training()) {
+        g.patronSaved = true;
+        g.patron = clampf(g.patron - 35, 0, 100);
+        g.standRez = 24;
+        cable("Centre", "The question of your recall", "The question of your recall was raised by the station and has been closed by the leadership of the directorate. "
+              "General " + g.patronName + " has said what he had to say on your behalf. He will not say it a second time.\n\nCENTRE");
+    }
     if (g.standRez < 6)
         endPosting(END_RECALLED, "RECALLED TO MOSCOW", T().role == 3
             ? "The department has lost confidence in your direction of the rezidentura. You are recalled 'for consultations' and will not be returning."
@@ -228,11 +259,17 @@ void Sim::night() {
 
 void Sim::sendCable(const OutCable& c) {
     switch (c.kind) {
-        case C_TRACE: pend(g.day + 6 + r().n(9), P_TRACE, c.ref, 0); break;
+        case C_TRACE: pend(g.day + (T().friends ? 2 + r().n(3) : 6 + r().n(9)), P_TRACE, c.ref, 0); break;   // the friends' card index answers in days
+        case C_EXFIL: pend(g.day + 7 + r().n(7), P_EXFIL, c.ref, 0); break;
         case C_SANCTION: pend(g.day + 5 + r().n(8), P_SANCTION, c.ref, 0); break;
         case C_FUNDS: pend(g.day + 4 + r().n(6), P_FUNDS, 0, P(100)); break;
         case C_KR: pend(g.day + 14 + r().n(16), P_KR, c.ref, 0); break;
         case C_RADIO: pend(g.day + 2 + r().n(3), P_RADIO, c.ref, c.p1, c.p2, c.p3); break;
+        case C_VERIFY: pend(g.day + 10 + r().n(11), P_VERIFY, c.ref, 0); break;
+        case C_KOMP: pend(g.day + 7 + r().n(8), P_KOMP, c.ref, 0); break;
+        case C_PLAY: pend(g.day + 8 + r().n(8), P_PLAY, c.ref, 0); break;
+        case C_CONFID: pend(g.day + 5 + r().n(6), P_CONFID, c.ref, 0); break;
+        case C_GAME: pend(g.day + 8 + r().n(8), P_GAME, 0, 0); break;
         case C_SUMMARY: {
             Roll* x = roll(c.ref);
             if (x && x->state == R_READY) {
@@ -259,7 +296,7 @@ static const char* const WARNFALSE[] = {"thinks he was followed home last week, 
 
 void Sim::agentNight(Person& p) {
     bool ctl = controlled(p);
-    bool work = !weekend(g.day);
+    bool work = !dayOff(g.day);
     float before = p.suspicion;
     // --- an inherited source whose name is in somebody else's files
     if (p.exposeDay >= 0 && g.day >= p.exposeDay && !ctl) {
@@ -268,14 +305,14 @@ void Sim::agentNight(Person& p) {
         file(p, "Named in records that have reached the adversary.");
     }
     // --- collection
-    if (p.tempo > 0 && work) {
+    if (p.tempo > 0 && work && g.day >= p.sickUntil) {
         static const float mult[] = {0, 4, 10, 22};
         float access = ctl ? p.app[A_ACCESS] : p.tru[A_ACCESS];
-        float pages = access / 100.f * mult[p.tempo] * rnd(0.5f, 1.5f);
+        float pages = access / 100.f * mult[p.tempo] * rnd(0.5f, 1.5f) * (0.85f + p.skPhoto / 300.f);   // a practised hand photographs more in the same ten minutes
         if (p.camera && p.film > 0) {
             Requirement* q = req(p.reqId);
             float match = q && !q->closed && q->kind == RK_COLLECT && q->sector == p.sector ? 1.f : 0.55f;
-            float v = ctl ? rnd(26, 60) : (p.fabricator && pct(45) ? -1 : p.tru[A_ACCESS] * rnd(0.6f, 1.05f) * match);
+            float v = ctl ? (p.fed < 3 ? rnd(22, 42) : rnd(30, 62)) : (p.fabricator && pct(45) ? -1 : p.tru[A_ACCESS] * rnd(0.6f, 1.05f) * match * (0.82f + p.skPhoto / 330.f));   // and fewer of the frames are unreadable
             p.frameVal += pages * v;
             p.frames += (int)std::lround(pages);
             if (p.frames >= FRAMES) {
@@ -283,6 +320,7 @@ void Sim::agentNight(Person& p) {
                 Roll& x = newRoll(p);
                 x.frames = FRAMES;
                 if (avg < 0 || (p.fabricator && avg < p.tru[A_ACCESS] * 0.35f)) { x.genuine = false; avg = rnd(25, 55); }
+                if (ctl) x.genuine = p.fed++ < 3;            // the first deliveries are true, and cost their owners nothing: chicken feed
                 x.value = clampf(avg, 3, 100);
                 x.state = R_AGENT;
                 p.held.push_back(x.id);
@@ -291,13 +329,14 @@ void Sim::agentNight(Person& p) {
         }
         if (!ctl) {
             float t = (float)p.tempo;
-            p.suspicion += t * t * (p.empSec / 100.f) * (1 - p.craft / 150.f) * 0.11f + (100 - p.tru[A_DISC]) / 100.f * 0.03f * t;
+            p.suspicion += (t * t * (p.empSec / 100.f) * (1 - p.craft / 150.f) * 0.11f + (100 - p.tru[A_DISC]) / 100.f * 0.03f * t) * hard();
             p.stress += t * 0.14f * (1.5f - p.tru[A_NERVE] / 100.f);
         }
     } else if (!ctl) {
         p.stress -= 0.3f;
         p.suspicion -= p.suspicion < 40 ? 0.15f : 0.4f;
     }
+    bugNight(p, work);
     if (ctl) { p.stress = 15; p.suspicion = 0; }
     // --- money
     static const std::string unpaid = "complains that he has not been paid what was promised.";
@@ -309,14 +348,9 @@ void Sim::agentNight(Person& p) {
         p.suspicion += 8;
         p.warn.push_back("is wearing a new watch and talks of buying a motor-car. He was warned against spending conspicuously.");
     }
-    // --- life
-    if (!ctl && pct(0.25f)) {
-        int k = r().n(4);
-        if (k == 0) { p.tru[A_ACCESS] = p.app[A_ACCESS] = clampf(p.tru[A_ACCESS] + rnd(6, 15), 0, 97); p.warn.push_back("has been promoted and now sees a wider range of papers."); }
-        else if (k == 1) { p.tru[A_ACCESS] = p.app[A_ACCESS] = clampf(p.tru[A_ACCESS] - rnd(10, 25), 5, 97); p.warn.push_back("has been moved to another section. His access is reduced."); }
-        else if (k == 2) { p.stress += 15; p.warn.push_back("has trouble at home and is drinking more than he should."); }
-        else { p.suspicion += p.empSec > 50 ? 8 : 2; p.warn.push_back("says routine security interviews are being held throughout his office."); }
-    }
+    // --- his own life
+    lifeEvent(p);
+    if (p.stage != AGENT) return;
     // --- investigation
     if (!ctl) {
         if (p.suspicion >= 40 && p.tempo > 0) p.suspicion += 0.35f;
@@ -329,14 +363,21 @@ void Sim::agentNight(Person& p) {
             if (p.signalSite >= 0 && p.craft > 25 && pct(40)) if (Site* sg = site(p.signalSite)) sg->mark = 2;
         }
         if (before < 75 && p.suspicion >= 75 && pct(p.tru[A_HONEST] * 0.9f)) p.warn.push_back(pick(WARN75));
+        if (before < 75 && p.suspicion >= 75 && p.escape == 2) escapeSignal(p);
+        if (p.escape == 3) p.suspicion += 5;          // he is waiting at the corner every evening, and they are getting closer
+        else if (p.escape == 4) p.suspicion += 1.2f;
         if (p.suspicion >= 60) p.stress += 0.6f;         // a man who knows he is watched does not hide it well
         if (p.tru[A_NERVE] < 45 && pct(0.5f)) p.warn.push_back(pick(WARNFALSE));
-        if (p.suspicion >= 100) { caught(p); return; }
+        if (p.suspicion >= 100) {
+            if (p.escape >= 3) { p.escape = 0; if (Site* sg = site(p.signalSite)) if (sg->mark == 4) sg->mark = 0; }      // too late: nobody came past in time
+            caught(p);
+            return;
+        }
         p.stress = clampf(p.stress, 0, 100);
         if (p.stress > 85 && pct(3)) { breakdown(p); return; }
     }
     // --- dead drop cycle
-    if (p.dropEvery > 0 && p.dropSite >= 0 && p.nextDrop >= 0 && g.day >= p.nextDrop) serviceDrop(p);
+    if (p.escape < 3 && p.dropEvery > 0 && p.dropSite >= 0 && p.nextDrop >= 0 && g.day >= p.nextDrop) serviceDrop(p);
     // --- meetings
     if (p.nextMeet == g.day && !attempted.count(p.id)) {
         Site* s = agreedSite(p);
@@ -358,11 +399,11 @@ void Sim::serviceDrop(Person& p) {
     if (!sp || sp->retired) { p.nextDrop = -1; return; }
     Site& s = *sp;
     Site* sg = site(p.signalSite);
-    if (!ctl && pct((100 - p.diligence) * 0.5f + (p.stress > 80 ? 20 : 0))) { p.nextDrop = g.day + 2; return; }   // he put it off
+    if (!ctl && pct((100 - p.diligence) * 0.5f * (1 - p.skComms / 160.f) + (p.stress > 80 ? 20 : 0))) { p.nextDrop = g.day + 2; return; }   // he put it off
     if (!ctl && p.suspicion >= 60 && sg && sg->mark == 2) { p.nextDrop = g.day + p.dropEvery; return; }
     if (!ctl) {
         if (s.staked) p.suspicion = std::max(p.suspicion + 30, 75.f);     // walked into a watched drop
-        else if (p.suspicion >= 50 && pct(p.suspicion - 35)) stake(s);     // led the watchers to it
+        else if (p.suspicion >= 50 && pct((p.suspicion - 35) * (1 - p.skComms / 220.f))) stake(s);     // led the watchers to it
     } else {
         s.burned = true;
         if (p.trapDay >= 0 && g.day >= p.trapDay) stake(s);
@@ -382,7 +423,7 @@ void Sim::serviceDrop(Person& p) {
         if (sg && sg->mark != 2) sg->mark = 1;
         if (p.handler != 0) p.fetchDay = g.day + 2;
     }
-    s.exposure += 3;
+    s.exposure += 3 * (1 - p.skComms / 200.f) + (g.wx == WX_SNOW ? 4 : 0);
     p.nextDrop = g.day + p.dropEvery;
 }
 
@@ -397,22 +438,7 @@ void Sim::caught(Person& p) {
         if (ha.heat < 45) ha.heat = 45;
         return;
     }
-    p.stage = ARRESTED;
-    clearAppointments(p);
-    p.nextMeet = -1; p.nextDrop = -1;
-    for (int id : p.held) if (Roll* x = roll(id)) x->state = R_LOST;
-    p.held.clear();
-    for (int id : p.meetSites) if (Site* s = site(id)) s->burned = true;
-    if (Site* s = site(p.dropSite)) stake(*s);
-    if (Site* s = site(p.signalSite)) s->burned = true;
-    ha.heat = clampf(ha.heat + 10, 0, 100);
-    // a chief with twenty agents loses more of them than an officer with two, and is judged accordingly
-    g.standRez -= 10 / (1 + 0.5f * T().role); g.standCentre -= 6 / (1 + 0.5f * T().role); g.totArrested++;
-    file(p, "ARRESTED. Charged with espionage.");
-    cable(T().chief, "Arrest of " + p.codename,
-          "The newspapers report that " + p.name + fstr(", %d, ", p.age) + p.job + ", has been arrested and charged with espionage.\n\n"
-              "Assume he is talking. Every site, signal and routine known to " + p.codename + " is finished as of today, and his case officer may be named in court. "
-              "A full damage report is required.\n\n" + upper(T().chief));
+    arrest(p, "ARRESTED. Charged with espionage.");
 }
 
 void Sim::breakdown(Person& p) {
@@ -510,16 +536,29 @@ void Sim::grade(Roll& x) {
     else if (v >= 25) { gr = "of interest"; pts = v * 0.6f; }
     else { gr = "of little interest / already known"; pts = v * 0.2f; }
     if (x.oral) pts *= 0.5f;
+    if (x.tech) pts *= 0.8f;                 // a tape is talk, not documents
+    pts *= T().gradeMult;
     std::string note;
     if (!x.genuine && pct(p && p->fabricator ? 32 : 36))
         note = " NOTE: parts contradict information from reliable sources. The source requires verification.";
+    std::string hint;
+    if (p && !x.oral && !x.tech && ((x.genuine && controlled(*p) && pct(32)) || (x.genuine && !controlled(*p) && v < 34 && pct(6))))
+        hint = " The material is accurate, but there is nothing in it that its owners would much mind losing.";
+    if (p && p->play == 2) {            // nothing a played-back source brings is credited
+        x.grade = "disregarded (playback)";
+        x.state = R_GRADED; x.stateDay = g.day;
+        g.totRolls++; g.mRolls++;
+        gradeLines.push_back(fstr("No. %d (", x.id) + src + "): read for what it shows of the adversary's intentions, and otherwise disregarded.");
+        return;
+    }
     x.grade = gr + (note.empty() ? "" : " (queried)");
+    if (p && p->verify == 2) verifyRoll(*p, x);
     x.state = R_GRADED; x.stateDay = g.day;
     g.totRolls++; g.mRolls++; g.totValue += pts; g.mValue += pts;
     g.standCentre = clampf(g.standCentre + pts / (80.f * (1 + 0.5f * T().role)), 0, 100);
     credit(x.sector, pts, x.reqId);
     if (x.sector == SECURITY && x.genuine && v >= 40) g.secBonusUntil = g.day + 120;
-    gradeLines.push_back(fstr("No. %d (", x.id) + src + (x.oral ? ", oral report" : ", film") + (x.cabled ? ", by cable summary" : "") + "): " + gr + "." + note);
+    gradeLines.push_back(fstr("No. %d (", x.id) + src + (x.oral ? ", oral report" : x.tech ? ", tape" : ", film") + (x.cabled ? ", by cable summary" : "") + "): " + gr + "." + note + hint);
 }
 
 // ============================================================================ DAWN
@@ -528,7 +567,7 @@ void Sim::coverage(Actor& a, bool isYou) {
     (void)isYou;
     bool prev = false;
     for (int b = 0; b < 3; b++) {
-        float p = clampf(0.04f + a.heat / 100.f * 0.72f, 0, 0.85f) * g.a4 * (b == 0 ? 0.7f : 1.f) * (weekend(g.day) ? 0.8f : 1.f);
+        float p = clampf(0.04f + a.heat / 100.f * 0.72f, 0, 0.85f) * g.a4 * (b == 0 ? 0.7f : 1.f) * (dayOff(g.day) ? 0.8f : 1.f);
         bool c = (b > 0 && r().f() < 0.55f) ? prev : r().f() < p;
         a.covered[b] = c; prev = c;
         a.teamQ[b] = (int)clampf(40 + a.heat * 0.4f + rnd(0, 15), 30, 90);
@@ -539,13 +578,16 @@ void Sim::dawn() {
     actAs(nullptr);
     subj = nullptr;
     Date d = dateOf(g.day);
+    if (g.day > g.postEnd && training()) { endTraining(false); return; }
     if (g.day > g.postEnd) {
         endPosting(END_TOUR, "END OF POSTING", "Your tour in " + std::string(T().city) + " is complete. You hand over your agents, your sites and your safe to your successor and fly home by Aeroflot.");
         return;
     }
+    replate();
+    weather(false);
     // --- hidden surveillance picture for today
     g.a4 = clampf(g.a4 + r().gauss() * 0.12f + (g.a4Base - g.a4) * 0.2f, 0.3f, 2.4f);
-    for (int i = 0; i < 8; i++) g.hot[i] = r().f() < T().density[i] * g.a4;
+    for (int i = 0; i < 8; i++) g.hot[i] = r().f() < (T().east[i] && g.wallDown ? 0.12f : T().density[i] * g.distMod[i]) * g.a4;
     coverage(g.you, true);
     for (auto& o : g.officers) coverage(o.a, false);
     // --- things that arrive this morning
@@ -561,13 +603,29 @@ void Sim::dawn() {
         for (auto& s : gradeLines) sb += "  " + s + "\n";
         cable("Centre", fstr("Evaluation of material (%d)", (int)gradeLines.size()), sb + "\nCENTRE");
     }
+    if (training()) { tutorialDawn(); return; }
     if (d.d == 1 && g.day > g.postStart) monthly();
     history(d);
     if (g.phase != PH_PLAY) return;
+    officeHistory(d);
+    leaveDawn();
+    planDawn(d);
+    if (g.phase != PH_PLAY) return;
     requirements();
     if (pct(T().walkIn) && g.day - g.postStart > 20) walkIn();
+    if (g.day - g.postStart > 60 && pct(0.10f)) krTip();
     // --- somebody takes an interest in you personally
-    if (g.theatre > 0 && g.day - g.lastApproach > 240 && g.day - g.postStart > 90 && pct(0.10f + g.you.heat * 0.004f)) {
+    if (g.dirt >= 30 && g.day - g.lastApproach > 200 && g.day > g.busyUntil && pct(1.2f)) {
+        g.lastApproach = g.day;
+        addDecision(DK_APPROACH, 1, "An approach, with photographs",
+            std::string("The man was waiting by your car. He was polite and did not waste your time. He had an envelope: ")
+            + (g.skimmed > 0 || g.skim > 0 ? "copies of receipts in your agents' hands, and beside each a figure in another hand - what the agent says he was really given. " : "photographs. You are in all of them. ")
+            + "\n\n'Nobody at your Embassy need ever see these. We ask very little: now and then, a conversation.' He lunches on Thursdays at a place he named.\n\n"
+              "He is right about one thing: what is in the envelope would finish you at home.",
+            {"Go to Line KR this morning and tell them everything, including what is in the envelope",
+             "Say nothing and do nothing. Perhaps they are bluffing",
+             "Give him something small, once, to keep the envelope where it is"});
+    } else if (T().slot > 0 && g.day - g.lastApproach > 240 && g.day - g.postStart > 90 && g.day > g.busyUntil && pct((0.10f + g.you.heat * 0.004f) * (g.wifeHere ? 1.f : 1.5f))) {
         g.lastApproach = g.day;
         addDecision(DK_APPROACH, 0, "An approach",
             std::string("At a reception last night a man you know slightly - a commercial counsellor, he says, though nobody has seen him do any commerce - took you aside. ")
@@ -575,9 +633,12 @@ void Sim::dawn() {
               "that he has friends who value them, and that he lunches on Thursdays at a place he named. Then he talked about fishing.\n\n"
               "It is a pitch, and a competent one. The rules say you report it to Line KR within twenty-four hours.",
             {"Report it to Line KR this morning (some hours of statements; you will be watched by your own side for a while)",
-             "Say nothing. Nothing happened, and a report goes on your file for ever"});
+             "Say nothing. Nothing happened, and a report goes on your file for ever",
+             "Report it, and propose to Line KR that you play along with him (an operational game)"});
     }
-    if (g.rank < std::min(3, g.theatre + 1) && g.standCentre >= 72 && g.day - g.postStart > 365) {
+    events();
+    if (g.game == 2) gameRound();
+    if (g.rank < std::min(3, T().slot + 1) && g.standCentre >= 72 && g.day - g.postStart > 365) {
         g.rank++;
         cable("Centre", "Promotion", std::string("By order of the Chairman of the Committee you are promoted to the rank of ") + RANK[g.rank] + ".\n\nCENTRE");
     }
@@ -597,6 +658,7 @@ void Sim::dawn() {
     }
     if (d.dow == 0) {
         float est = g.you.heat + r().gauss() * 9;
+        g.krEst = est;
         std::string kr = est < 22 ? "No sign that the adversary takes a special interest in you."
                          : est < 45 ? "Periodic coverage. You are probably carded as a suspected intelligence officer."
                          : est < 68 ? "Regular coverage. Assume you are identified as an officer of the service."
@@ -609,8 +671,15 @@ void Sim::dawn() {
             sb += "  " + o.title() + ": " + (e < 22 ? "not noticed." : e < 45 ? "periodic coverage." : e < 68 ? "regular coverage." : "priority target - stand him down.") + "\n";
         }
     }
+    sb += "\nWEATHER: " + weatherLine() + "\n  Forecast for tomorrow: " + g.forecast + ".\n";
     sb += "\nTODAY:\n";
     bool any = false;
+    std::string hol = holiday(g.day);
+    if (!hol.empty()) { sb += "  " + hol + ": a public holiday. Offices are closed and your agents are at home.\n"; any = true; }
+    if (d.m == 11 && d.d == 7) { sb += "  The Embassy's reception for the anniversary of the Revolution is this evening. Every officer attends.\n"; any = true; }
+    if (g.day <= g.busyUntil) { sb += "  You are taken up today: " + g.busyWhy + ".\n"; any = true; }
+    if (g.day <= g.standDownUntil) { sb += fstr("  Line KR's stand-down is in force until %s", fmtShort(g.standDownUntil).c_str()) + (meetsAllowed(g) ? " (agents' agreed meetings are kept)" : "") + ".\n"; any = true; }
+    if (strikeToday(g)) { sb += "  Transport strike: no buses or trains.\n"; any = true; }
     if (d.dow == 3) { sb += "  Diplomatic pouch closes tonight.\n"; any = true; }
     auto cs = g.csDays.find(g.day);
     if (cs != g.csDays.end() && cs->second.state == 2) {
@@ -635,7 +704,7 @@ void Sim::arrive(const Pending& x) {
         case P_TRACE: {
             if (!p) break;
             p->traceState = 2;
-            bool flag = controlled(*p) ? pct(35) : pct(4);
+            bool flag = controlled(*p) ? pct(T().friends ? 55 : 35) : pct(4);
             learn(*p, A_ACCESS, 35);
             p->traceBad = flag;
             file(*p, flag ? "TRACE: CAUTION - name connected with the adversary's special services." : "TRACE: nothing adverse. Position confirmed.");
@@ -677,6 +746,29 @@ void Sim::arrive(const Pending& x) {
         case P_FILM: g.film += x.amt; cable("Technical officer", "Stores issued", fstr("%d Minox cassettes are in your safe.", x.amt)); break;
         case P_CAMERA: g.cameras += x.amt; cable("Technical officer", "Stores issued", "One Minox camera, tested, is in your safe."); break;
         case P_CONTAINER: g.containers += x.amt; cable("Technical officer", "Stores issued", fstr("%d concealment containers (hollow bolts and a magnetic box) are in your safe.", x.amt)); break;
+        case P_BUG:
+            subj = nullptr;
+            g.bugs += x.amt;
+            cable("Technical officer", "Stores issued", "One listening device with transmitter is in your safe, tested. The listening post is arranged. The device must be placed inside the target office by somebody who works there; "
+                  "the battery will last two to four months.");
+            break;
+        case P_EXFIL: {
+            if (!p || p->stage != AGENT) break;
+            int graded = 0;
+            for (auto& rl : g.rolls) if (rl.agentId == p->id && rl.state == R_GRADED) graded++;
+            bool ok = p->service != SVC_NONE || graded >= 4 || pct(g.standCentre);
+            if (ok) {
+                p->exfil = 2;
+                file(*p, "Centre APPROVES exfiltration. Passport and route in the safe.");
+                cable("Centre", "Exfiltration of " + p->codename, "Centre APPROVES. A passport in another name, money and the route are in your safe. Hand them to him at a personal meeting (tick 'travel documents' on the order) and make him repeat the route. "
+                      "He is to leave the same night and take nothing with him. If he is already under close observation he may not reach the frontier.\n\nCENTRE");
+            } else {
+                p->exfil = 0;
+                file(*p, "Centre REFUSES exfiltration.");
+                cable("Centre", "Exfiltration of " + p->codename, "The source is not of a value to justify the expense and the risk to the route. The request is REFUSED. Break contact in good order.\n\nCENTRE");
+            }
+            break;
+        }
         case P_PADS: g.pads += x.amt; cable("Cipher clerk", "Stores issued", fstr("%d one-time pad sheets with broadcast schedules are in your safe.", x.amt)); break;
         case P_RESUPPLY:
             g.stationFilm += 40; g.stationCameras += 1; g.stationPads += 6; g.resupplyOrdered = false;
@@ -719,7 +811,7 @@ void Sim::arrive(const Pending& x) {
             Officer* o = officer(x.ref);
             subj = nullptr;
             if (!o || o->gone) { cable("Directorate K", "Your report", "The officer concerned is no longer at the station. The matter is closed.\n\nDIRECTORATE K"); break; }
-            bool guilty = o->mole && o->moleDay <= g.day;
+            bool guilty = (o->mole && o->moleDay <= g.day) || (o->defectDay >= 0 && o->defectDay - g.day < 200);
             if (guilty && pct(75)) {
                 std::string known;
                 for (auto& q : g.persons) if (q.handler == o->id || has(q.witting, o->id)) {
@@ -769,6 +861,22 @@ void Sim::arrive(const Pending& x) {
                     cable("Centre", fstr("Line N task No. %d", q->id), "The comrade for whom the package was intended reported hostile observation at the place and has broken off. "
                           "An officer of Directorate S has been lost to the service for some years as a result. A written explanation is required: how the drop was chosen, who knew of it, and what you saw on the way there.\n\nCENTRE");
                 }
+            } else if (x.amt == 4) {                    // travel documents given to a man who was theirs
+                Person* q = person(x.ref);
+                g.standCentre = clampf(g.standCentre - 4, 0, 100);
+                cable("Centre", "The documents issued for " + (q ? q->codename : std::string("your agent")),
+                      "The passport and route prepared for " + (q ? q->codename : std::string("your agent")) + " were displayed yesterday at a press conference by the adversary's security service, with your photograph. "
+                      "The route is lost to the service. The man was theirs. You will explain when you first had grounds to doubt him.\n\nCENTRE");
+                if (q) q->file.push_back(pad(fmtShort(g.day), 11) + "The exfiltration documents were shown to the press by the adversary. HE WAS UNDER THEIR CONTROL.");
+            } else if (x.amt == 5) {                    // what you gave the other side to keep them quiet: a source of ours inside their service has reported it
+                summons();
+                break;
+            } else if (x.amt == 6) {
+                finishCareer("LEFORTOVO",
+                             "A source of Directorate K inside the adversary's service reported that an officer of the " + std::string(T().city) + " rezidentura had been passing them information under pressure. "
+                             "There were not many officers it could be. You were asked to come to Moscow for consultations, and were met at the foot of the aircraft steps by two men who took your arms.\n\n"
+                             "The investigation took four months and the trial one day, in closed session. Your name was removed from the lists of the service, and your photograph from the corridor of the department.");
+                return;
             } else if (x.amt == 3) {                    // an approach you did not report
                 g.standRez = clampf(g.standRez - 15, 0, 100); g.standCentre = clampf(g.standCentre - 8, 0, 100);
                 g.paperwork += 6;
@@ -777,6 +885,55 @@ void Sim::arrive(const Pending& x) {
             }
             break;
         }
+        case P_FLAT: {
+            subj = nullptr;
+            int d = x.ref;
+            Site f = makeSite(ST_MEET, d);
+            f.name = std::string("Safe flat, ") + T().street[d][r().n(3)] + " [" + T().district[d] + "]";
+            f.flat = true; f.rent = x.amt;
+            f.cover = rnd(85, 95); f.sight = rnd(35, 60);
+            f.casing = 3;
+            casingEstimate(f);
+            g.sites.push_back(f);
+            cable("Support officer", "The flat", f.name + " is ready. The lease is in the name of the cut-out, who believes it is for a married man's afternoons, and does not mind. "
+                  + fstr("Rent: %d %s a month, paid through him. ", x.amt, T().currency)
+                  + "Keys in your safe. Meet there only those who already know what you are; every visitor is seen by somebody on the stairs.");
+            break;
+        }
+        case P_VERIFY:
+            if (!p || p->stage != AGENT || p->verify != 1) break;
+            p->verify = 2; p->verifyLeft = 2;
+            file(*p, "Centre's control questions received. His next two deliveries will be checked against them.");
+            cable("Centre", "Verification of " + p->codename, "Control questions for " + p->codename + " are in your safe. Task him against them at his next meeting, as if they were ordinary requirements. "
+                  "Centre will check his next two deliveries and report.\n\nCENTRE");
+            break;
+        case P_GAME: subj = nullptr; gameSanction(); break;
+        case P_KOMP: if (p) kompSanction(*p); break;
+        case P_SKIM:
+            subj = nullptr;
+            skimExposed(x.amt == 1 ? "An agent told his new case officer what he had really been paid, and the officer did his duty and reported it."
+                                   : "The auditors compared the agents' receipts with what the agents themselves say they received.");
+            break;
+        case P_WALKIN: subj = nullptr; walkIn(); break;
+        case P_PLAY: if (p) playSanction(*p); break;
+        case P_CONFID: if (p) confidRegistered(*p); break;
+        case P_LETTER: subj = nullptr; letterAnswer(x.ref); break;
+        case P_ESCAPE: if (p) escapePickup(*p); break;
+        case P_KOBA:
+            if (p && p->live() && !controlled(*p)) {
+                arrest(*p, "ARRESTED. Charged with attempting to communicate secrets to a foreign power.");
+                subj = nullptr;
+                cable("Line KR", "The man who wrote the letter", "The newspapers have the arrest of " + p->name + " this morning. He had been under observation, they say, 'for some weeks' - that is, from about the time his letter reached us.\n\n"
+                      "He told nobody. We told nobody outside this station. Somebody in this station told them.\n\nLINE KR");
+            }
+            break;
+        case P_LOSTOFFER:
+            subj = nullptr;
+            g.standCentre = clampf(g.standCentre - 7, 0, 100);
+            cable("Centre", "The letter you did not answer", "An officer of one of the adversary's secret departments was convicted yesterday of attempting to pass documents to this Embassy. In court it was said that he pushed three letters through a Soviet letter-box, "
+                  "and that 'the Russians never answered'. Centre has read the evidence with attention. The material he was offering would have been the most valuable the station had produced in ten years.\n\nCENTRE");
+            break;
+        case P_REFERRAL: subj = nullptr; referralArrives(x.ref); break;
         case P_LINEN_PKG:
             subj = nullptr;
             g.lineNPkgs++;
@@ -797,11 +954,19 @@ void Sim::monthly() {
     int basic = (int)std::lround(P(60) * (1 + 0.25f * subs));
     int allot = basic + (int)std::lround(sal * 0.8f);
     money(allot, "Monthly operational advance");
-    g.paperwork += 3 + T().role;
-    float par = 26 * (1 + 0.3f * T().role);
+    if (!onLeave(g.day)) g.paperwork += 3 + T().role;
+    const Officer* rz = rezident();
+    int tp = rz && T().role < 3 ? rz->temper : 0;
+    float par = 26 * (1 + 0.3f * T().role) * (tp == 1 ? 1.15f : tp == 2 ? 0.85f : 1.f);
+    int away = 0;
+    for (int dd = g.day - 30; dd < g.day; dd++) if (onLeave(dd)) away++;
+    par *= 1 - std::min(30, away) / 30.f;                    // a month on leave is not held against you
     float score = g.mSpotted * 3 + std::min(g.mMeetings, 8 + 4 * T().role) * 1.5f + g.mRolls * 2 + std::min(g.mValue / 12.f, 15.f * (1 + 0.5f * T().role))
-                  - (g.overdueDays > 0 ? 8 : 0) - (g.cover < 40 ? 8 : 0);
+                  - (g.overdueDays > 0 ? (tp == 4 ? 16 : tp == 3 ? 0 : 8) : 0) - (g.cover < 40 ? (tp == 4 ? 16 : 8) : 0);
     float delta = clampf((score - par) / 3.f, -3, 5);
+    if (tp == 1) delta *= 1.5f;                              // a careerist: loud praise, long memory
+    if (tp == 3) delta *= 0.6f;                              // an old hand: little moves him
+    if (tp == 2 && g.you.heat > 45) delta -= 2;              // cautious: the watchers' interest in you worries him
     // yesterday's successes are forgotten, and so in time are yesterday's failures: both standings drift back towards the ordinary
     g.standRez = clampf(g.standRez + delta + (g.standRez > 50 ? -1.5f : (g.standRez < 35 ? 1.5f : 0.5f)), 0, 100);
     g.standCentre = clampf(g.standCentre + (g.standCentre > 45 ? -1.5f : 0.5f), 0, 100);
@@ -811,12 +976,32 @@ void Sim::monthly() {
     else if (g.ryanPolicy == 1) { g.standCentre = clampf(g.standCentre + 2, 0, 100); g.paperwork += 3; ryan = "RYAN return submitted: nine indicators reported with commentary (three hours). Centre notes the rezidentura's vigilance and asks for more detail next month.\n"; }
     std::string verdict = delta >= 3 ? "Good work. Keep to this pace." : delta >= 0 ? "Satisfactory." : delta > -3 ? "Below what is expected of this post."
                           : "Unsatisfactory. Results are what is asked of you, not explanations.";
+    static const char* const GOOD[] = {"", " The station's figures went to the Department with your name at the top.", "", " Carry on.", ""};
+    static const char* const BAD[] = {"", " The Department reads these figures too. So do I.", "", " It happens. Next month.", " The forms exist for a reason."};
+    verdict += delta >= 3 ? GOOD[tp] : delta < 0 ? BAD[tp] : "";
+    if (tp == 2 && g.you.heat > 45) verdict += " And you are being followed too often. I want fewer risks taken, not more.";
+    if (tp == 3 && g.overdueDays > 0) verdict += " Your reports are late; nobody will die of it.";
     Date prev = dateOf(g.day - 1);
     cable(T().chief, std::string("Monthly review - ") + MONTH[prev.m],
           fstr("New contacts: %d. Meetings held: %d. Acts aborted: %d. Material graded: %d.\n", g.mSpotted, g.mMeetings, g.mAborts, g.mRolls)
               + (g.overdueDays > 0 ? "Reports are in arrears.\n" : "") + (g.cover < 40 ? "The Ambassador's office complains that you neglect your cover duties. That endangers more than yourself.\n" : "") + ryan
               + "\n" + verdict + fstr("\n\nOperational advance for the month: %d %s (basic %d, plus four-fifths of agreed agent remuneration). Monthly accounts are due: %d hours.\n\n", allot, T().currency, basic, 3 + T().role)
               + upper(T().chief));
+    int rent = 0;
+    for (auto& s : g.sites) if (s.flat && !s.retired) rent += s.rent;
+    if (rent > 0) {
+        int paid = std::min(rent, g.funds);
+        money(-paid, "Safe flats - the month's rent, through the cut-out");
+        if (paid < rent) {
+            for (auto& s : g.sites) if (s.flat && !s.retired) s.neighbours += 6;
+            alert("The rent of the safe flats was paid late: the landlord came round himself to ask for it.");
+        }
+    }
+    officeMonthly();
+    if (g.phase != PH_PLAY) return;
+    monthRecord();
+    krVehicles();
+    cityChanges();
     g.mSpotted = g.mMeetings = g.mAborts = g.mRolls = 0; g.mValue = 0;
 }
 
@@ -856,7 +1041,9 @@ void Sim::requirements() {
 }
 
 void Sim::walkIn() {
-    Person np = makePerson(r().n(4), 0.5f);
+    bool spy = !T().spies.empty() && pct(15);          // the best penetrations in the history of the service walked in
+    if (spy && g.decisions.empty() && pct(75)) { walkInLetter(); return; }
+    Person np = spy ? makeSpy(0.5f) : makePerson(r().n(4), 0.5f);
     np.walkIn = true;
     np.rapport = 30; np.commitment = 35; np.stage = DEVELOPING;
     if (!np.dangle) np.tru[A_MONEY] = np.app[A_MONEY] = rnd(65, 92);
@@ -867,7 +1054,7 @@ void Sim::walkIn() {
     file(p, "WALK-IN. Pushed a letter through the door of the Consulate offering 'documents of interest' for payment.");
     cable(T().role == 3 ? "Duty officer" : "Rezident", "A volunteer",
           "A letter was pushed through the Consulate door last night. The writer gives his name as " + p.name + ", " + p.job + ", " + p.employer
-              + ", and offers documents for money.\n\nHalf of these are provocations and the other half are our best agents. He is yours to assess. Trace him before anything else is done.");
+              + ", and offers documents for money." + (spy ? " If he is what he says, he is an officer of a foreign service offering himself." : "") + "\n\nHalf of these are provocations and the other half are our best agents. He is yours to assess. Trace him before anything else is done.");
     subj = nullptr;
 }
 
@@ -883,17 +1070,19 @@ void Sim::history(const Date& d) {
         std::string text = h.text;
         switch (h.code) {
             case H_DEFECTION: {
-                std::vector<Officer*> c;
-                for (auto& o : g.officers) if (!o.gone && o.role == ROLE_COLLEAGUE) c.push_back(&o);
                 Officer* who = nullptr;
-                for (Officer* o : c) if (o->mole) who = o;                 // if there was a traitor all along, it is he who runs
-                if (!who && !c.empty()) who = c[r().n((int)c.size())];
-                std::string lost;
-                if (who) {
-                    for (auto& p : g.persons) if (p.live() && has(p.witting, who->id)) lost += "  " + p.full() + "\n";
-                    defection(*who);
+                for (auto& o : g.officers) if (!o.gone && o.defectDay >= 0) who = &o;     // chosen when the posting began
+                if (!who) {
+                    // he was reported and recalled in time: the morning that should have been a disaster is an ordinary one
+                    g.a4Base -= h.a4Base; g.you.heat = clampf(g.you.heat - h.heat, 0, 100);
+                    text = "Centre informs the rezidentura that an officer formerly of this station, recalled on a colleague's report, has admitted that he was in touch with the adversary and had fixed a date to go over to them. "
+                           "The date was to have been today.\n\nThe agents and the places he knew of are still ours.\n\nREZIDENT";
+                    break;
                 }
-                text = (who ? who->title() : std::string("An officer")) + " of this rezidentura has failed to report and must be presumed to be in the hands of the adversary.\n\n"
+                std::string lost;
+                for (auto& p : g.persons) if (p.live() && has(p.witting, who->id)) lost += "  " + p.full() + "\n";
+                defection(*who);
+                text = who->title() + " of this rezidentura has failed to report and must be presumed to be in the hands of the adversary.\n\n"
                        "Assume that your identity as an officer of the service is known. He knew what he had seen and what he had been told:\n"
                        + (lost.empty() ? "  (none of your people, so far as the record shows)\n" : lost)
                        + "\nOperational acts only with my personal sanction.\n\nREZIDENT";
@@ -916,9 +1105,9 @@ void Sim::history(const Date& d) {
             case H_RYAN:
                 text = "At the all-union conference the Chairman announced that the principal task of the service is now to detect preparations by the main adversary for a surprise nuclear missile attack. "
                        "The operation is called RYAN.\n\nEvery rezidentura in a NATO capital will report on a list of indicators every fortnight: lights at night in government buildings, movements of officials, "
-                       "the price paid for donor blood, the slaughter of cattle. Reports are required whether or not anything has been observed.\n\nYour line will make the return for Washington.\n\nCENTRE";
+                       "the price paid for donor blood, the slaughter of cattle. Reports are required whether or not anything has been observed.\n\nYour line will make the return for " + std::string(T().city) + ".\n\nCENTRE";
                 addDecision(DK_RYAN, 0, "Operation RYAN - your line's returns",
-                    "You have read the list of indicators. Half of them are things that happen in Washington every working day; the other half could not be observed by anyone without an agent in the President's bedroom. "
+                    "You have read the list of indicators. Half of them are things that happen in any Western capital every working day; the other half could not be observed by anyone without an agent in the President's bedroom. "
                     "The men who wrote it believe an attack is being prepared. Your sources say that nothing of the kind is in train.\n\nThe return goes in every month over your signature. Decide how your line will make it. You may be asked again.",
                     {"Report what is observed - which is nothing - and say so", "Report in the sense Centre expects: find the indicators and send them (three more hours a month)"});
                 break;
@@ -941,10 +1130,24 @@ void Sim::history(const Date& d) {
                        "Assume that the friends' knowledge of our operations, and their own agent records, will reach the West German services in whole or in part.";
                 addDecision(DK_ORPHANS, 0, "The friends' sources",
                     "A colonel of the friends' foreign service, a man you have dealt with for three years, asked to see you alone. His service has weeks to live. "
-                    "He has three sources in the Bonn ministries who have never been met by anyone but him, and he would rather give them to you than see them abandoned. He can introduce them once.\n\n"
+                    "He has three sources in " + std::string(g.theatre == TH_BONN ? "the Bonn ministries" : "the West Berlin Senate and the Allied missions") + " who have never been met by anyone but him, and he would rather give them to you than see them abandoned. He can introduce them once.\n\n"
                     "They are productive, trained and frightened. Their names are also in a card index in the Normannenstrasse, and nobody can tell you whether that index has been burned or sold.",
                     {"Take over all three", "Take over only the one with the best access", "Decline. Their files are not in your safe and never will be"});
                 break;
+            case H_UNIFY:
+                g.wallDown = true;
+                text = "The GDR ceased to exist at midnight. From today the security services of the Federal Republic have authority in what was its capital, and the friends' service is being wound up by the people it worked against. "
+                       "Its officers are being questioned, and some of them are answering.\n\nKarlshorst is an island. Treat every district of the city as hostile ground, and every source ever known to the friends as named.";
+                break;
+            case H_JANATA: {
+                bool forecast = false;
+                for (auto& q : g.reqs) if (q.title == "The general election" && q.closed && !q.failed) forecast = true;
+                g.standCentre = clampf(g.standCentre + (forecast ? 4.f : -6.f), 0, 100);
+                text = std::string("The Prime Minister has lost the general election, and her own seat. Centre's forecast to the leadership, built on this rezidentura's reporting, was for a comfortable majority.\n\n")
+                       + (forecast ? "Your own sources said otherwise and were not believed. The file shows it, and it has been noted where such things are noted."
+                                   : "An explanation is required of why a rezidentura with this many agents in the governing party did not see it coming.") + "\n\nCENTRE";
+                break;
+            }
             default: break;
         }
         if (!text.empty()) cable(h.from, h.title, text);

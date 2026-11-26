@@ -412,7 +412,8 @@ void App::dossierView(const Person& p) {
         struct Field { const char* ruL; const char* en; std::string v; };
         std::vector<Field> fields = {
             {"ФАМИЛИЯ, ИМЯ", "Name", p.name},
-            {"ГОД РОЖДЕНИЯ", "Born", fstr("%d  (age %d)", today.y - p.age, p.age)},
+            {"ДАТА РОЖДЕНИЯ", "Born", [&] { Date bd = dateOf(sim.birthday(p, sim.birthYear(p) + 40)); int age = today.y - sim.birthYear(p) - (today.m * 40 + today.d < bd.m * 40 + bd.d ? 1 : 0);
+                                             return fstr("%d %s %d  (age %d)", bd.d, MON[bd.m], sim.birthYear(p), age); }()},
             {"ДОЛЖНОСТЬ", "Post", p.job},
             {"МЕСТО РАБОТЫ", "Employer", p.employer},
             {"ЛИНИЯ", "Line", SECTOR_LABEL[p.sector]},
@@ -2110,3 +2111,226 @@ void App::tabCareer() {
     ImGui::Dummy(ImVec2(sideW, avail.y));
 }
 
+
+// ============================================================================ CASE BOARD
+/**
+ * A cork board on the wall of your office: the officers of the station on the left, your agents and
+ * the people you are developing in the middle, the sites on the right - and string between them for
+ * everything your own files say one knows of the other. Nothing hidden is used: a red string is only
+ * drawn where the file records that an officer knows of a man or a place.
+ */
+void App::tabBoard() {
+    GameState& g = sim.g;
+    struct Card { int kind, id; ImVec2 c; float w, h; std::string name, sub; ImU32 flag; std::string flagTxt; };
+    struct Link { int a, b, kind; };      // kind 0: knows of (red string), 1: his communications plan (black thread), 2: runs him (heavy)
+    enum { K_OFF, K_AGENT, K_CONTACT, K_SITE };
+    std::vector<Card> cards;
+    std::vector<Link> links;
+    std::map<long long, int> at;
+    auto key = [](int kind, int id) { return (long long)kind * 1000000 + id; };
+    auto inPlan = [](const Person& p, int sid) { return p.dropSite == sid || p.signalSite == sid || std::find(p.meetSites.begin(), p.meetSites.end(), sid) != p.meetSites.end(); };
+
+    // ---- who goes on the board
+    static const char* const OROLE[] = {"Rezident", "Security (Line KR)", "Technical officer", "Colleague", "Your officer"};
+    for (auto& o : g.officers) {
+        if (o.gone) continue;
+        int n = 0;
+        for (auto& p : g.persons) if (p.live() && (p.handler == o.id || std::find(p.witting.begin(), p.witting.end(), o.id) != p.witting.end())) n++;
+        Card c{K_OFF, o.id, {}, 0, 0, o.title(), std::string(OROLE[std::max(0, std::min(4, o.role))]) + fstr("  -  knows %d of yours", n), 0, ""};
+        if (n >= 3) { c.flag = rgb(0xD08A2A); c.flagTxt = "knows a great deal"; }
+        for (auto& f : o.file) if (has(f, "stake-out was waiting")) { c.flag = rgb(0xC0392B); c.flagTxt = "a marked card was answered"; }
+        cards.push_back(c);
+    }
+    for (int pass = 0; pass < 2; pass++)
+        for (auto& p : g.persons) {
+            if (!p.live() || (pass == 0) != (p.stage == AGENT)) continue;
+            Card c{pass == 0 ? K_AGENT : K_CONTACT, p.id, {}, 0, 0, p.label(), "", 0, ""};
+            c.sub = pass == 0 ? (p.handler ? "run by " + sim.handlerName(p) : std::string("run by you")) + std::string("  -  ") + SECTOR_SHORT[p.sector]
+                              : std::string(STAGE_LABEL[p.stage]) + "  -  " + word(p.rapport, W_RAPPORT, 5);
+            int queried = 0;
+            for (auto& x : g.rolls) if (x.agentId == p.id && has(x.grade, "queried")) queried++;
+            bool seen = false;
+            for (auto& f : p.file) if (has(f, "SURVEILLANCE OBSERVED") || has(f, "KNOWN TO THE ADVERSARY") || has(f, "observed by the adversary")) seen = true;
+            Site* sg = sim.site(p.signalSite);
+            if (sg && sg->markSeen == 2) { c.flag = rgb(0xC0392B); c.flagTxt = "DANGER signal seen"; }
+            else if (p.verify == 3 && p.verifyResult != "CONSISTENT") { c.flag = rgb(0xC0392B); c.flagTxt = "failed verification"; }
+            else if (seen) { c.flag = rgb(0xC0392B); c.flagTxt = "seen with you by the other side"; }
+            else if (queried) { c.flag = rgb(0xD08A2A); c.flagTxt = fstr("%d item%s queried by Centre", queried, queried == 1 ? "" : "s"); }
+            else if (p.traceBad) { c.flag = rgb(0xD08A2A); c.flagTxt = "adverse trace"; }
+            cards.push_back(c);
+        }
+    for (auto& s : g.sites) {
+        if (s.retired) continue;
+        bool used = !s.witting.empty();
+        for (auto& p : g.persons) if (p.live() && p.stage == AGENT && inPlan(p, s.id)) used = true;
+        if (!used) continue;
+        Card c{K_SITE, s.id, {}, 0, 0, sim.shortSite(&s), std::string(s.flat ? "Safe flat" : SITETYPE_LABEL[s.type]) + fstr("  -  used %d", s.uses), 0, ""};
+        if (s.exposure > 55) { c.flag = rgb(0xD08A2A); c.flagTxt = "over-used"; }
+        cards.push_back(c);
+    }
+    for (size_t i = 0; i < cards.size(); i++) at[key(cards[i].kind, cards[i].id)] = (int)i;
+
+    // ---- the string
+    for (auto& p : g.persons) {
+        if (!p.live()) continue;
+        auto pi = at.find(key(p.stage == AGENT ? K_AGENT : K_CONTACT, p.id));
+        if (pi == at.end()) continue;
+        for (int oid : p.witting) { auto oi = at.find(key(K_OFF, oid)); if (oi != at.end() && oid != p.handler) links.push_back({oi->second, pi->second, 0}); }
+        if (p.handler) { auto oi = at.find(key(K_OFF, p.handler)); if (oi != at.end()) links.push_back({oi->second, pi->second, 2}); }
+        if (p.stage == AGENT)
+            for (auto& s : g.sites) if (!s.retired && inPlan(p, s.id)) { auto si = at.find(key(K_SITE, s.id)); if (si != at.end()) links.push_back({pi->second, si->second, 1}); }
+    }
+    for (auto& s : g.sites) {
+        auto si = at.find(key(K_SITE, s.id));
+        if (si == at.end()) continue;
+        for (int oid : s.witting) { auto oi = at.find(key(K_OFF, oid)); if (oi != at.end()) links.push_back({oi->second, si->second, 0}); }
+    }
+
+    // ---- the frame and the cork
+    ImVec2 avail = ImGui::GetContentRegionAvail();
+    ImVec2 a = ImGui::GetCursorScreenPos(), fb = a + avail;
+    ImDrawList* fdl = ImGui::GetWindowDrawList();
+    skin::frame(fdl, a, fb, S);
+    float bh = skin::titleBar(fdl, a, avail.x, S, "Case board", "Who knows whom, as your own files have it. Hover a card to follow its strings; double-click to open the file.");
+    ImGui::SetCursorScreenPos(a + ImVec2(8 * S, bh + 6 * S));
+    ImVec2 area = fb - ImVec2(8 * S, 8 * S) - ImGui::GetCursorScreenPos();
+    ImGui::BeginChild("##board", area, 0, ImGuiWindowFlags_NoBackground);
+    ImDrawList* dl = ImGui::GetWindowDrawList();
+    ImVec2 o0 = ImGui::GetCursorScreenPos();
+    float W = ImGui::GetContentRegionAvail().x;
+
+    // columns: officers | agents | contacts | sites
+    const float colX[4] = {0.02f, 0.27f, 0.52f, 0.77f}, colW = 0.21f;
+    const char* const HEAD[4] = {"THE STATION", "AGENTS", "IN DEVELOPMENT", "PLACES"};
+    float cw = 74 * S, chh = cw * 4 / 3, labelH = 38 * S, gapY = 14 * S, top = 34 * S;
+    float bottom = top;
+    for (int k = 0; k < 4; k++) {
+        float x0 = o0.x + W * colX[k], x1 = x0 + W * colW;
+        int perRow = std::max(1, (int)((x1 - x0) / (cw + 22 * S)));
+        float cellW = (x1 - x0) / perRow;
+        int n = 0;
+        for (auto& c : cards) {
+            if (c.kind != k) continue;
+            float w = k == K_SITE ? cw * 1.15f : cw, h = k == K_SITE ? w * 0.75f : chh;
+            int row = n / perRow, col = n % perRow;
+            float rowH = chh + labelH + gapY;
+            c.w = w; c.h = h;
+            c.c = ImVec2(x0 + cellW * (col + 0.5f) + ((row + col) % 2 ? 4 * S : -4 * S), o0.y + top + row * rowH + h / 2);
+            bottom = std::max(bottom, c.c.y + h / 2 + labelH + gapY);
+            n++;
+        }
+    }
+    float H = std::max(area.y - 4 * S, bottom + 70 * S);
+    ImVec2 o1 = o0 + ImVec2(W, H);
+    // cork: a warm brown with darker and lighter specks, the same every frame
+    dl->AddRectFilledMultiColor(o0, o1, rgb(0x9A7148), rgb(0x8F663E), rgb(0x84603A), rgb(0x936B43));
+    tile(dl, tex("tx:grain", [] { return art::paperGrain(256, 5); }), o0, o1, 200 * S, IM_COL32(60, 35, 15, 110));
+    for (int i = 0, nSpeck = std::min(450, (int)(W * H / (1600 * S * S))); i < nSpeck; i++) {   // few: one draw list holds 65536 vertices
+        uint32_t h1 = hsh(77, (uint32_t)i), h2 = hsh(h1, 3);
+        ImVec2 p(o0.x + (h1 % 10000) / 10000.f * W, o0.y + (h2 % 10000) / 10000.f * H);
+        dl->AddCircleFilled(p, (0.6f + (h1 >> 20) % 3 * 0.5f) * S, (h2 >> 9) & 1 ? IM_COL32(60, 38, 18, 90) : IM_COL32(196, 160, 112, 70), 4);
+    }
+    for (int k = 0; k < 4; k++) {
+        float x0 = o0.x + W * colX[k];
+        ImVec2 la(x0 + 4 * S, o0.y + 6 * S);
+        sheet(dl, la, la + ImVec2(W * colW - 8 * S, 22 * S), rgb(C_CARD), S, true);
+        skin::tracked(dl, F.uiCaps, F.uiCaps->FontSize, la + ImVec2(8 * S, 11 * S - F.uiCaps->FontSize / 2), rgb(C_INK), HEAD[k], 1.2f * S);
+    }
+
+    // ---- which card is under the pointer
+    ImVec2 m = ImGui::GetMousePos();
+    int hot = -1;
+    bool inside = ImGui::IsWindowHovered();
+    for (size_t i = 0; i < cards.size() && inside; i++) {
+        const Card& c = cards[i];
+        if (m.x >= c.c.x - c.w / 2 && m.x <= c.c.x + c.w / 2 && m.y >= c.c.y - c.h / 2 && m.y <= c.c.y + c.h / 2 + labelH) hot = (int)i;
+    }
+    if (hot >= 0) boardFocus = (int)key(cards[hot].kind, cards[hot].id);
+    std::set<int> lit;
+    if (hot >= 0) { lit.insert(hot); for (auto& l : links) if (l.a == hot || l.b == hot) { lit.insert(l.a); lit.insert(l.b); } }
+
+    // ---- string first, so the cards lie on top of it
+    auto pinAt = [&](const Card& c) { return ImVec2(c.c.x, c.c.y - c.h / 2 + 3 * S); };
+    for (int pass = 0; pass < 2; pass++)
+        for (auto& l : links) {
+            bool on = hot >= 0 && (l.a == hot || l.b == hot);
+            if ((pass == 1) != on) continue;
+            ImVec2 p0 = pinAt(cards[l.a]), p1 = pinAt(cards[l.b]);
+            float sag = std::min(60 * S, std::fabs(p1.x - p0.x) * 0.12f + 12 * S);
+            ImVec2 mid((p0.x + p1.x) / 2, std::max(p0.y, p1.y) + sag);
+            float alpha = hot < 0 ? 0.85f : on ? 1.f : 0.18f;
+            ImU32 col = l.kind == 1 ? rgb(0x1E1A16, alpha) : rgb(l.kind == 2 ? 0xA01812 : 0xC8281C, alpha);
+            float th = (l.kind == 2 ? 2.6f : l.kind == 1 ? 1.3f : 1.7f) * S * (on ? 1.25f : 1.f);
+            dl->AddBezierQuadratic(p0 + ImVec2(1.5f * S, 2 * S), mid + ImVec2(1.5f * S, 3 * S), p1 + ImVec2(1.5f * S, 2 * S), rgb(0, alpha * 0.25f), th, 12);
+            dl->AddBezierQuadratic(p0, mid, p1, col, th, 14);
+        }
+
+    // ---- the cards
+    for (size_t i = 0; i < cards.size(); i++) {
+        Card& c = cards[i];
+        bool dim = hot >= 0 && !lit.count((int)i);
+        float deg = ((int)(hsh((uint32_t)c.id, (uint32_t)c.kind) % 7) - 3) * 0.9f;
+        ImVec2 tl = c.c - ImVec2(c.w / 2, c.h / 2);
+        ImTextureID t = c.kind == K_OFF ? officerPhoto(*sim.officer(c.id)) : c.kind == K_SITE ? sitePhoto(*sim.site(c.id)) : facePhoto(*sim.person(c.id));
+        photo(dl, t, tl, ImVec2(c.w, c.h), deg, S, false);
+        // a slip of paper under the photograph with the name in pencil
+        ImVec2 la(c.c.x - c.w * 0.62f, c.c.y + c.h / 2 + 4 * S), lb(c.c.x + c.w * 0.62f, la.y + labelH - 6 * S);
+        sheet(dl, la, lb, rgb(c.kind == K_AGENT ? 0xF3E9C8u : (unsigned)C_CARD), S, true);
+        std::string nm = clip(c.name, 20);
+        ImFont* nf = c.kind == K_AGENT ? F.uiBold : F.uiSmall;
+        float fs = nf->FontSize * 0.95f;
+        ImVec2 ts = nf->CalcTextSizeA(fs, FLT_MAX, 0, nm.c_str());
+        dl->AddText(nf, fs, ImVec2(c.c.x - ts.x / 2, la.y + 2 * S), rgb(c.kind == K_AGENT ? C_RED : C_INK), nm.c_str());
+        std::string sub = clip(c.sub, 30);
+        float ss = F.tiny->FontSize;
+        ImVec2 ts2 = F.tiny->CalcTextSizeA(ss, FLT_MAX, 0, sub.c_str());
+        if (ts2.x > lb.x - la.x - 4 * S) { ss *= (lb.x - la.x - 4 * S) / ts2.x; ts2.x = lb.x - la.x - 4 * S; }
+        dl->AddText(F.tiny, ss, ImVec2(c.c.x - ts2.x / 2, la.y + fs + 4 * S), rgb(C_INK_FADED), sub.c_str());
+        if (c.flag) {                     // a coloured flag pinned to the corner: something on the file wants looking at
+            ImVec2 f0 = tl + ImVec2(c.w - 6 * S, -2 * S);
+            dl->AddTriangleFilled(f0, f0 + ImVec2(16 * S, 6 * S), f0 + ImVec2(0, 12 * S), c.flag);
+            dl->AddLine(f0, f0 + ImVec2(0, 18 * S), rgb(0x2A2018), 1.2f * S);
+        }
+        ImU32 head = c.kind == K_AGENT ? rgb(0xC0392B) : c.kind == K_OFF ? rgb(0x2D4C8A) : c.kind == K_SITE ? rgb(0x2F6B3A) : rgb(0xD8B23C);
+        pushpin(dl, pinAt(c), S, head);
+        if (dim) dl->AddRectFilled(tl - ImVec2(6 * S, 8 * S), lb + ImVec2(2 * S, 2 * S), IM_COL32(70, 48, 26, 140));
+        // an invisible button over the card, for the tests and for double-clicking into the file
+        ImGui::SetCursorScreenPos(ImVec2(c.c.x - c.w / 2, tl.y));
+        ImGui::PushID((int)key(c.kind, c.id));
+        ImGui::InvisibleButton("card", ImVec2(c.w, c.h + labelH));
+        ImGui::PopID();
+        uiRec(std::string("board:") + c.name);
+        if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
+            if (c.kind == K_OFF) { selOfficer = c.id; wantTab = T_STATION; }
+            else if (c.kind == K_SITE) { selSite = c.id; wantTab = T_SITES; }
+            else { selPerson = c.id; wantTab = T_PEOPLE; }
+        }
+        if (ImGui::IsItemHovered() && cfg.tooltips) {
+            int nl = 0;
+            for (auto& l : links) if (l.a == (int)i || l.b == (int)i) nl++;
+            std::string tip = c.name + "\n" + c.sub + (c.flagTxt.empty() ? "" : "\n\n! " + c.flagTxt) + fstr("\n\n%d string%s on the board.", nl, nl == 1 ? "" : "s");
+            ImGui::SetTooltip("%s", tip.c_str());
+        }
+    }
+    if (cards.empty()) pencil(dl, o0 + ImVec2(40 * S, 80 * S), "Nothing pinned up yet.", rgb(0xF2E6C8), -2, F.handBig);
+
+    // ---- the key, pinned at the bottom
+    {
+        ImVec2 ka(o0.x + 12 * S, o0.y + H - 58 * S), kb = ka + ImVec2(560 * S, 48 * S);
+        sheet(dl, ka, kb, rgb(C_CARD), S, true);
+        pushpin(dl, ka + ImVec2(10 * S, 8 * S), S, rgb(0x777777));
+        const struct { ImU32 c; float th; const char* t; } K[] = {{rgb(0xC8281C), 1.7f, "knows of it, by your files"}, {rgb(0xA01812), 2.6f, "runs him"}, {rgb(0x1E1A16), 1.3f, "in his communications plan"}};
+        for (int i = 0; i < 3; i++) {
+            ImVec2 p = ka + ImVec2(18 * S + i * 180 * S, 16 * S);
+            dl->AddLine(p, p + ImVec2(28 * S, 0), K[i].c, K[i].th * S);
+            dl->AddText(F.uiSmall, F.uiSmall->FontSize, p + ImVec2(34 * S, -F.uiSmall->FontSize / 2), rgb(C_INK), K[i].t);
+        }
+        ImVec2 p = ka + ImVec2(18 * S, 33 * S);
+        dl->AddTriangleFilled(p - ImVec2(0, 5 * S), p + ImVec2(10 * S, 0), p + ImVec2(0, 5 * S), rgb(0xD08A2A));
+        dl->AddText(F.uiSmall, F.uiSmall->FontSize, p + ImVec2(16 * S, -F.uiSmall->FontSize / 2), rgb(C_INK),
+                    "a flag: something on the file wants looking at (hover for what). An officer with string to everything is worth a marked card.");
+    }
+    ImGui::SetCursorScreenPos(o0);
+    ImGui::Dummy(ImVec2(W, H));
+    ImGui::EndChild();
+}

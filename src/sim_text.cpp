@@ -35,6 +35,11 @@ std::string Sim::diary(int d) {
     if (dateOf(d).d == 1) add("advance and accounts");
     auto cs = g.csDays.find(d);
     if (cs != g.csDays.end() && cs->second.state == 2) add("CS TEAM");
+    for (auto& p : g.persons)
+        if (p.live() && p.handler == 0 && p.stage != SPOTTED && birthday(p, dateOf(d).y) == d) {
+            int turns = dateOf(d).y - birthYear(p);
+            add(p.label() + "'s birthday" + (turns % 10 == 0 ? fstr(" (%d)", turns) : std::string("")));
+        }
     for (auto& p : g.persons) if (p.stage == AGENT) {
         if (p.nextMeet == d) add(p.codename + " meeting" + (p.handler ? " (" + handlerName(p) + ")" : std::string("")));
         if (p.nextDrop == d) add(p.codename + " due at drop");
@@ -411,6 +416,15 @@ std::vector<Sim::Todo> Sim::todo() {
             if (sg->markSeen == 2) add(2, TD_PEOPLE, gx(&p, p.codename + "'s DANGER signal was seen on " + fmtShort(sg->markSeenDay) + "."));
         }
         if (p.verify == 3 && p.verifyResult != "CONSISTENT" && p.play == 0) add(1, TD_PEOPLE, gx(&p, p.codename + " failed Centre's verification. Decide what is to be done with him."));
+    }
+    // birthdays in the coming ten days, of the people you see yourself
+    for (auto& p : g.persons) {
+        if (!p.live() || p.handler != 0 || p.stage == SPOTTED) continue;
+        int b = nearBirthday(p, g.day + 5);
+        if (b < g.day || b > g.day + 10 || p.giftYear == dateOf(b).y) continue;
+        int turns = dateOf(b).y - birthYear(p);
+        bool round = turns % 10 == 0;
+        add(round ? 1 : 0, TD_PLAN, gx(&p, p.label() + "'s birthday is on " + fmtDay(b) + (round ? fstr(" - his %dth. A present at a meeting near the day would be remembered; none would be noticed.", turns) : std::string(". A small present at a meeting near the day is a kindness."))));
     }
     // your own agents' equipment, as your file has it
     for (auto& p : g.persons) {

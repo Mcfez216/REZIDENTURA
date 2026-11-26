@@ -157,6 +157,46 @@ bool Sim::isOp(int t) {
 }
 
 /** Returns "" if the order is legal for that slot, otherwise the reason it is not. */
+// ============================================================================ birthdays
+int Sim::birthday(const Person& p, int year) const {
+    uint32_t h = (uint32_t)(g.seed * 2654435761u) ^ ((uint32_t)p.id * 40503u + 0x9E37u);
+    h ^= h >> 13; h *= 0x5bd1e995u; h ^= h >> 15;
+    return dayOf(year, 1, 1) + (int)(h % 365);
+}
+int Sim::nearBirthday(const Person& p, int day) const {
+    int y = dateOf(day).y;
+    for (int yy = y - 1; yy <= y + 1; yy++) { int b = birthday(p, yy); if (std::abs(b - day) <= 10) return b; }
+    return -99999;
+}
+bool Sim::presentDue(const Person& p, int day) const {
+    int b = nearBirthday(p, day);
+    return b > -99999 && p.giftYear != dateOf(b).y;
+}
+
+/** A present for his birthday - or, on a round one, the absence of one. */
+void Sim::birthdayMeeting(const Order& o, Person& p) {
+    int b = nearBirthday(p, g.day);
+    if (b <= -99999 || p.giftYear == dateOf(b).y || !me()) return;
+    int turns = dateOf(b).y - birthYear(p);
+    bool round = turns % 10 == 0;
+    if (o.present) {
+        int cost = std::min(g.funds, P(round ? 12 : 5));
+        money(-cost, "Birthday present for " + p.label());
+        p.giftYear = dateOf(b).y;
+        p.rapport = clampf(p.rapport + rnd(5, 9) * (round ? 1.6f : 1.f), 0, 100);
+        p.commitment = clampf(p.commitment + (round ? 5 : 2), 0, 100);
+        if (p.stage == AGENT) p.stress = clampf(p.stress - (round ? 10 : 5), 0, 100);
+        static const char* const GIFT[] = {"a bottle of Armenian brandy", "a lacquered Palekh box", "a set of Melodiya records", "a tin of caviar and a card signed 'from friends'", "a Zenit camera of his own"};
+        std::string what = round ? std::string(GIFT[(p.id + turns) % 5]) : std::string("a small present");
+        say(fstr("    You gave him %s for his birthday%s. ", what.c_str(), round ? fstr(" - his %dth", turns).c_str() : "") + std::string(round ? "He was moved, and did not try to hide it." : "He had not thought you would remember."));
+        file(p, round ? fstr("Given a present on his %dth birthday.", turns) : std::string("Given a birthday present."));
+    } else if (round && g.day > b) {
+        p.giftYear = dateOf(b).y;
+        p.rapport = clampf(p.rapport - 4, 0, 100);
+        say(fstr("    He mentioned, a little pointedly, that he had turned %d on ", turns) + DOW[dateOf(b).dow] + ". Nobody had remembered.");
+    }
+}
+
 std::string Sim::validate(const Order& o, int day, int b) {
     Person* p = person(o.person);
     Site* s = site(o.site);
@@ -164,6 +204,8 @@ std::string Sim::validate(const Order& o, int day, int b) {
     bool usesPerson = o.type == O_MEET_OVERT || o.type == O_MEET_CLAN || o.type == O_LOAD_DROP || o.type == O_PLACE_SIGNAL;
     if (usesPerson && p && p->handler != 0 && !o.appointment)
         return bad(p->label() + " is run by " + handlerName(*p) + ". Take the case back yourself first (Contacts).");
+    if (o.present && (!p || (o.type != O_MEET_OVERT && o.type != O_MEET_CLAN) || o.brush || !presentDue(*p, day)))
+        return "A present is for a birthday within ten days of the meeting, and only once a year.";
     switch (o.type) {
         case O_FUNCTION:
             if (b == 0) return "Receptions, lectures and society meetings are afternoon or evening affairs.";
@@ -854,6 +896,7 @@ void Sim::meetOvert(const Order& o, int b) {
     money(-cost, std::string(what) + " with " + p.name);
     say(std::string("  ") + what + " with " + p.name + fstr(" (%d %s).", cost, T().currency));
     socialGain(p, 1.0f);
+    birthdayMeeting(o, p);
     confidTalk(p);
     if (b == 2 && me() && p.kompState == 2) { stageCompromise(p); if (!p.live() || g.phase != PH_PLAY) return; }
     if (o.favour) favour(p);
@@ -1098,6 +1141,7 @@ void Sim::agentAgenda(const Order& o, Person& p, Site& s) {
     p.warn.clear();
     postingDecision(p);
     say("    Agent's manner: " + mood(p) + ".");
+    if (!o.brush) birthdayMeeting(o, p);
     // material
     if (o.collect && !p.held.empty()) {
         int n = 0;
@@ -1191,6 +1235,7 @@ void Sim::commsPlan(const Order& o, Person& p) {
 
 void Sim::contactAgenda(const Order& o, Person& p, Site& s) {
     socialGain(p, o.longMeet ? 1.1f : 0.4f);
+    birthdayMeeting(o, p);
     if (o.favour) favour(p);
     if (!p.live()) return;
     if (o.pay > 0 && o.pitch < 0) gift(p, o.pay);

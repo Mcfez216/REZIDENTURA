@@ -267,7 +267,7 @@ int main(int argc, char** argv) {
     s.newCareer(11, "Sokolov");
     click("cable:0");
     shot("05-centre");
-    const char* tabs[] = {"Planner", "Checklist", "Contacts", "City map", "Sites", "Material", "Centre", "Daily report", "Station", "Surveillance", "Accounts", "Results", "Private life", "Career", "Handbook"};
+    const char* tabs[] = {"Planner", "Checklist", "Contacts", "City map", "Sites", "Case board", "Material", "Centre", "Daily report", "Station", "Surveillance", "Accounts", "Results", "Private life", "Career", "Handbook"};
     for (auto t : tabs) check(click(std::string("tab:") + t), std::string("tab opens: ") + t);
 
     // ---- give an order through the form
@@ -316,6 +316,9 @@ int main(int argc, char** argv) {
     click("OK##note");
     // ---- let the test player work for five months, then look at every screen
     play(150);
+    a.showMoment("ЗАВЕРБОВАН", "RECRUITED", 0xB3171B);
+    frames(8); shot("09-moment");
+    frames(200);
     int shotNo = 10;
     for (const char* t : tabs) {
         if (s.g.phase != PH_PLAY) break;
@@ -672,6 +675,13 @@ int main(int argc, char** argv) {
         shot(fstr("4%d-planner", posting));
         click("tab:City map");
         shot(fstr("4%d-map", posting));
+        click("tab:Case board");
+        shot(fstr("4%d-board", posting));
+        for (auto& p : s.g.persons) if (p.stage == AGENT && onScreen("board:" + p.label())) {
+            click("board:" + p.label(), true);
+            check(a.tab == App::T_PEOPLE, "double-clicking a card on the case board opens the file");
+            break;
+        }
         click("tab:Results");
         shot(fstr("4%d-returns", posting));
         click("tab:Surveillance");

@@ -228,6 +228,11 @@ void icon(ImDrawList* dl, int id, ImVec2 c, float s, ImU32 col) {
                   ImVec2(-0.14f, 0.30f), ImVec2(-0.42f, 0.40f)}, true);
             line(-0.14f, -0.38f, -0.14f, 0.30f, t * 0.8f); line(0.14f, -0.28f, 0.14f, 0.40f, t * 0.8f);
             break;
+        case IC_BOARD:                                           // a pinned board with a string between two pins
+            poly({ImVec2(-0.42f, -0.36f), ImVec2(0.42f, -0.36f), ImVec2(0.42f, 0.36f), ImVec2(-0.42f, 0.36f)}, true);
+            circF(-0.20f, -0.12f, 0.07f); circF(0.20f, 0.14f, 0.07f);
+            line(-0.20f, -0.12f, 0.20f, 0.14f, t * 0.8f);
+            break;
         case IC_SITES:                                           // a marker pin
             dl->PathArcTo(P(0, -0.12f), 0.26f * s, PI * 0.80f, PI * 2.20f, 18);
             dl->PathLineTo(P(0, 0.44f));

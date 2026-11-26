@@ -37,6 +37,11 @@ extern const char* W_STAND[5];
 
 class Sim {
 public:
+    // ---- birthdays: everybody has one, drawn from the world number, and Centre's files note the round ones
+    int birthday(const Person& p, int year) const;          // the day (game day number) of his birthday in that year
+    int birthYear(const Person& p) const { return dateOf(p.firstDay).y - p.age; }
+    int nearBirthday(const Person& p, int day) const;       // the birthday within ten days of that day, or -99999
+    bool presentDue(const Person& p, int day) const;        // a present on that day would be in time, and none has been given
     GameState g;
     /** Set when something happened that the player should look at ("run until event" stops on it). */
     bool attention = false;
@@ -165,6 +170,7 @@ public:
     int unread() const;
 
 private:
+    void birthdayMeeting(const Order& o, Person& p);
     Rng& r() { return g.rng; }
     float rnd(float lo, float hi) { return g.rng.rnd(lo, hi); }
     bool pct(float c) { return g.rng.pct(c); }

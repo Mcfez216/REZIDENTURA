@@ -442,6 +442,8 @@ void App::tabManual() {
 }
 
 // ============================================================================ notices after a day
+static bool hasTxt(const std::string& s, const char* w) { return s.find(w) != std::string::npos; }
+
 void App::pushToasts(int fromDay, size_t cablesBefore) {
     if (!cfg.toasts) return;
     std::vector<Toast> add;
@@ -462,6 +464,30 @@ void App::pushToasts(int fromDay, size_t cablesBefore) {
         if (c.routine()) continue;
         add.push_back({"Cable from " + c.from + ": " + c.subject, T_CENTRE, now, true});
     }
+    // the one thing today that deserves a stamp across the desk, if there is one
+    {
+        struct Cand { int prio; const char *ru, *en; unsigned ink; };
+        std::vector<Cand> c;
+        for (int d = fromDay; d < sim.g.day; d++) {
+            auto it = sim.g.reports.find(d);
+            if (it == sim.g.reports.end()) continue;
+            for (auto& l : it->second) {
+                if (hasTxt(l, "has agreed to co-operate")) c.push_back({5, "ЗАВЕРБОВАН", "RECRUITED", 0xB3171Bu});
+                if (hasTxt(l, " IS OUT. ") || hasTxt(l, "HAS BEEN BROUGHT OUT")) c.push_back({6, "ВЫВЕЗЕН", "BROUGHT OUT", 0x2F6B3Au});
+            }
+        }
+        for (size_t i = cablesBefore; i < sim.g.cables.size(); i++) {
+            const Cable& cb = sim.g.cables[i];
+            if (cb.subject == "Promotion") c.push_back({7, "ПОВЫШЕН В ЗВАНИИ", "PROMOTED", 0xA8801Cu});
+            else if (cb.subject.rfind("Arrest of ", 0) == 0 && !hasTxt(cb.subject, "neighbours")) c.push_back({4, "АРЕСТОВАН", "AGENT ARRESTED", 0x3A1410u});
+            else if (hasTxt(cb.subject, "satisfied") || hasTxt(cb.subject, "carried out")) c.push_back({2, "ЗАДАНИЕ ВЫПОЛНЕНО", "REQUIREMENT MET", 0x4A3E8Eu});
+            else if (cb.subject.rfind("Evaluation of material", 0) == 0 && hasTxt(cb.body, "OF CONSIDERABLE VALUE")) c.push_back({3, "ОСОБО ЦЕННО", "OF CONSIDERABLE VALUE", 0x4A3E8Eu});
+        }
+        if (!c.empty()) {
+            auto best = std::max_element(c.begin(), c.end(), [](const Cand& x, const Cand& y) { return x.prio < y.prio; });
+            moment = {best->ru, best->en, best->ink, now};
+        }
+    }
     if (add.empty()) return;
     toastList.clear();
     int shown = 0, more = 0;
@@ -469,6 +495,30 @@ void App::pushToasts(int fromDay, size_t cablesBefore) {
     if (more) toastList.push_back({fstr("... and %d more in the report and the cables", more), T_REPORT, now, false});
     for (size_t i = 0; i < toastList.size(); i++) toastList[i].t0 = now + 0.08 * (double)i;      // they come in one after another
 }
+
+/** The stamp comes down hard, sits for a moment, and lifts. It takes no clicks: the desk under it works as before. */
+void App::drawMoment() {
+    double age = ImGui::GetTime() - moment.t0;
+    const double LIFE = 2.4;
+    if (age < 0 || age > LIFE || moment.en.empty()) return;
+    const ImGuiViewport* vp = ImGui::GetMainViewport();
+    ImDrawList* dl = ImGui::GetForegroundDrawList(const_cast<ImGuiViewport*>(vp));
+    float slam = (float)std::min(1.0, age / 0.16);                       // falls in a sixth of a second
+    float scale = 1.0f + (1 - slam) * (1 - slam) * 0.9f;
+    float alpha = (float)std::min(1.0, std::min(age / 0.08, (LIFE - age) / 0.5));
+    ImVec2 c = vp->WorkPos + ImVec2(vp->WorkSize.x * 0.56f, vp->WorkSize.y * 0.44f);
+    // the thump: the desk darkens a little round the stamp, as if the light had shaken
+    if (slam >= 1 && age < 0.45) {
+        float k = (float)(1 - (age - 0.16) / 0.29);
+        dl->AddRectFilled(vp->WorkPos, vp->WorkPos + vp->WorkSize, IM_COL32(0, 0, 0, (int)(60 * k)));
+        c.x += std::sin((float)age * 90) * 3 * S * k;
+    }
+    float size = 64 * S * scale;
+    ImU32 ink = rgb(moment.ink, 0.88f * alpha);
+    stamp(dl, c, moment.ru, ink, -7, F.stampBig ? F.stampBig : F.stamp, size, 1, moment.en);
+}
+
+void App::showMoment(const char* ru, const char* en, unsigned ink) { moment = {ru, en, ink, ImGui::GetTime()}; }
 
 void App::drawToasts() {
     if (toastList.empty()) return;

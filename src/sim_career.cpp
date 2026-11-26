@@ -21,7 +21,7 @@ bool Sim::load(const std::vector<uint8_t>& data) {
     a.writing = false; a.buf = data; a.pos = 4;
     GameState t;
     a & t;
-    if (!a.ok || a.ver < 8 || a.ver > 12 || t.theatre < 0 || t.theatre >= (int)THEATRES.size()) return false;
+    if (!a.ok || a.ver < 8 || a.ver > 13 || t.theatre < 0 || t.theatre >= (int)THEATRES.size()) return false;
     g = t;
     if (g.patronName.empty()) g.patronName = RU_LAST[(size_t)(g.seed % RU_LAST.size())];     // a save from before version 1.2
     if (a.ver < 9) g.planYear = dateOf(g.day).y;                                             // no plan until next January

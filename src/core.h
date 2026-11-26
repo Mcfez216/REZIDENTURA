@@ -286,6 +286,7 @@ struct Person {
     int referrals = 0;                       // colleagues he has put your way
     // --- verification by Centre: 0 none, 1 asked, 2 control questions put to him, 3 done
     int verify = 0, verifyLeft = 0;
+    int giftYear = -1;                       // the year whose birthday has been marked (or missed) - version 13
     std::string verifyResult;
     // --- his own life
     int sickUntil = -1;                      // off work, photographing nothing
@@ -322,6 +323,7 @@ struct Person {
         if (a.ver >= 9) a & kompState & kompKind & kompDay & komp & shortPaid;
         if (a.ver >= 10) a & fed & play & playMeets & confid & lastConfid & escape & escapeDay;
         if (a.ver >= 11) a & note;
+        if (a.ver >= 13) a & giftYear;
     }
 };
 
@@ -386,6 +388,7 @@ struct Order {
     int travel = 0;                          // how you get there: see TRAVEL
     bool docs = false;                       // at a safe flat: he brings the documents themselves, and you photograph them
     int trainWhat = 0;                       // what the instruction is in: see SKILL_LABEL
+    bool present = false;                    // a present for his birthday (version 13)
     bool standing = false;                   // rehearse the escape plan and leave it standing (he stays in place)
     // communications plan changes (-1 / -2 = leave alone)
     int meetEvery = -1, dropEvery = -1, dropSite = -2, signalSite = -2;
@@ -400,6 +403,7 @@ struct Order {
           & pay & film & tempo & reqId & pitch & pads & camera & container & am & meetEvery & dropEvery & dropSite & signalSite
           & setMeetSites & meetSites & appointment & officer & lineN & brush & exfil & bug & travel & docs & trainWhat;
         if (a.ver >= 10) a & standing;
+        if (a.ver >= 13) a & present;
     }
 };
 typedef std::array<Order, 3> DayPlan;
@@ -520,7 +524,7 @@ struct PostRec {
 };
 
 struct GameState {
-    uint32_t version = 12;
+    uint32_t version = 13;
     std::string notes;                       // the player's notebook
     int background = 0;                      // where the officer came from (BACKGROUND_LABEL)
     int startTheatre = 0;                    // where the career was begun
@@ -659,7 +663,7 @@ struct GameState {
     template <class A> void io(A& a) {
         a & version;
         a.ver = version;
-        if (!a.writing) version = 12;
+        if (!a.writing) version = 13;
         a & difficulty & nextTheatre & wallDown & bugs & totExfil & tut & tutTries & tutMarks & tutMax & tutA & tutB
           & tutMeet & tutDrop & tutSignal & tutRoll & tutText & tutLog & courseReport & pool & watchers & replateDay & months & krEst
           & wx & wxNext & temp & tempNext & sunset & sunrise & forecast & game & gameNext & gameRounds & gameFound & gameDoubt & gameSuspect & gameName & gameLog

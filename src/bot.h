@@ -221,6 +221,7 @@ struct Bot {
             o.camera = !p.camera;
             o.train = true;
             o.standing = p.exfil == 2;
+            o.present = !o.brush && s.presentDue(p, day);
             o.trainWhat = p.craft < 55 ? 0 : (p.camera && p.skPhoto < 50) ? 1 : p.skSpot < 40 ? 3 : p.skComms < 50 ? 4 : 2;
             if (Site* at = s.agreedSite(p)) o.docs = at->flat && g.film >= 4 && !warned(p) && p.estV[A_ACCESS] > 40 && day % 2 == 0;
             o.longMeet = true;
@@ -301,6 +302,7 @@ struct Bot {
         if (lunch && (!wk || desk)) {
             Order o = mk(O_MEET_OVERT);
             o.person = lunch->id;
+            o.present = s.presentDue(*lunch, day);
             o.favour = lunch->rapport > 35 && lunch->commitment < 60;
             if (lunch->rapport > 45 && lunch->estV[A_MONEY] > 50 && g.funds > s.P(60) && day % 3 == 0) o.pay = s.P(10);
             if (lunch->estV[A_INFL] > 45 && lunch->commitment > 30) for (auto& q : g.reqs) if (!q.closed && q.kind == RK_ACTIVE) { o.am = q.id; break; }

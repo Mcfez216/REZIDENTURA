@@ -13,8 +13,8 @@ using namespace gfx;
 
 extern const char* const TAB_RU[App::N_TAB];
 extern const char* const TAB_EN[App::N_TAB];
-const char* const TAB_RU[App::N_TAB] = {"ПЛАН РАБОТЫ", "ПАМЯТКА", "АГЕНТУРА", "КАРТА ГОРОДА", "МЕСТА И МАРШРУТЫ", "МАТЕРИАЛЫ", "ЦЕНТР", "СВОДКА", "РЕЗИДЕНТУРА", "НАРУЖКА", "КАССА", "ОТЧЁТНОСТЬ", "ЛИЧНАЯ ЖИЗНЬ", "ЛИЧНОЕ ДЕЛО", "ИНСТРУКЦИЯ"};
-const char* const TAB_EN[App::N_TAB] = {"Planner", "Checklist", "Contacts", "City map", "Sites", "Material", "Centre", "Daily report", "Station", "Surveillance", "Accounts", "Results", "Private life", "Career", "Handbook"};
+const char* const TAB_RU[App::N_TAB] = {"ПЛАН РАБОТЫ", "ПАМЯТКА", "АГЕНТУРА", "КАРТА ГОРОДА", "МЕСТА И МАРШРУТЫ", "СХЕМА СВЯЗЕЙ", "МАТЕРИАЛЫ", "ЦЕНТР", "СВОДКА", "РЕЗИДЕНТУРА", "НАРУЖКА", "КАССА", "ОТЧЁТНОСТЬ", "ЛИЧНАЯ ЖИЗНЬ", "ЛИЧНОЕ ДЕЛО", "ИНСТРУКЦИЯ"};
+const char* const TAB_EN[App::N_TAB] = {"Planner", "Checklist", "Contacts", "City map", "Sites", "Case board", "Material", "Centre", "Daily report", "Station", "Surveillance", "Accounts", "Results", "Private life", "Career", "Handbook"};
 
 bool App::recordRects = false;
 std::map<std::string, std::array<float, 4>> App::rects;
@@ -385,6 +385,7 @@ void App::frame() {
     ImGui::End();
     if (inGame && sim.g.phase == PH_PLAY) poppedWindows();
     if (inGame && sim.g.phase == PH_PLAY) drawToasts();
+    if (inGame && sim.g.phase == PH_PLAY && cfg.toasts) drawMoment();
 }
 
 // ============================================================================ the interlude: an order on posting
@@ -542,6 +543,7 @@ void App::drawTab(int t) {
         case T_PEOPLE: tabContacts(); break;
         case T_MAP: tabMap(); break;
         case T_SITES: tabSites(); break;
+        case T_BOARD: tabBoard(); break;
         case T_MAT: tabMaterial(); break;
         case T_CENTRE: tabCentre(); break;
         case T_REPORT: tabReport(); break;
@@ -760,8 +762,8 @@ void App::nav(ImVec2 a, ImVec2 b) {
     dl->AddRectFilledMultiColor(a, b, rgb(0x1E1914), rgb(0x1E1914), rgb(0x151210), rgb(0x151210));
     dl->AddLine(ImVec2(b.x - 2, a.y), ImVec2(b.x - 2, b.y), rgb(K_BRASS_LO), 1);
     dl->AddLine(ImVec2(b.x - 1, a.y), ImVec2(b.x - 1, b.y), rgb(0, 0.7f), 1);
-    static const int ICON[N_TAB] = {IC_PLAN, IC_CHECK, IC_PEOPLE, IC_MAP, IC_SITES, IC_MAT, IC_CENTRE, IC_REPORT, IC_STATION, IC_SURV, IC_ACC, IC_RESULTS, IC_HOME, IC_CAREER, IC_BOOK};
-    static const char* const GROUP[N_TAB] = {"Today", nullptr, "Operations", nullptr, nullptr, nullptr, "Communications", nullptr, "Station", nullptr, nullptr, nullptr, "Personal", nullptr, nullptr};
+    static const int ICON[N_TAB] = {IC_PLAN, IC_CHECK, IC_PEOPLE, IC_MAP, IC_SITES, IC_BOARD, IC_MAT, IC_CENTRE, IC_REPORT, IC_STATION, IC_SURV, IC_ACC, IC_RESULTS, IC_HOME, IC_CAREER, IC_BOOK};
+    static const char* const GROUP[N_TAB] = {"Today", nullptr, "Operations", nullptr, nullptr, nullptr, nullptr, "Communications", nullptr, "Station", nullptr, nullptr, nullptr, "Personal", nullptr, nullptr};
     float cardH = sim.training() ? 160 * S : 0;
     float avail = b.y - a.y - cardH - 16 * S;
     float th = std::floor(std::min(34 * S, avail / (N_TAB + 5 * 0.9f))), gh = std::floor(th * 0.9f), y = a.y + 6 * S;
@@ -845,7 +847,7 @@ void App::nav(ImVec2 a, ImVec2 b) {
 // ============================================================================ the order form
 /** What an experienced officer puts on the agenda of an ordinary meeting with his agent: what he is owed,
     film to keep him working, a camera if he has none, and instruction in whatever he is weakest at. */
-static void usualAgenda(Sim& sim, Order& o, const Person& p) {
+static void usualAgenda(Sim& sim, Order& o, const Person& p, int day) {
     const GameState& g = sim.g;
     o.collect = true;
     if (!o.brush) o.longMeet = true;
@@ -857,6 +859,7 @@ static void usualAgenda(Sim& sim, Order& o, const Person& p) {
     for (int i = 1; i < 5; i++) if (lv[i] < lv[weak]) weak = i;
     o.train = o.longMeet && lv[weak] < 60;
     o.trainWhat = weak;
+    o.present = !o.brush && sim.presentDue(p, day);
 }
 
 void App::beginEdit(int day, int block) {
@@ -866,7 +869,7 @@ void App::beginEdit(int day, int block) {
     if (Person* p = sim.person(ed.person))
         if (ed.appointment && ed.type == O_MEET_CLAN && p->stage == AGENT && ed.pay == 0 && ed.film == 0 && !ed.camera && !ed.train && !ed.brush
             && prefilled.insert(((long long)day * 4 + block) * 100000 + p->id).second)
-            usualAgenda(sim, ed, *p);
+            usualAgenda(sim, ed, *p, day);
     edError.clear();
     openEditor = true;
 }
@@ -1059,8 +1062,8 @@ void App::orderEditor() {
     if (meet || load || overt) {
         ImGui::SeparatorText("Agenda");
         if (meet && agent && p) {
-            if (uiBtn("Fill in the usual agenda")) usualAgenda(sim, o, *p);
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", gx(p, "Pay what he is owed, bring his film up to two cassettes, a camera if he has none, and instruction in what he is weakest at.").c_str());
+            if (uiBtn("Fill in the usual agenda")) usualAgenda(sim, o, *p, edDay);
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", gx(p, "Pay what he is owed, bring his film up to two cassettes, a camera if he has none, instruction in what he is weakest at - and a present, if it is his birthday.").c_str());
         }
         if (meet && agent) uiCheck("Brush pass: twelve seconds in a crowd - packages only, no talk", &o.brush);
         if (!(meet && agent)) o.brush = false;
@@ -1112,6 +1115,13 @@ void App::orderEditor() {
             }
         }
         if ((meet && !agent) || overt) uiCheck("Ask a small favour (builds commitment; may be refused)", &o.favour);
+        if (p && (meet || overt) && !o.brush && sim.presentDue(*p, edDay)) {
+            int bd = sim.nearBirthday(*p, edDay), turns = dateOf(bd).y - sim.birthYear(*p);
+            bool round = turns % 10 == 0;
+            uiCheck(gx(p, fstr("A present for his birthday (%s%s, about %d %s)", fmtDay(bd).c_str(), round ? fstr(" - his %dth", turns).c_str() : "",
+                               sim.P(round ? 12 : 5), sim.T().currency)).c_str(), &o.present);
+            if (ImGui::IsItemHovered() && cfg.tooltips) ImGui::SetTooltip("%s", round ? "A round birthday. Remembered, it is worth a great deal; forgotten, it will be mentioned." : "People like to be remembered.");
+        } else o.present = false;
         if ((meet && (agent || pitching)) || load) {
             std::vector<Opt> tp = {{"(no change)", -1}};
             for (int i = 0; i < 4; i++) tp.push_back({TEMPO[i], i});

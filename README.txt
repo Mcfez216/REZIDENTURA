@@ -84,6 +84,15 @@ REFINEMENTS SINCE 1.6
   - The checklist also notices: acts with no detection route before them, agents with no film
     or no camera, cables stuck in the cipher queue, and the next step with a developing
     contact (trace him; then propose him to Centre).
+  - THE CASE BOARD: a new screen. A cork board with the station's officers, your agents, your
+    contacts and your sites pinned up as photographs, and red string for who knows whom.
+    Hover a card to follow its strings; flags mark files that want looking at.
+  - BIRTHDAYS: agents and contacts have them. A present at a meeting near the day warms
+    them; forgetting a round one is remarked upon. Shown on the file, in the diary and
+    on the checklist.
+  - Stamps across the desk for the moments that matter: a recruitment, an agent brought out,
+    a promotion, a requirement met, material of considerable value - and an arrest.
+  - Saved games from 1.6 (and earlier, as before) load in this version.
 
 NEW IN 1.6
   - A new look: the desk is now dark, with every screen in a brass-framed panel with its

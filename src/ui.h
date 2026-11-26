@@ -65,7 +65,7 @@ struct App {
     void autosave();
     void doEndDay(bool run);
 
-    enum { T_PLAN, T_NOTES, T_PEOPLE, T_MAP, T_SITES, T_MAT, T_CENTRE, T_REPORT, T_STATION, T_SURV, T_ACC, T_STATS, T_HOME, T_CAREER, T_MANUAL, N_TAB };
+    enum { T_PLAN, T_NOTES, T_PEOPLE, T_MAP, T_SITES, T_BOARD, T_MAT, T_CENTRE, T_REPORT, T_STATION, T_SURV, T_ACC, T_STATS, T_HOME, T_CAREER, T_MANUAL, N_TAB };
     int tab = T_PLAN;
     bool popped[N_TAB] = {};                  // which screens have been lifted off the desk into windows of their own
     void popOut(int t, bool out);
@@ -76,6 +76,7 @@ struct App {
     static bool recordRects;
     static std::map<std::string, std::array<float, 4>> rects;
 
+    void showMoment(const char* ru, const char* en, unsigned ink);     // for the tests: bring a stamp down now
 private:
     int wantTab = -1;
     int selRow = 0, selCol = 1;               // planner cell
@@ -121,6 +122,10 @@ private:
     std::vector<Toast> toastList;
     void pushToasts(int fromDay, size_t cablesBefore);
     void drawToasts();
+    // a rubber stamp brought down across the desk for the moments that matter: a recruitment, a man brought out, a promotion
+    struct Moment { std::string ru, en; unsigned ink = 0; double t0 = -100; };
+    Moment moment;
+    void drawMoment();
     void drawTab(int t);
     void poppedWindows();
     void settingsPopup(ImVec2 centre);
@@ -194,6 +199,8 @@ private:
     void docTitle(const char* ru, const char* title, const char* hint = nullptr);
     int era() const;
     ImTextureID facePhoto(const Person& p);
+    void tabBoard();                          // the case board: who knows whom (ui_tabs.cpp)
+    int boardFocus = -1;                      // card the pointer last rested on (key: kind * 1000000 + id)
     ImTextureID candidPhoto(const Person& p);
     ImTextureID officerPhoto(const Officer& o);
     ImTextureID myPhoto();

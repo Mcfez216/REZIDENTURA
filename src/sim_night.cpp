@@ -5,8 +5,35 @@ static std::string upper(std::string s) { for (auto& c : s) c = (char)toupper((u
 static bool has(const std::vector<int>& v, int x) { return std::find(v.begin(), v.end(), x) != v.end(); }
 
 // ============================================================================ END OF DAY
+/**
+ * The day, with a pause in it. If a meeting or a drop of yours meets surveillance and you have asked to decide such
+ * things yourself, the day is put back exactly as it was this morning and the question is put to you (DK_STREET).
+ * Your answer is kept in g.streetForce and the day is played again from the start: the random numbers are part of the
+ * state that was put back, so everything up to that moment happens exactly as before, and from then on as you chose.
+ */
 void Sim::endDay() {
     if (g.phase != PH_PLAY || !g.decisions.empty()) return;
+    bool mayAsk = askInStreet && !training();
+    if (mayAsk) {
+        mayAsk = false;
+        for (int b = 0; b < 3; b++) {
+            int t = order(g.day, b).type;
+            if (t == O_MEET_CLAN || t == O_LOAD_DROP || t == O_UNLOAD_DROP || t == O_LINE_N) mayAsk = true;
+        }
+    }
+    if (!mayAsk) { endDayInner(); return; }
+    GameState morning = g;
+    try {
+        endDayInner();
+    } catch (const StreetHalt& h) {
+        g = std::move(morning);
+        rep = nullptr; subj = nullptr; actAs(nullptr);
+        addDecision(DK_STREET, h.block, h.title, h.text, h.opts);
+        attention = true;
+    }
+}
+
+void Sim::endDayInner() {
     rep = &g.reports[g.day];
     rep->clear();
     attempted.clear();
@@ -47,6 +74,7 @@ void Sim::endDay() {
     if (g.phase == PH_PLAY) night();
     if (g.phase == PH_PLAY && training()) tutorialNight();
     g.plan.erase(g.day);
+    for (int& f : g.streetForce) f = -1;
     if (g.phase == PH_PLAY) { g.day++; dawn(); }
     // keep the save file from growing without limit
     while (!g.reports.empty() && g.reports.begin()->first < g.day - 500) g.reports.erase(g.reports.begin());

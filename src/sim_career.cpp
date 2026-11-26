@@ -564,6 +564,13 @@ void Sim::decide(int decisionId, int option) {
     actAs(nullptr);
     subj = nullptr;
     switch (d.kind) {
+        case DK_STREET: {
+            int b = std::max(0, std::min(2, d.ref));
+            int t = order(g.day, b).type;
+            g.streetForce[b] = (t == O_MEET_CLAN) ? std::max(0, std::min(2, option)) : (option == 0 ? 0 : 2);
+            endDay();                               // the day is played again, from the morning, with your decision in it
+            return;
+        }
         case DK_APPROACH:
             if (d.ref == 1) { dirtDecide(option); break; }
             if (option == 0) {

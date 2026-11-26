@@ -37,6 +37,8 @@ extern const char* W_STAND[5];
 
 class Sim {
 public:
+    /** When set, a meeting or a drop of yours that meets surveillance stops the day and asks you (DK_STREET). The screens set it from the settings. */
+    bool askInStreet = false;
     /** Your own operational acts, as your surveillance log records them: when and where. Nothing hidden. */
     struct Pattern { int grid[7][3] = {}; int dist[8] = {}; int n = 0, slotDow = -1, slotB = -1, slotN = 0, topDist = -1, topDistN = 0; };
     Pattern myPattern(int days) const;
@@ -174,6 +176,9 @@ public:
     int unread() const;
 
 private:
+    struct StreetHalt { int block; std::string title, text; std::vector<std::string> opts; };
+    void endDayInner();
+    std::string streetStakes(const Order& o, Site* st);
     void birthdayMeeting(const Order& o, Person& p);
     Rng& r() { return g.rng; }
     float rnd(float lo, float hi) { return g.rng.rnd(lo, hi); }

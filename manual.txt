@@ -110,6 +110,12 @@ The check reports one of three things:
 
 Each order carries an abort policy: Strict (abort on any doubt), Normal (abort on confirmed), Press on regardless. An aborted meeting is not free - the agent waits for nothing and the fall-back comes into force - but it is always cheaper than the alternative.
 
+DECISIONS IN THE STREET. When a meeting or a drop of your own meets surveillance - possible or confirmed - the day stops and the choice is yours, on the spot: walk on and make it an innocent errand; go to the meeting but let nothing change hands (no film, no money, no approach); or go through with all of it. You are told what you saw, who is waiting, what you are carrying and what hangs on it, and what your standing order would have done. Then the day plays out from that moment. (Settings: "Decide in the street yourself". Turned off, the abort policy decides, as before.)
+
+THEY LEARN YOUR HABITS. The other side's analysts keep a table of every act their teams have seen you make: the weekday, the time of day, the district. Once you have a habit, they have it too - teams are out on your usual evenings and waiting in your usual districts. A routine fades from their table in a couple of months if you break it. The Surveillance screen shows your own table for the last ninety days ("Your own pattern") with a word for how predictable it looks, and Line KR's Monday assessment remarks on it when it is obvious. Officers who keep spotting the teams on them get better teams put on them: Zenit sometimes hears the new call-signs.
+
+WATCHED. The figure at the top of the desk is Line KR's Monday estimate of how closely the other side watches you - little, at times, regularly, closely. It is an estimate, not the truth, and it changes once a week.
+
 WHAT HAPPENS IF YOU ARE COVERED AND GO AHEAD. The watchers see the act. A meeting seen puts your contact into a security file; a recruited agent seen with you is under investigation from that day. A site used under observation is known to them from then on, and a dead drop seen being serviced will have men waiting beside it. Their interest in you rises.
 
 A PARADOX TO LIVE WITH. A diplomat does not spend two hours changing buses. If you run a full route while a team is on you, they learn nothing about your agent, but they learn what you are.
@@ -318,6 +324,8 @@ AN APPROACH TO YOU. From your second posting on, the adversary may try to recrui
 ============================================================
 
 From Vienna on you have officers under your command: one probationer at first, three as head of a line, five as Rezident. They are on the Station screen. Select one to give him an ASSIGNMENT and his ORDERS (abort policy):
+
+Your officers use their own judgement in the street. One who has seen surveillance, or whom Line KR names a priority target, lies low for two weeks or so: brush passes instead of meetings, drops emptied a few days late, no new contacts. When a meeting place of one of his agents has been used too often he moves the agent to a fresher one at the next meeting, and tells you so in the report.
 
   Support ........ he is available for your countersurveillance team. As head of line or Rezident you form the team from your own officers on Support (two needed; a Rezident needs one), up to four times a week, without asking anybody.
   Spotting ....... he goes to functions in the circle you choose and brings in contacts, which stay his cases.

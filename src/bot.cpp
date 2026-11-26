@@ -17,16 +17,20 @@ int main(int argc, char** argv) {
     }
     int reached[N_THEATRE] = {}, n91 = 0, saveFail = 0;
     double score[N_THEATRE] = {}, value[N_THEATRE] = {}, recruited[N_THEATRE] = {}, arrested[N_THEATRE] = {};
+    long streetAsked = 0;
     int how[N_THEATRE][4] = {}, cnt[N_THEATRE] = {}, moleCaught = 0, moles = 0, cause[N_THEATRE][8] = {}, exfil = 0, courses = 0, coursePass = 0;
     double days[N_THEATRE] = {};
     std::map<std::string, int> endings;
     for (uint64_t seed = first; seed < first + (uint64_t)n; seed++) {
         Sim s;
         s.newCareer(seed, "Testov", 1, course);
+        s.askInStreet = seed % 2 == 0;           // half the careers decide in the street, the other half leave it to the abort policy
         Bot bot(s, careful);
         int guard = 0, checked = 0;
         while (s.g.phase != PH_OVER && guard++ < 12000) {
             if (s.g.phase == PH_INTERLUDE) { if (immortal) { s.g.png = 0; s.g.recalls = 0; s.g.poorPostings = 0; } s.chooseInterlude((int)(seed % 3)); continue; }
+            int dPlan = s.g.day;
+            for (auto& d : s.g.decisions) if (d.kind == DK_STREET) streetAsked++;
             bot.plan();
             // save / load round trip: a loaded game must play on exactly as the original does
             if (guard % 700 == 350 && checked < 6) {
@@ -36,8 +40,12 @@ int main(int argc, char** argv) {
                 if (!t.load(buf)) { saveFail++; printf("LOAD FAILED seed %llu day %d\n", (unsigned long long)seed, s.g.day); }
                 else {
                     Sim u; u.load(buf);
+                    t.askInStreet = u.askInStreet = s.askInStreet;
                     Bot b1(t, careful), b2(u, careful);
-                    for (int k = 0; k < 25 && t.g.phase == PH_PLAY; k++) { b1.plan(); t.endDay(); b2.plan(); u.endDay(); }
+                    for (int k = 0; k < 25 && t.g.phase == PH_PLAY; k++) {
+                        int d0 = t.g.day; b1.plan(); if (t.g.day == d0) t.endDay();
+                        d0 = u.g.day; b2.plan(); if (u.g.day == d0) u.endDay();
+                    }
                     if (t.save() != u.save()) { saveFail++; printf("NON-DETERMINISTIC after load: seed %llu day %d\n", (unsigned long long)seed, s.g.day); }
                 }
             }
@@ -51,7 +59,7 @@ int main(int argc, char** argv) {
             }
             float h0 = s.g.you.heat; int th0 = s.g.theatre; std::string key;
             if (getenv("HEATDBG") && s.g.phase == PH_PLAY) for (int b = 0; b < 3; b++) { Order o = s.order(s.g.day, b); if (o.type != O_COVER && o.type != O_REST && o.type != O_OFFICE && o.type != O_SDR) key += std::string(key.empty() ? "" : "+") + (o.type == O_MEET_CLAN ? (o.appointment ? "AGENTMEET" : (o.pitch >= 0 ? "PITCH" : "CLANCONTACT")) : OTYPE_LABEL[o.type]); }
-            s.endDay();
+            if (s.g.day == dPlan) s.endDay();       // (answering a decision in the street finishes the day by itself)
             if (getenv("HEATDBG") && s.g.phase == PH_PLAY && s.g.theatre == th0) { static std::map<std::string, std::pair<double, int>> acc; static int nn = 0; auto& e = acc[key.empty() ? "(quiet day)" : key]; e.first += s.g.you.heat - h0; e.second++;
                 if (++nn % 60000 == 0 || (seed == first + (uint64_t)n - 1 && guard > 11990)) {} 
                 static bool reg = false; if (!reg) { reg = true; static auto* pacc = &acc; atexit([]() { for (auto& kv : *pacc) if (kv.second.second > 30) printf("   heat %+8.0f over %6d days (%+.2f/day)  %s\n", kv.second.first, kv.second.second, kv.second.first / kv.second.second, kv.first.c_str()); }); } }
@@ -75,6 +83,7 @@ int main(int argc, char** argv) {
     for (auto& e : endings) printf("  ending: %-32s %d\n", e.first.c_str(), e.second);
     printf("  traitors in stations: %d, removed before the end of the tour: %d\n", moles, moleCaught);
     printf("  exfiltrated agents: %d   courses taken: %d, completed: %d\n", exfil, courses, coursePass);
+    printf("  decisions taken in the street: %ld\n", streetAsked);
     printf("  save/load failures: %d\n", saveFail);
     return saveFail ? 1 : 0;
 }

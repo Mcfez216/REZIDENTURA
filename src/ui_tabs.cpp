@@ -1700,6 +1700,36 @@ void App::tabSurveillance() {
     ImGui::SameLine(0, 16 * S);
     float rw = ImGui::GetContentRegionAvail().x;
     if (docPanel("survText", ImVec2(rw, avail.y), C_PAPER, 16, "The watchers", nullptr)) {
+        {   // your own pattern over the last ninety days, as the log shows it - and as their analysts may be seeing it
+            Sim::Pattern pt = sim.myPattern(90);
+            ImDrawList* dl = ImGui::GetWindowDrawList();
+            ImVec2 o = ImGui::GetCursorScreenPos();
+            dl->AddText(F.bold, F.bold->FontSize, o, rgb(C_INK), "YOUR OWN PATTERN - LAST 90 DAYS");
+            std::string pw = "Operational acts: " + std::to_string(pt.n) + ".  Predictability: " + sim.patternWord(pt) + ".";
+            bool bad = pt.n >= 3 && sim.patternWord(pt).find("varied") == std::string::npos;
+            dl->AddText(F.small, F.small->FontSize, o + ImVec2(0, F.bold->FontSize + 4 * S), rgb(bad ? C_RED : C_INK_FADED), pw.c_str());
+            float gy = o.y + F.bold->FontSize + F.small->FontSize + 14 * S, cw = std::min(34 * S, (ImGui::GetContentRegionAvail().x - 90 * S) / 7), ch = 18 * S;
+            int mx = 1;
+            for (auto& row : pt.grid) for (int v : row) mx = std::max(mx, v);
+            for (int d = 0; d < 7; d++) {
+                const char* dn = DOW[d];
+                dl->AddText(F.small, F.small->FontSize, ImVec2(o.x + 84 * S + d * cw + 4 * S, gy), rgb(C_INK_FADED), dn);
+                for (int b = 0; b < 3; b++) {
+                    ImVec2 a(o.x + 84 * S + d * cw, gy + F.small->FontSize + 4 * S + b * ch), z = a + ImVec2(cw - 3 * S, ch - 3 * S);
+                    int v = pt.grid[d][b];
+                    dl->AddRectFilled(a, z, v ? rgb(C_PENCIL_RED, 0.18f + 0.72f * v / mx) : rgb(C_RULE, 0.15f));
+                    if (v) { std::string n = std::to_string(v); dl->AddText(F.small, F.small->FontSize, a + ImVec2(4 * S, 1 * S), rgb(v * 2 > mx ? 0xFFFFFFu : (unsigned)C_INK), n.c_str()); }
+                }
+            }
+            for (int b = 0; b < 3; b++) dl->AddText(F.small, F.small->FontSize, ImVec2(o.x, gy + F.small->FontSize + 4 * S + b * ch + 1 * S), rgb(C_INK_FADED), BLOCK_LABEL[b]);
+            float ty = gy + F.small->FontSize + 8 * S + 3 * ch;
+            if (pt.topDist >= 0) {
+                std::string dd = "Most used district: " + std::string(sim.T().district[pt.topDist]) + fstr(" (%d of %d)", pt.topDistN, pt.n);
+                dl->AddText(F.small, F.small->FontSize, ImVec2(o.x, ty), rgb(C_INK_FADED), dd.c_str());
+            }
+            ImGui::Dummy(ImVec2(10, ty - o.y + F.small->FontSize + 10 * S));
+            if (ImGui::IsItemHovered() && cfg.tooltips) ImGui::SetTooltip("Every operational act of yours over the last ninety days, by weekday and time of day.\nThe other side's analysts build the same table from what their teams see. A dark square is where they will be waiting.");
+        }
         int key = 0;
         for (int i = (int)g.sdrLog.size() - 1; i >= 0; i--) if (g.sdrLog[i].signs > 0) { key = g.sdrLog[i].day; break; }
         float pw = std::min(ImGui::GetContentRegionAvail().x - 70 * S, 250 * S);

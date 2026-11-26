@@ -474,6 +474,7 @@ void App::overScreen() {
 // ============================================================================ the game screen
 void App::doEndDay(bool run) {
     if (!sim.g.decisions.empty()) { note = "A decision is waiting for you."; return; }
+    sim.askInStreet = cfg.streetChoices;
     if (cfg.confirmEndDay && !sureEndDay && sim.g.phase == PH_PLAY) {
         std::string undone;
         for (auto& t : sim.todo()) if (t.level == 2 && t.text.find("Agreed meeting") != 0 && t.text.find("detection route") == std::string::npos) undone += "  - " + t.text + "\n";
@@ -709,6 +710,8 @@ void App::header(ImVec2 a, ImVec2 b) {
         {"Reports", fstr("%.0f h", std::ceil(g.paperwork)), g.paperwork > 8 ? 2 : g.paperwork > 5 ? 1 : 0, -1, "Hours of written reports outstanding. Over 8 they are in arrears.", IC_PEN},
         {t.role == 3 ? "Department" : "Rezident", word(g.standRez, W_STAND, 5), g.standRez < 25 ? 2 : g.standRez < 38 ? 1 : 0, -1, "How your chief rates you", IC_CHIEF},
         {"Centre", word(g.standCentre, W_STAND, 5), g.standCentre < 25 ? 2 : g.standCentre < 38 ? 1 : 0, -1, "How Moscow rates you", IC_KREMLIN},
+        {"Watched", g.krEst < 0 ? "not yet known" : g.krEst < 22 ? "little" : g.krEst < 45 ? "at times" : g.krEst < 68 ? "regularly" : "closely", g.krEst >= 68 ? 2 : g.krEst >= 45 ? 1 : 0, clampf(g.krEst / 100.f, 0.02f, 1.f),
+         "How closely the other side watches you, by Line KR's assessment on Monday - an estimate, not the truth.\nPredictable habits and carelessness raise it; quiet weeks let it fall.", IC_SURV},
     };
     float fx = nx + nameW + 30 * S, fEnd = da.x - 14 * S;
     // a status tag first, when today has one thing that matters most
@@ -1360,6 +1363,13 @@ void App::popups() {
         if (g.decisions.empty()) ImGui::CloseCurrentPopup();
         else {
             Decision d = g.decisions[0];
+            if (d.kind == DK_STREET) {             // a photograph from the street: what you are looking at as you decide
+                ImDrawList* pdl = ImGui::GetWindowDrawList();
+                float pw = std::min(PW * 0.55f, 330 * S);
+                ImVec2 pp = ImGui::GetCursorScreenPos() + ImVec2((PW - pw) / 2, 8 * S);
+                photo(pdl, scenePhoto(d.id, art::SC_WATCHERS), pp, ImVec2(pw, pw * 0.75f), -1.5f, S, false);
+                ImGui::Dummy(ImVec2(PW, pw * 0.75f + 22 * S));
+            }
             ImGui::PushFont(F.uiTitle);
             ImGui::TextColored(rgb4(skin::K_BRASS_HI), "%s", d.title.c_str());
             ImGui::PopFont();
@@ -1391,7 +1401,20 @@ void App::popups() {
                 dl->AddText(F.ui, F.ui->FontSize, p + ImVec2(42 * S, (h - ts.y) / 2), rgb(hov ? 0xFFF6E2 : skin::K_TEXT), d.opts[i].c_str(), nullptr, tw);
                 ImGui::Dummy(ImVec2(1, 2 * S));
                 ImGui::PopID();
-                if (hit) { sim.decide(d.id, (int)i); autosave(); ImGui::CloseCurrentPopup(); break; }
+                if (hit) {
+                    int day0 = sim.g.day;
+                    size_t cables0 = sim.g.cables.size();
+                    sim.askInStreet = cfg.streetChoices;
+                    sim.decide(d.id, (int)i);
+                    autosave();
+                    ImGui::CloseCurrentPopup();
+                    if (d.kind == DK_STREET && sim.g.day != day0 && sim.g.phase == PH_PLAY) {    // the day ran on to its end
+                        reportDay = sim.g.day - 1; selRow = 0;
+                        pushToasts(day0, cables0);
+                        if (cfg.jumpAfterDay) wantTab = T_REPORT;
+                    }
+                    break;
+                }
             }
         }
         uiEndModal();

@@ -44,6 +44,7 @@ void App::loadSettings() {
         else if (k == "jumpAfterDay") cfg.jumpAfterDay = b();
         else if (k == "tooltips") cfg.tooltips = b();
         else if (k == "confirmEndDay") cfg.confirmEndDay = b();
+        else if (k == "streetChoices") cfg.streetChoices = b();
         else if (k == "toasts") cfg.toasts = b();
         else if (k == "popped" && cfg.rememberWindows) for (int i = 0; i < N_TAB && i < (int)v.size(); i++) popped[i] = v[(size_t)i] == '1';
     }
@@ -58,7 +59,7 @@ void App::saveSettings() {
     for (int i = 0; i < N_TAB; i++) pop += popped[i] ? '1' : '0';
     f << "multiMonitor=" << cfg.multiMonitor << "\nrememberWindows=" << cfg.rememberWindows << "\nuiScale=" << cfg.uiScale << "\nfullscreen=" << cfg.fullscreen
       << "\nmonthlyBackups=" << cfg.monthlyBackups << "\nrunStopMeeting=" << cfg.runStopMeeting << "\nrunStopCable=" << cfg.runStopCable << "\nrunStopAlert=" << cfg.runStopAlert
-      << "\nrunMaxDays=" << cfg.runMaxDays << "\njumpAfterDay=" << cfg.jumpAfterDay << "\ntooltips=" << cfg.tooltips << "\nconfirmEndDay=" << cfg.confirmEndDay << "\ntoasts=" << cfg.toasts << "\npopped=" << pop << "\n";
+      << "\nrunMaxDays=" << cfg.runMaxDays << "\njumpAfterDay=" << cfg.jumpAfterDay << "\ntooltips=" << cfg.tooltips << "\nconfirmEndDay=" << cfg.confirmEndDay << "\nstreetChoices=" << cfg.streetChoices << "\ntoasts=" << cfg.toasts << "\npopped=" << pop << "\n";
 }
 
 /** Keep the autosaves of the last three months: autosave-1 is the newest. */
@@ -260,6 +261,7 @@ void App::settingsPopup(ImVec2 centre) {
     changed |= ImGui::SliderInt("and in any case after (days)", &cfg.runMaxDays, 2, 90);
     changed |= uiCheck("After End Day, turn to the cables or the report by itself", &cfg.jumpAfterDay);
     changed |= uiCheck("Ask before ending a day while something urgent is undone (see Checklist)", &cfg.confirmEndDay);
+    changed |= uiCheck("Decide in the street yourself when a meeting or a drop of yours meets surveillance (otherwise the abort policy decides)", &cfg.streetChoices);
     changed |= uiCheck("Show a short notice of what happened after each day", &cfg.toasts);
     changed |= uiCheck("Keep the autosaves of the last three months as well (autosave-month-1 ... 3)", &cfg.monthlyBackups);
 

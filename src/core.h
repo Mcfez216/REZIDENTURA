@@ -476,7 +476,7 @@ struct Decision {
     std::vector<std::string> opts;
     template <class A> void io(A& a) { a & id & kind & ref & day & title & text & opts; }
 };
-enum { DK_APPROACH = 1, DK_RYAN, DK_ORPHANS, DK_POSTED, DK_GAME, DK_GAME_OFFER, DK_EVENT, DK_PLAN, DK_LEAVE, DK_WIFE, DK_WALKIN, DK_SUMMONS };
+enum { DK_APPROACH = 1, DK_RYAN, DK_ORPHANS, DK_POSTED, DK_GAME, DK_GAME_OFFER, DK_EVENT, DK_PLAN, DK_LEAVE, DK_WIFE, DK_WALKIN, DK_SUMMONS, DK_STREET };
 inline const char* KOMP_LABEL[] = {"Money against signed receipts", "An arranged acquaintance, photographed", "Photographs of him taking an envelope from you"};
 inline const char* PLAN_LABEL[] = {"modest", "firm", "ambitious"};
 inline const char* ASSET_LABEL[] = {"A Zhiguli, through the cheque shop", "A cooperative flat in Moscow", "A dacha outside Moscow"};
@@ -593,6 +593,7 @@ struct GameState {
     // HIDDEN - what the adversary's analysts have learned of your habits from what their teams saw (version 14):
     // weight of your operational acts by weekday and block, and by district; and how hard they are pushing back
     float habit[7][3] = {}, habitD[8] = {}, advAlert = 0;
+    int streetForce[3] = {-1, -1, -1};      // what you decided in the street today, block by block (the day is replayed with it)
     float distMod[8] = {1, 1, 1, 1, 1, 1, 1, 1};   // HIDDEN - how hard the watchers are working each district, as the months go by
     int lastCarDay = -99;
     uint64_t seed = 0;
@@ -688,6 +689,6 @@ struct GameState {
         if (a.ver >= 10) a & lastPad & padded & padCaught;
         if (a.ver >= 11) a & notes;
         if (a.ver >= 12) a & background & startTheatre & ironman & archived;
-        if (a.ver >= 14) a & habit & habitD & advAlert;
+        if (a.ver >= 14) a & habit & habitD & advAlert & streetForce;
     }
 };

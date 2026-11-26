@@ -167,7 +167,7 @@ static bool clickRaw(const std::string& key, bool dbl) {
 static bool onScreen(const std::string& key) { frames(2); return App::rects.count(key) > 0; }
 static void play(int days, bool careful = true) {
     Bot bot(app->sim, careful);
-    for (int i = 0; i < days && app->sim.g.phase == PH_PLAY; i++) { bot.plan(); app->sim.endDay(); }
+    for (int i = 0; i < days && app->sim.g.phase == PH_PLAY; i++) { int d0 = app->sim.g.day; bot.plan(); if (app->sim.g.day == d0) app->sim.endDay(); }
 }
 
 int main(int argc, char** argv) {
@@ -207,6 +207,7 @@ int main(int argc, char** argv) {
     { std::ifstream f("manual.txt"); if (f) a.manual.assign((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>()); }
     App::recordRects = true;
     a.cfg.toasts = false;                               // the notices after each day are tested on their own, below
+    a.cfg.streetChoices = false;                        // and so are the decisions in the street
     Sim& s = a.sim;
 
     auto t0 = std::chrono::steady_clock::now();
@@ -316,6 +317,33 @@ int main(int argc, char** argv) {
     click("OK##note");
     // ---- let the test player work for five months, then look at every screen
     play(150);
+    // ---- a decision in the street: a watched officer goes about his business until something is seen on the way to an act
+    {
+        std::vector<uint8_t> before = s.save();
+        s.askInStreet = true;
+        Bot sb(s, true);
+        bool met = false;
+        for (int k = 0; k < 200 && s.g.phase == PH_PLAY && !met; k++) {
+            for (auto& d : s.g.decisions) if (d.kind == DK_STREET) met = true;
+            if (met) break;
+            s.g.you.heat = std::max(s.g.you.heat, 70.f);
+            int d0 = s.g.day; sb.plan(); if (s.g.day == d0) s.endDay();
+        }
+        check(met, "surveillance on the way to an act stops the day and asks what to do");
+        if (met) {
+            int d0 = s.g.day;
+            a.cfg.streetChoices = true;
+            shot("09-street");
+            click("decision:0");
+            auto it = s.g.reports.find(d0);
+            bool walked = false;
+            if (it != s.g.reports.end()) for (auto& l : it->second) if (l.find("You walked on.") != std::string::npos) walked = true;
+            check(s.g.day == d0 + 1 && walked, "walking on: the day is played out with the act aborted");
+            a.cfg.streetChoices = false;
+        }
+        s.askInStreet = false;
+        s.load(before);
+    }
     a.cfg.toasts = true;
     a.showMoment("ЗАВЕРБОВАН", "RECRUITED", 0xB3171B);
     frames(8); shot("09-moment");

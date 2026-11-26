@@ -28,6 +28,7 @@ struct Settings {
     bool jumpAfterDay = true;                 // after End Day, turn to the report or the cables by itself
     bool tooltips = true;
     bool toasts = true;                       // after each day, short notices of what happened
+    bool streetChoices = true;                // decide yourself when a meeting or a drop meets surveillance
     bool confirmEndDay = false;               // ask before ending a day on which something urgent is still undone
 };
 

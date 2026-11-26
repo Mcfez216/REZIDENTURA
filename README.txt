@@ -92,6 +92,14 @@ REFINEMENTS SINCE 1.6
     on the checklist.
   - Stamps across the desk for the moments that matter: a recruitment, an agent brought out,
     a promotion, a requirement met, material of considerable value - and an arrest.
+  - DECISIONS IN THE STREET: when a meeting or a drop of yours meets surveillance, the day
+    stops and you decide on the spot - walk on, meet but pass nothing, or go through with
+    it - with what you saw and what is at stake in front of you.
+  - AN ADVERSARY THAT LEARNS: the watchers build a table of your habits from what their teams
+    see (weekday, time, district) and put teams out where you are predictable. Officers who
+    keep spotting them get better teams. Your own pattern is on the Surveillance screen.
+  - "Watched" at the top of the desk: Line KR's weekly estimate of how closely you are followed.
+  - Your officers lie low after seeing surveillance and move their agents off worn sites.
   - Saved games from 1.6 (and earlier, as before) load in this version.
 
 NEW IN 1.6

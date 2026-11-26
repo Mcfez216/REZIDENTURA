@@ -81,6 +81,7 @@ struct Bot {
     int choose(const Decision& d) {
         int n = (int)d.opts.size();
         switch (d.kind) {
+            case DK_STREET: return careful ? (d.title.rfind("SURVEILLANCE", 0) == 0 ? 0 : 1) : n - 1;   // careful: walk on from a confirmed team
             case DK_ORPHANS: return (int)(g.seed % 3);
             case DK_APPROACH: if (d.ref == 1) return careful ? 0 : 1 + (int)(g.seed % 2);
                               return careful ? (g.seed % 3 == 0 ? 2 : 0) : (g.seed % 2 ? 2 : 1);

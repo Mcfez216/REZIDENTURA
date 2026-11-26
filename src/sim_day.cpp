@@ -673,6 +673,30 @@ Sim::Ap Sim::approach(const Order& o, int b, int district, Site* st) {
     else if (signs == 1) a.txt = "SDR (" + how + "): POSSIBLE surveillance - " + pick(WEAK) + ".";
     else a.txt = "SDR (" + how + "): SURVEILLANCE CONFIRMED - " + pick(STRONG) + ".";
     a.abort = (signs == 2 && o.policy != 2) || (signs == 1 && o.policy == 0);
+    // your own meeting or drop, with something seen: the decision is yours, on the spot
+    bool hotAct = o.type == O_MEET_CLAN || o.type == O_LOAD_DROP || o.type == O_UNLOAD_DROP || o.type == O_LINE_N;
+    if (me() && signs > 0 && hotAct && askInStreet && !training() && rep) {
+        int f = g.streetForce[b];
+        if (f < 0) {
+            StreetHalt h;
+            h.block = b;
+            Person* p = person(o.person);
+            std::string where = st ? st->name : std::string(T().district[district]);
+            std::string up = where;
+            for (auto& ch : up) ch = (char)toupper((unsigned char)ch);
+            h.title = signs == 2 ? "SURVEILLANCE - " + up : "SOMETHING NOT RIGHT - " + up;
+            std::string seen = a.txt.substr(a.txt.find(": ") + 2);
+            h.text = fstr("%s, %s. ", DOW[dateOf(g.day).dow], BLOCK_LABEL[b]) + "On your way to " + (o.type == O_MEET_CLAN ? "meet " + (p ? p->label() : std::string("your man")) : std::string(OTYPE_LABEL[o.type])) + " at " + where + ".\n\n"
+                     + "You saw: " + seen + "\n\n" + streetStakes(o, st)
+                     + "\n\nYour standing order for this act: " + POLICY[std::max(0, std::min(2, o.policy))] + ".";
+            if (o.type == O_MEET_CLAN) h.opts = {"Walk on. Make it an innocent errand and go home", "Go to the meeting, but let nothing change hands", "Go through with all of it"};
+            else h.opts = {"Walk on. Make it an innocent errand and go home", "Go through with it"};
+            throw h;
+        }
+        a.abort = f == 0;
+        static const char* const WHAT[] = {" You walked on.", " You went to the meeting, and nothing changed hands.", " You went through with it."};
+        a.txt += WHAT[std::max(0, std::min(2, f))];
+    }
     if (a.abort) {
         a.txt += " Act aborted; the route was completed as an innocent errand.";
         if (me()) { g.mAborts++; g.totAborts++; }
@@ -826,7 +850,15 @@ void Sim::resolve(const Order& o, int b) {
             break;
         }
         case O_MEET_OVERT: meetOvert(o, b); break;
-        case O_MEET_CLAN: meetClan(o, b); break;
+        case O_MEET_CLAN: {
+            if (g.streetForce[b] == 1) {             // decided in the street: a meeting at which nothing changes hands
+                Order t = o;
+                t.collect = false; t.longMeet = false; t.docs = false; t.exfil = false; t.pitch = -1; t.bug = false;
+                t.film = 0; t.camera = false; t.pads = 0; t.pay = 0;
+                meetClan(t, b);
+            } else meetClan(o, b);
+            break;
+        }
         case O_LOAD_DROP: loadDrop(o, b); break;
         case O_UNLOAD_DROP: unloadDrop(o, b); break;
         case O_READ_SIGNAL: readSignal(o, b); break;
@@ -1496,4 +1528,27 @@ void Sim::controlOp(const Order& o, int b) {
     } else if (a.observed) { s.burned = true; heat(4); }
     of->file.push_back(pad(fmtShort(g.day), 11) + "Control operation at " + s.name + ": nothing seen at the site.");
     say("    Dummy package placed and recovered. Nothing seen at the site.");
+}
+
+/** What hangs on the next few minutes, as an officer in the street would put it to himself. */
+std::string Sim::streetStakes(const Order& o, Site* st) {
+    Person* p = person(o.person);
+    std::string sb;
+    if (o.type == O_MEET_CLAN && p) {
+        bool agent = p->stage == AGENT;
+        bool carry = !p->held.empty() && o.collect && agent;
+        if (agent) sb += gx(p, p->label() + " will be there" + std::string(carry ? " with exposed film on him." : ".") + " If you are caught together with it, you are expelled and he goes to prison. ");
+        else sb += gx(p, p->name + " will be waiting" + std::string(o.pitch >= 0 ? ", and tonight you mean to recruit him. " : ". "));
+        if (o.pay > 0 || o.film > 0) sb += "You are carrying " + (o.pay > 0 ? fstr("%d %s", o.pay, T().currency) : std::string("")) + (o.pay > 0 && o.film > 0 ? " and " : "") + (o.film > 0 ? fstr("%d cassette%s", o.film, o.film == 1 ? "" : "s") : std::string("")) + ". ";
+        if (agent) sb += gx(p, "If you walk on, he waits fifteen minutes and goes home; the fall-back is in a week, and he will wonder why.");
+        else sb += gx(p, "If you walk on, he will wonder why, and it will cost you some of his goodwill.");
+    } else if (o.type == O_UNLOAD_DROP) {
+        sb += "If the drop is loaded and they are watching it, you will be taken with the material in your hand. If you walk on, it lies there another day - and so does the risk that somebody else finds it.";
+    } else if (o.type == O_LOAD_DROP) {
+        sb += gx(p, "If they see you load it, they will have the drop - and whoever comes to empty it. If you walk on, " + std::string(p ? p->label() : "he") + " finds nothing at his next servicing.");
+    } else if (o.type == O_LINE_N) {
+        sb += "If they see the package placed, an illegal walks into their arms in a week, and years of somebody's work are lost. Centre will not forget it.";
+    }
+    (void)st;
+    return sb;
 }

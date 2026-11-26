@@ -141,6 +141,12 @@ void Sim::opOffer(int kind) {
 /** Called each morning. Judges the operation that is running, and now and then offers a new one. */
 void Sim::opsDawn() {
     if (training() || g.phase != PH_PLAY) return;
+    if (g.scenario) {                         // a scenario ends when its operation is decided, or its time runs out
+        if (Operation* o = activeOp()) (void)o;
+        bool decided = false;
+        for (auto& o : g.ops) if (o.state == OPS_WON || o.state == OPS_LOST) decided = true;
+        if (decided || g.day > g.scenarioEnd) { scenarioFinish(false, ""); return; }
+    }
     if (Operation* o = activeOp()) {
         Person* p = person(o->ref);
         Requirement* q = req(o->ref);
@@ -171,7 +177,7 @@ void Sim::opsDawn() {
         return;
     }
     // a man of yours in danger does not wait for the calendar
-    bool offered = false;
+    bool offered = g.scenario != 0;           // in a scenario there is one operation, and it is already running
     for (auto& o : g.ops) if (o.state == OPS_OFFERED) offered = true;
     if (offered || !g.decisions.empty() || g.day - g.postStart < 30) return;
     for (auto& p : g.persons)
@@ -270,4 +276,83 @@ void Sim::opDecide(const Decision& d, int option) {
         g.standRez = clampf(g.standRez - 6, 0, 100);
         opEnd(*o, false, x->title() + " has been cleared by Directorate K. " + (mole ? "The leak goes on." : "The leak was never in the station.") + " He knows it was you.");
     }
+}
+
+// ============================================================================ scenarios
+const ScenarioDef SCENARIOS[] = {
+    {"A full career", "", TH_MOSCOW, 0},
+    {"The man from the Admiralty - London, 1968",
+     "Your first posting. Centre has its eye on a man with access to secrets nobody of ours has seen, and he is leaving the city in a few months. Recruit him before he goes - without being thrown out of the country first.",
+     TH_LONDON, OP_RECRUIT},
+    {"Somebody in the station - Vienna, 1973",
+     "Sources are being lost and sites are burning. Centre believes one of your colleagues is working for the other side. You have a few weeks, the marked card and the Case board. Name him - and be right.",
+     TH_VIENNA, OP_LEAK},
+    {"Get him out - Washington, 1979",
+     "The best agent you have inherited has seen men outside his house. The FBI is closing in. Get the travel documents, get him to a meeting, and get him out of America before they take him.",
+     TH_WASHINGTON, OP_RESCUE},
+    {"Flash - Berlin, 1979",
+     "Moscow wants one thing, quickly, for a meeting at the very top. Your line can get it - if you can task the right man and get his film into the pouch in time.",
+     TH_BERLIN1, OP_FLASH},
+};
+const int N_SCENARIO = (int)(sizeof SCENARIOS / sizeof SCENARIOS[0]);
+
+void Sim::scenarioSetup(int k) {
+    const ScenarioDef& sc = SCENARIOS[k];
+    g.scenario = k;
+    g.lastOpDay = g.day;
+    if (sc.opKind == OP_LEAK) {               // in this story there is a traitor, and he is already at work
+        bool any = false;
+        for (auto& o : g.officers) if (o.mole && !o.gone) { any = true; o.moleDay = std::min(o.moleDay, g.day); }
+        if (!any) {
+            std::vector<Officer*> c;
+            for (auto& o : g.officers) if (!o.gone && (o.role == ROLE_COLLEAGUE || o.role == ROLE_SUB)) c.push_back(&o);
+            if (!c.empty()) { Officer* m = c[r().n((int)c.size())]; m->mole = true; m->moleDay = g.day; }
+        }
+    }
+    if (sc.opKind == OP_RESCUE) {             // and here an agent of yours is already being looked at
+        for (auto& p : g.persons) if (p.stage == AGENT && p.handler == 0) {
+            p.suspicion = std::max(p.suspicion, 50.f);
+            p.warn.push_back("is certain he is followed from his office every evening. He asks what will happen to his family.");
+            file(p, "Agent is certain he is followed from his office every evening. (Reported by the departing officer.)");
+            if (p.signalSite < 0) for (auto& s : g.sites) if (s.type == ST_SIGNAL && !s.retired) { p.signalSite = s.id; break; }
+            break;
+        }
+    }
+    opOffer(sc.opKind);
+    for (auto& d : g.decisions) if (d.kind == DK_OP_OFFER) { g.decisions.erase(std::find_if(g.decisions.begin(), g.decisions.end(), [&](const Decision& x) { return x.id == d.id; })); break; }
+    Operation* op = nullptr;
+    for (auto& o : g.ops) if (o.state == OPS_OFFERED) { o.state = OPS_ACTIVE; op = &o; }
+    g.scenarioEnd = op ? op->due + 1 : g.day + 120;
+    Person* keep = subj; subj = nullptr;
+    cable("Centre", std::string("SCENARIO: ") + sc.name, std::string(sc.blurb) + "\n\n" + (op ? "Operation " + op->name + ": " + op->title + ".\n\n" + op->brief + "\n\n" + op->stakes : std::string(""))
+          + "\n\nThe scenario ends on " + fmtDay(g.scenarioEnd) + ", or as soon as the operation is decided. Its stages are pinned above the morning brief on the Planner. Your deputy runs the routine.\n\nCENTRE");
+    subj = keep;
+}
+
+/** The end of a scenario: the operation decided, the time run out, or the posting cut short. */
+void Sim::scenarioFinish(bool forced, const std::string& why) {
+    Operation* op = nullptr;
+    for (auto& o : g.ops) if (o.state != OPS_DECLINED) op = &o;
+    bool won = op && op->state == OPS_WON && !forced;
+    int agents = 0;
+    for (auto& p : g.persons) if (p.stage == AGENT) agents++;
+    float score = (won ? 60.f : 0.f) + std::min(20.f, g.totValue / 40.f) + std::min(15, agents * 5) + std::min(10, g.totRecruited * 5) - g.totArrested * 10 - (forced ? 30 : 0);
+    score = clampf(score, 0, 100);
+    std::string grade = score >= 85 ? "Order of the Red Banner" : score >= 65 ? "Order of the Red Star" : score >= 45 ? "A commendation from the Chairman" : score >= 25 ? "A note on your file" : "A reprimand";
+    std::string sb = std::string(SCENARIOS[g.scenario].name) + "\n\n";
+    sb += forced ? why + "\n\n" : (op ? std::string(won ? "The operation succeeded. " : "The operation failed. ") : std::string("")) + "\n";
+    sb += fstr("Days: %d.   Material graded: %d (worth %d).   Recruited: %d.   Agents active at the end: %d.   Agents lost to arrest: %d.\n\n", g.day - g.postStart, g.totRolls, (int)std::lround(g.totValue), g.totRecruited, agents, g.totArrested);
+    sb += fstr("SCORE: %d / 100  -  ", (int)std::lround(score)) + grade + ".\n\n";
+    sb += "The files have been opened. What your agents really were:\n";
+    for (auto& p : g.persons) {
+        if (p.codename.empty()) continue;
+        std::string truth = p.dangle ? "A PROVOCATION - the adversary's man from the start" : p.doubled ? "caught and TURNED by the adversary" : p.fabricator ? "genuine, but invented part of his material" : "genuine";
+        sb += "  " + pad(p.codename, 10) + pad(clip(p.name + ", " + p.job, 46), 48) + pad(STAGE_LABEL[p.stage], 14) + truth + "\n";
+    }
+    for (auto& o : g.officers) if (o.mole) sb += "  (" + o.title() + " of the rezidentura worked for the adversary" + (o.gone ? "; he was taken.)\n" : "; he was never caught.)\n");
+    g.phase = PH_OVER;
+    g.overTitle = std::string(won ? "SCENARIO WON" : "SCENARIO LOST") + fstr("  -  %d / 100", (int)std::lround(score));
+    g.overText = sb;
+    g.archived = true;                        // a scenario is not a career: it does not go into the service records
+    attention = true;
 }

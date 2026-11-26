@@ -92,6 +92,9 @@ REFINEMENTS SINCE 1.6
     on the checklist.
   - Stamps across the desk for the moments that matter: a recruitment, an agent brought out,
     a promotion, a requirement met, material of considerable value - and an arrest.
+  - SCENARIOS: one posting, one operation, a few months and a score - an hour or two of play.
+    Choose "Play: Scenario" on the New career page. Four to begin with: a recruitment in London,
+    a traitor in Vienna, a rescue in Washington, a flash task in Berlin.
   - MEETINGS AS SCENES: a long meeting with your agent, or an approach, stops at the table:
     reassure him, press him, praise and pay him, or test his story; at a pitch, choose the
     basis on the night with your estimates of him in front of you.

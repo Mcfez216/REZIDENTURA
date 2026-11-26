@@ -141,7 +141,7 @@ private:
     bool peekDone = false, peekOk = false, lastInGame = false;
     std::string peekLine1, peekLine2;
     std::string newName = "Sokolov", newSeed;
-    int newStart = 0, newBackground = 0;
+    int newStart = 0, newBackground = 0, newScenario = 0;
     bool newIronman = false;
     std::vector<std::string> loadInfo;
     std::vector<Record> archive;

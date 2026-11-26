@@ -21,7 +21,7 @@ bool Sim::load(const std::vector<uint8_t>& data) {
     a.writing = false; a.buf = data; a.pos = 4;
     GameState t;
     a & t;
-    if (!a.ok || a.ver < 8 || a.ver > 16 || t.theatre < 0 || t.theatre >= (int)THEATRES.size()) return false;
+    if (!a.ok || a.ver < 8 || a.ver > 17 || t.theatre < 0 || t.theatre >= (int)THEATRES.size()) return false;
     g = t;
     if (g.patronName.empty()) g.patronName = RU_LAST[(size_t)(g.seed % RU_LAST.size())];     // a save from before version 1.2
     if (a.ver < 9) g.planYear = dateOf(g.day).y;                                             // no plan until next January
@@ -201,6 +201,8 @@ void Sim::newCareer(uint64_t seed, const std::string& officerName_, const Career
     actAs(nullptr);
     g.patronName = RU_LAST[r().n((int)RU_LAST.size())];
     int start = std::max(0, std::min((int)TH_BERLIN2, opt.start));
+    int scen = std::max(0, std::min(N_SCENARIO - 1, opt.scenario));
+    if (scen) start = SCENARIOS[scen].theatre;
     g.background = std::max(0, std::min(3, opt.background));
     g.ironman = opt.ironman;
     g.startTheatre = start;
@@ -220,6 +222,7 @@ void Sim::newCareer(uint64_t seed, const std::string& officerName_, const Career
     }
     startPosting(start, true);
     if (g.background == 3) g.standCentre = clampf(g.standCentre + 8, 0, 100);
+    if (scen) scenarioSetup(scen);
 }
 
 /**
@@ -442,6 +445,7 @@ std::string Sim::summary() {
 }
 
 void Sim::endPosting(int how, const std::string& title, const std::string& text) {
+    if (g.scenario) { scenarioFinish(false, title + "\n\n" + text); return; }
     const Theatre& t = T();
     if (!t.training && how == END_TOUR) attestation(true);
     g.planLevel = -1;

@@ -35,6 +35,11 @@ extern const char* W_COMMIT[5];
 extern const char* W_LEVEL[5];
 extern const char* W_STAND[5];
 
+/** A short scenario: one posting, one operation, a few months, and a graded result (sim_ops.cpp). */
+struct ScenarioDef { const char* name; const char* blurb; int theatre; int opKind; };
+extern const ScenarioDef SCENARIOS[];
+extern const int N_SCENARIO;
+
 class Sim {
 public:
     // ---- operations (sim_ops.cpp)
@@ -68,7 +73,7 @@ public:
     // ---- starting, saving, loading
     void newCareer(uint64_t seed, const std::string& officer, int difficulty = 1, bool withTraining = false);
     /** A career begun anywhere: at the course (TH_MOSCOW) or at any posting, with a background, difficulty and ironman rule. */
-    struct CareerOpts { int start = TH_MOSCOW; int background = 0; int difficulty = 1; bool ironman = false; };
+    struct CareerOpts { int start = TH_MOSCOW; int background = 0; int difficulty = 1; bool ironman = false; int scenario = 0; };
     void newCareer(uint64_t seed, const std::string& officer, const CareerOpts& o);
     static int startRank(int theatre);
     const Officer* rezident() const;
@@ -188,6 +193,8 @@ public:
 
 private:
     void opsDawn();
+    void scenarioSetup(int k);
+    void scenarioFinish(bool forced, const std::string& why);
     void opOffer(int kind);
     void opEnd(Operation& o, bool won, const std::string& why);
     void opDecide(const Decision& d, int option);

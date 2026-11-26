@@ -345,8 +345,20 @@ void App::launchNew() {
     uiText("##name", newName, ImVec2(220 * S, 0));
     ImGui::SameLine();
     if (uiBtn("Another")) newName = RU_LAST[(size_t)(ImGui::GetTime() * 1000) % RU_LAST.size()];
-    row("Begin in");
+    row("Play");
     {
+        std::vector<Opt> o;
+        for (int i = 0; i < N_SCENARIO; i++) o.push_back({i == 0 ? std::string("A full career, 1968-1991") : std::string("Scenario: ") + SCENARIOS[i].name, i});
+        uiCombo("##scenario", newScenario, o, FW);
+        if (newScenario > 0) {
+            ImGui::SetCursorPosX(LW);
+            ImGui::BeginGroup(); ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + FW);
+            hint(std::string(SCENARIOS[newScenario].blurb) + "  A few months, one operation, a score out of 100.");
+            ImGui::PopTextWrapPos(); ImGui::EndGroup();
+        }
+    }
+    if (newScenario == 0) {
+        row("Begin in");
         std::vector<Opt> o;
         for (int th : STARTS) o.push_back({startLabel(th), th});
         uiCombo("##start", newStart, o, FW);
@@ -387,17 +399,17 @@ void App::launchNew() {
     // begin
     float bw = 200 * S;
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + w - bw);
-    if (uiPrimary("Begin career", ImVec2(bw, 38 * S))) {
+    if (uiPrimary(newScenario ? "Begin scenario" : "Begin career", ImVec2(bw, 38 * S))) {
         uint64_t seed = (uint64_t)strtoull(newSeed.c_str(), nullptr, 10);
         if (seed == 0) seed = (uint64_t)(ImGui::GetTime() * 1000003.0) % 1000000 + (uint64_t)ImGui::GetFrameCount() % 997 + 1;
         Sim::CareerOpts o;
-        o.start = newStart; o.background = newBackground; o.difficulty = newDifficulty; o.ironman = newIronman;
+        o.start = newStart; o.background = newBackground; o.difficulty = newDifficulty; o.ironman = newIronman; o.scenario = newScenario;
         sim.newCareer(seed, newName.empty() ? std::string("Sokolov") : newName, o);
         inGame = true;
         page = 0;
         resetSelection();
         forgetTextures("p");
-        wantTab = newStart == TH_MOSCOW ? T_PLAN : T_CENTRE;
+        wantTab = newScenario ? T_PLAN : newStart == TH_MOSCOW ? T_PLAN : T_CENTRE;
         autosave();
     }
 }

@@ -248,6 +248,17 @@ int main(int argc, char** argv) {
         s.newCareer(5, "Ivanov", o);
         check(s.rezident()->temper == t1, "the same world number gives the same Rezident");
     }
+    // ---- scenarios: one operation, a few months, a score
+    for (int k = 1; k < N_SCENARIO; k++) {
+        Sim::CareerOpts o;
+        o.scenario = k;
+        s.newCareer(20 + (uint64_t)k, "Petrov", o);
+        check(s.g.phase == PH_PLAY && s.g.scenario == k && s.activeOp() != nullptr && s.g.theatre == SCENARIOS[k].theatre, std::string("a scenario begins with its operation running: ") + SCENARIOS[k].name);
+        if (k == 2) { click("tab:Planner"); shot("06-scenario-planner"); }
+        play(200);
+        check(s.g.phase == PH_OVER && s.g.overTitle.find("SCENARIO") == 0, "and it ends with a score: " + s.g.overTitle);
+        if (k == 2) shot("06-scenario-end");
+    }
     s.newCareer(11, "Sokolov", 1, true);
     // ---- the course, played by the test player, with pictures on the way
     shot("02-course-planner");

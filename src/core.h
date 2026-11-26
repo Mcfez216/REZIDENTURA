@@ -535,7 +535,7 @@ struct PostRec {
 };
 
 struct GameState {
-    uint32_t version = 16;
+    uint32_t version = 17;
     std::string notes;                       // the player's notebook
     int background = 0;                      // where the officer came from (BACKGROUND_LABEL)
     int startTheatre = 0;                    // where the career was begun
@@ -607,7 +607,8 @@ struct GameState {
     bool deputy = false;                     // your deputy runs the routine (version 15)
     std::vector<Operation> ops;              // operations offered, running and finished this posting (version 16)
     int lastOpDay = -9999, opsWon = 0, opsLost = 0;
-    int sceneForce[3] = {-1, -1, -1};        // how you chose to handle today's meetings (the day is replayed with it)
+    int sceneForce[3] = {-1, -1, -1};
+    int scenario = 0, scenarioEnd = -1;      // a short scenario instead of a career (version 17)        // how you chose to handle today's meetings (the day is replayed with it)
     int deputyDay = -1;                      // the last day he planned      // what you decided in the street today, block by block (the day is replayed with it)
     float distMod[8] = {1, 1, 1, 1, 1, 1, 1, 1};   // HIDDEN - how hard the watchers are working each district, as the months go by
     int lastCarDay = -99;
@@ -683,7 +684,7 @@ struct GameState {
     template <class A> void io(A& a) {
         a & version;
         a.ver = version;
-        if (!a.writing) version = 16;
+        if (!a.writing) version = 17;
         a & difficulty & nextTheatre & wallDown & bugs & totExfil & tut & tutTries & tutMarks & tutMax & tutA & tutB
           & tutMeet & tutDrop & tutSignal & tutRoll & tutText & tutLog & courseReport & pool & watchers & replateDay & months & krEst
           & wx & wxNext & temp & tempNext & sunset & sunrise & forecast & game & gameNext & gameRounds & gameFound & gameDoubt & gameSuspect & gameName & gameLog
@@ -707,5 +708,6 @@ struct GameState {
         if (a.ver >= 14) a & habit & habitD & advAlert & streetForce;
         if (a.ver >= 15) a & deputy & deputyDay;
         if (a.ver >= 16) a & ops & lastOpDay & opsWon & opsLost & sceneForce;
+        if (a.ver >= 17) a & scenario & scenarioEnd;
     }
 };
